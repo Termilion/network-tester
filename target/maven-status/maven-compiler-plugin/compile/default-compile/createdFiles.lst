@@ -1,0 +1,12 @@
+general/IoTMessage.class
+client/BulkClient.class
+ServerApplication.class
+general/BulkMessage.class
+server/Server$1.class
+client/Client.class
+server/Server.class
+ClientApplication.class
+general/Utility.class
+client/IoTClient.class
+general/Message.class
+server/LogServer.class
