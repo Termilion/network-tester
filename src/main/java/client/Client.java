@@ -19,7 +19,7 @@ public abstract class Client {
                 connect(address, port);
                 execute();
                 close();
-                Thread.currentThread().wait(waitTime);
+                Thread.sleep(waitTime);
             }
         } catch(InterruptedException e) {
             System.out.println("Thread has been interrupted");

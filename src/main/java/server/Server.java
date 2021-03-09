@@ -26,6 +26,13 @@ public abstract class Server {
                 @Override
                 public void run() {
                     executeLogic(client);
+                    try {
+                        if(!client.isClosed()) {
+                            client.close();
+                        }
+                    } catch(IOException e) {
+                        e.printStackTrace();
+                    }
                     super.run();
                 }
             };

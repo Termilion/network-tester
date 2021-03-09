@@ -3,6 +3,7 @@ package server;
 import general.BulkMessage;
 import general.Message;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
@@ -19,7 +20,7 @@ public class LogServer extends Server {
             long numberOfMessages = 0;
             Message message = (Message) in.readObject();
 
-            while (message != null) {
+            while (true) {
                 numberOfMessages++;
                 String type = message.getType();
                 String name = message.getName();
@@ -32,8 +33,13 @@ public class LogServer extends Server {
                     default:
                         System.out.printf("%s [%s]: received message [%d]\n", name, client.getInetAddress(), numberOfMessages);
                 }
-                message = (Message) in.readObject();
+                try {
+                    message = (Message) in.readObject();
+                } catch (EOFException e) {
+                    break;
+                }
             }
+            in.close();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
