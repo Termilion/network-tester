@@ -14,7 +14,6 @@ public class BulkClient extends Client {
 
     @Override
     public void execute() throws IOException {
-        System.out.printf("%s:%d", this.name, this.numberOfMBytes);
         ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
         int numberSend = 0;
         for (int i = 0; i < this.numberOfMBytes; i++) {

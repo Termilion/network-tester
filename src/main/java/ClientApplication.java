@@ -31,7 +31,7 @@ public class ClientApplication implements Callable<Integer> {
     public Integer call() throws Exception {
         for (int i = 0; i < number; i++) {
             String name = String.format("%s_%d", namePrefix, i);
-            System.out.printf("1: %s:%d\n", address, port);
+            System.out.printf("Started %s: %s:%d\n", name, address, port);
             if (type.equals("b")) {
                 clients.add(new BulkClient(address, port, name, numberOfTransmissions));
             } else {
