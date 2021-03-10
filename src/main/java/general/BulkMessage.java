@@ -6,10 +6,8 @@ public class BulkMessage extends Message implements Serializable {
     int maxSize;
 
     public BulkMessage(byte[] payload, int maxSize, String name) {
-        this.type = "bulk";
-        this.payload = payload;
+        super("bulk", name, payload);
         this.maxSize = maxSize;
-        this.name = name;
     }
 
     public int getMaxSize() {

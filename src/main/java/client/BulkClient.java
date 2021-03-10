@@ -22,7 +22,7 @@ public class BulkClient extends Client {
             out.writeObject(message);
             numberSend++;
             if ((numberSend % 100) == 0) {
-                System.out.printf("Send a hundred Mbyte! Current Number of Mbytes: %d\n", numberSend);
+                System.out.printf("%s: Send a hundred Mbyte! Current Number of Mbytes: %d\n", this.name, numberSend);
             }
         }
         out.flush();

@@ -1,6 +1,5 @@
 package client;
 
-import general.BulkMessage;
 import general.IoTMessage;
 import general.Utility;
 
@@ -15,12 +14,11 @@ public class IoTClient extends Client {
 
     @Override
     public void execute() throws IOException {
-        System.out.printf("%s:%d", this.name, this.numberOfMBytes);
         ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
         byte[] mByte = Utility.generateBytes(1000000);
         IoTMessage message = new IoTMessage(mByte, this.name);
         out.writeObject(message);
-        System.out.println("Send an IoTMessage!\n");
+        System.out.printf("%s: Send an IoTMessage!", this.name);
         out.flush();
         out.close();
     }

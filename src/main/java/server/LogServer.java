@@ -7,6 +7,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.sql.Timestamp;
 
 public class LogServer extends Server {
     public LogServer(int port) {
@@ -24,14 +25,24 @@ public class LogServer extends Server {
                 numberOfMessages++;
                 String type = message.getType();
                 String name = message.getName();
+                long sendTime = message.getTimestamp().getTime();
+                long currentTime = new Timestamp(System.currentTimeMillis()).getTime();
+                float travelTimeInMS = currentTime - sendTime;
+                float sizeInByte = message.getPayload().length;
+
+                double goodput = -1;
+                if (travelTimeInMS > 0) {
+                    goodput = (sizeInByte / travelTimeInMS) / 1000;
+                }
+
                 switch(type) {
                     case "bulk":
                         BulkMessage bulkMessage = (BulkMessage) message;
                         int maxSize = bulkMessage.getMaxSize();
-                        System.out.printf("%s [%s]: received message [%d/%d]\n", name, client.getInetAddress(), numberOfMessages, maxSize);
+                        System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps\n", client.getInetAddress().getHostName(), name, numberOfMessages, maxSize, goodput);
                         break;
                     default:
-                        System.out.printf("%s [%s]: received message [%d]\n", name, client.getInetAddress(), numberOfMessages);
+                        System.out.printf("[%s] %s: received message [%d]: %s Mbps\n", client.getInetAddress().getHostName(), name, numberOfMessages, goodput);
                 }
                 try {
                     message = (Message) in.readObject();
