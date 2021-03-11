@@ -1,5 +1,6 @@
 package client;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
@@ -14,12 +15,13 @@ public class BulkClient extends Client {
 
     @Override
     public void execute() throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         int numberSend = 0;
         for (int i = 0; i < this.numberOfMBytes; i++) {
             byte[] mByte = Utility.generateBytes(1000000);
             BulkMessage message = new BulkMessage(mByte, this.numberOfMBytes, this.name);
-            out.writeObject(message);
+            out.writeUnshared(message);
+            out.reset();
             numberSend++;
             if ((numberSend % 100) == 0) {
                 System.out.printf("%s: Send a hundred Mbyte! Current Number of Mbytes: %d\n", this.name, numberSend);

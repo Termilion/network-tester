@@ -3,9 +3,7 @@ package server;
 import general.BulkMessage;
 import general.Message;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.net.Socket;
 import java.sql.Timestamp;
 
@@ -17,9 +15,9 @@ public class LogServer extends Server {
     @Override
     public void executeLogic(Socket client) {
         try {
-            ObjectInputStream in = new ObjectInputStream(client.getInputStream());
+            ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             long numberOfMessages = 0;
-            Message message = (Message) in.readObject();
+            Message message = (Message) in.readUnshared();
 
             while (true) {
                 numberOfMessages++;
@@ -35,14 +33,12 @@ public class LogServer extends Server {
                     goodput = (sizeInByte / travelTimeInMS) / 1000;
                 }
 
-                switch(type) {
-                    case "bulk":
-                        BulkMessage bulkMessage = (BulkMessage) message;
-                        int maxSize = bulkMessage.getMaxSize();
-                        System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps\n", client.getInetAddress().getHostName(), name, numberOfMessages, maxSize, goodput);
-                        break;
-                    default:
-                        System.out.printf("[%s] %s: received message [%d]: %s Mbps\n", client.getInetAddress().getHostName(), name, numberOfMessages, goodput);
+                if ("bulk".equals(type)) {
+                    BulkMessage bulkMessage = (BulkMessage) message;
+                    int maxSize = bulkMessage.getMaxSize();
+                    System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps (%s ms)\n", client.getInetAddress().getHostName(), name, numberOfMessages, maxSize, goodput, travelTimeInMS);
+                } else {
+                    System.out.printf("[%s] %s: received message [%d]: %s Mbps (%s ms)\n", client.getInetAddress().getHostName(), name, numberOfMessages, goodput, travelTimeInMS);
                 }
                 try {
                     message = (Message) in.readObject();
@@ -51,9 +47,7 @@ public class LogServer extends Server {
                 }
             }
             in.close();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (ClassNotFoundException | IOException e) {
             e.printStackTrace();
         }
     }
