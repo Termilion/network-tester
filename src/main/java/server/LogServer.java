@@ -8,8 +8,8 @@ import java.net.Socket;
 import java.sql.Timestamp;
 
 public class LogServer extends Server {
-    public LogServer(int port) {
-        super(port);
+    public LogServer(int port, int receiveBufferSize) {
+        super(port, receiveBufferSize);
     }
 
     @Override

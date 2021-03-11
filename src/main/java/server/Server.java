@@ -9,16 +9,17 @@ public abstract class Server {
     ArrayList<Socket> connected = new ArrayList<>();
     ArrayList<Thread> clientThreads = new ArrayList<>();
 
-    public Server(int port) {
+    public Server(int port, int receiveBufferSize) {
         try {
-            listen(port);
+            listen(port, receiveBufferSize);
         } catch(IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void listen(int port) throws IOException {
+    private void listen(int port, int receiveBufferSize) throws IOException {
         ServerSocket socket = new ServerSocket(port);
+        socket.setReceiveBufferSize(receiveBufferSize);
         System.out.printf("opened server socket on address %s\n", socket.getInetAddress());
         while (true) {
             Socket client = socket.accept();

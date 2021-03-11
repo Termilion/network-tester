@@ -8,8 +8,12 @@ import java.io.ObjectOutputStream;
 
 public class IoTClient extends Client {
 
+    public IoTClient(String address, int port, String name, int numberOfTransmissions, int sendBufferSize) {
+        super(address, port, name, 1, numberOfTransmissions, sendBufferSize);
+    }
+
     public IoTClient(String address, int port, String name, int numberOfTransmissions) {
-        super(address, port, name, 1, numberOfTransmissions);
+        super(address, port, name, 1, numberOfTransmissions, 1000);
     }
 
     @Override

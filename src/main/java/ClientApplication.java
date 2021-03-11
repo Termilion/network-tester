@@ -25,6 +25,9 @@ public class ClientApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--type"}, defaultValue = "b", description = "type of the transmission. b = bulk, i = iot, default value: b")
     String type;
 
+    @CommandLine.Option(names = {"-b", "--buffer"}, defaultValue = "1000", description = "SendBufferSize in packets, default value: 1000")
+    int sendBufferSize;
+
     ArrayList<Client> clients = new ArrayList<>();
 
     @Override
@@ -33,9 +36,9 @@ public class ClientApplication implements Callable<Integer> {
             String name = String.format("%s_%d", namePrefix, i);
             System.out.printf("Started %s: %s:%d\n", name, address, port);
             if (type.equals("b")) {
-                clients.add(new BulkClient(address, port, name, numberOfTransmissions));
+                clients.add(new BulkClient(address, port, name, numberOfTransmissions, sendBufferSize));
             } else {
-                clients.add(new IoTClient(address, port, name, numberOfTransmissions));
+                clients.add(new IoTClient(address, port, name, numberOfTransmissions, sendBufferSize));
             }
         }
         return 0;

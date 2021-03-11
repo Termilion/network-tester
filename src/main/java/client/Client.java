@@ -7,11 +7,12 @@ import java.net.UnknownHostException;
 public abstract class Client {
     Socket socket;
     String name;
+    int sendBufferSize;
     int numberOfMBytes;
 
     int waitTime = 10000; // 10s
 
-    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions) {
+    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize) {
         this.name = name;
         this.numberOfMBytes = numberOfMBytes;
         try {

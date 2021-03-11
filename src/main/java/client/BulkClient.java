@@ -9,14 +9,19 @@ import general.Utility;
 
 public class BulkClient extends Client {
 
+    public BulkClient(String address, int port, String name, int numberOfTransmissions, int sendBufferSize) {
+        super(address, port, name, 5000, numberOfTransmissions, sendBufferSize);
+    }
+
     public BulkClient(String address, int port, String name, int numberOfTransmissions) {
-        super(address, port, name, 5000, numberOfTransmissions);
+        super(address, port, name, 5000, numberOfTransmissions, 1000);
     }
 
     @Override
     public void execute() throws IOException {
         ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         int numberSend = 0;
+        this.socket.setSendBufferSize(this.sendBufferSize);
         for (int i = 0; i < this.numberOfMBytes; i++) {
             byte[] mByte = Utility.generateBytes(1000000);
             BulkMessage message = new BulkMessage(mByte, this.numberOfMBytes, this.name);
