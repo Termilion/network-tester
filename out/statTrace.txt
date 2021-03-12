@@ -1,0 +1,378 @@
+TRACE: 0
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 1000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 2000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 3000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 4000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 5000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 6000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 7000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 8000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 9000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 10000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 11000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 12000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 13000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 14000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 15000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 16000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 17000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 18000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 19000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+TRACE: 20000
+TOOL: ss
+ESTAB        0        0                                   192.168.178.71:39846                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:39844                                      198.252.206.25:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+ESTAB        0        0                                   192.168.178.71:45192                                       140.82.114.26:https                         skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+CLOSE-WAIT   32       0                                    172.24.77.205:43472                                     151.101.114.217:https                         skmem:(r1536,rb1381592,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+CLOSE-WAIT   32       0                                    172.24.77.205:43474                                     151.101.114.217:https                         skmem:(r1536,rb3962752,t0,tb87040,f2560,w0,o0,bl0,d0)                          
+ESTAB        0        0                                    192.168.44.20:40828                                        91.189.91.42:https                         skmem:(r38400,rb6291456,t0,tb46080,f2560,w0,o0,bl0,d1)                         
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52022                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d2)                           
+CLOSE-WAIT   130      0          [2003:c1:6720:9f00:7858:157e:a750:62be]:52020                          [2a00:1450:4001:801::200a]:https                         skmem:(r1344,rb131072,t0,tb87040,f2752,w0,o0,bl0,d1)                           
+ESTAB        0        0          [2003:c1:6720:9f00:7858:157e:a750:62be]:60524                            [2a00:1450:400c:c1b::bc]:5228                          skmem:(r0,rb131072,t0,tb87040,f0,w0,o0,bl0,d0)                                 
+Tool: tc
+qdisc noqueue 0: dev lo root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+qdisc noqueue 0: dev wlp2s0 root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
