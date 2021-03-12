@@ -21,7 +21,7 @@ public class ServerApplication implements Callable<Integer> {
         File outFile = new File(filePath);
         outFile.getParentFile().mkdirs();
         BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
-        writer.write("Address;Name;Goodput;Delay");
+        writer.write("Time;Address;Name;Goodput;Delay");
         writer.newLine();
         try {
             new LogServer(port, receiveBufferSize, writer);

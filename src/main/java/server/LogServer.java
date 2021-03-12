@@ -18,6 +18,7 @@ public class LogServer extends Server {
     public void executeLogic(Socket client, BufferedWriter writer) {
         try {
             ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
+            long initialTime = new Timestamp(System.currentTimeMillis()).getTime();
             long numberOfMessages = 0;
             Message message = (Message) in.readUnshared();
 
@@ -39,12 +40,12 @@ public class LogServer extends Server {
                 if ("bulk".equals(type)) {
                     BulkMessage bulkMessage = (BulkMessage) message;
                     int maxSize = bulkMessage.getMaxSize();
-                    writer.write(String.format("%s;%s;%s;%s", address, name, goodput, travelTimeInMS));
-                    writer.newLine();
                     System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, maxSize, goodput, travelTimeInMS);
                 } else {
                     System.out.printf("[%s] %s: received message [%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, goodput, travelTimeInMS);
                 }
+                writer.write(String.format("%s;%s;%s;%s;%s", currentTime-initialTime, address, name, goodput, travelTimeInMS));
+                writer.newLine();
                 try {
                     message = (Message) in.readObject();
                 } catch (EOFException e) {
