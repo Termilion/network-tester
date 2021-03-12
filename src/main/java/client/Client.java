@@ -15,6 +15,7 @@ public abstract class Client {
     public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize) {
         this.name = name;
         this.numberOfMBytes = numberOfMBytes;
+        this.sendBufferSize = sendBufferSize;
         try {
             for (int i = 0; i < numberOfTransmissions; i++) {
                 connect(address, port);

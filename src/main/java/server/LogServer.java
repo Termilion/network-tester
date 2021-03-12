@@ -5,15 +5,17 @@ import general.Message;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.Buffer;
 import java.sql.Timestamp;
 
 public class LogServer extends Server {
-    public LogServer(int port, int receiveBufferSize) {
-        super(port, receiveBufferSize);
+
+    public LogServer(int port, int receiveBufferSize, BufferedWriter writer) {
+        super(port, receiveBufferSize, writer);
     }
 
     @Override
-    public void executeLogic(Socket client) {
+    public void executeLogic(Socket client, BufferedWriter writer) {
         try {
             ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             long numberOfMessages = 0;
@@ -23,6 +25,7 @@ public class LogServer extends Server {
                 numberOfMessages++;
                 String type = message.getType();
                 String name = message.getName();
+                String address = client.getInetAddress().getHostName();
                 long sendTime = message.getTimestamp().getTime();
                 long currentTime = new Timestamp(System.currentTimeMillis()).getTime();
                 float travelTimeInMS = currentTime - sendTime;
@@ -36,9 +39,11 @@ public class LogServer extends Server {
                 if ("bulk".equals(type)) {
                     BulkMessage bulkMessage = (BulkMessage) message;
                     int maxSize = bulkMessage.getMaxSize();
-                    System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps (%s ms)\n", client.getInetAddress().getHostName(), name, numberOfMessages, maxSize, goodput, travelTimeInMS);
+                    writer.write(String.format("%s;%s;%s;%s", address, name, goodput, travelTimeInMS));
+                    writer.newLine();
+                    System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, maxSize, goodput, travelTimeInMS);
                 } else {
-                    System.out.printf("[%s] %s: received message [%d]: %s Mbps (%s ms)\n", client.getInetAddress().getHostName(), name, numberOfMessages, goodput, travelTimeInMS);
+                    System.out.printf("[%s] %s: received message [%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, goodput, travelTimeInMS);
                 }
                 try {
                     message = (Message) in.readObject();

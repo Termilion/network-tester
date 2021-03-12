@@ -1,6 +1,9 @@
 import picocli.CommandLine;
 import server.LogServer;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.concurrent.Callable;
 
 public class ServerApplication implements Callable<Integer> {
@@ -10,9 +13,24 @@ public class ServerApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-b", "--buffer"}, defaultValue = "1000", description = "ReceiveBufferSize in packets, default value: 1000")
     int receiveBufferSize;
 
+    @CommandLine.Option(names = {"-o", "--out"}, defaultValue = "./out/server.log", description = "Path to output log file, default: ./out/server.log")
+    String filePath;
+
     @Override
     public Integer call() throws Exception {
-        new LogServer(port, receiveBufferSize);
+        File outFile = new File(filePath);
+        outFile.getParentFile().mkdirs();
+        BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
+        writer.write("Address;Name;Goodput;Delay");
+        writer.newLine();
+        try {
+            new LogServer(port, receiveBufferSize, writer);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            writer.flush();
+            writer.close();
+        }
         return 0;
     }
 

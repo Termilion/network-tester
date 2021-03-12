@@ -1,5 +1,6 @@
 package server;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,15 +10,15 @@ public abstract class Server {
     ArrayList<Socket> connected = new ArrayList<>();
     ArrayList<Thread> clientThreads = new ArrayList<>();
 
-    public Server(int port, int receiveBufferSize) {
+    public Server(int port, int receiveBufferSize, BufferedWriter writer) {
         try {
-            listen(port, receiveBufferSize);
+            listen(port, receiveBufferSize, writer);
         } catch(IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void listen(int port, int receiveBufferSize) throws IOException {
+    private void listen(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
         ServerSocket socket = new ServerSocket(port);
         socket.setReceiveBufferSize(receiveBufferSize);
         System.out.printf("opened server socket on address %s\n", socket.getInetAddress());
@@ -26,7 +27,7 @@ public abstract class Server {
             Thread clientThread = new Thread() {
                 @Override
                 public void run() {
-                    executeLogic(client);
+                    executeLogic(client, writer);
                     try {
                         if(!client.isClosed()) {
                             client.close();
@@ -43,5 +44,5 @@ public abstract class Server {
         }
     }
 
-    public abstract void executeLogic(Socket client);
+    public abstract void executeLogic(Socket client, BufferedWriter writer);
 }

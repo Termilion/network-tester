@@ -21,7 +21,7 @@ public class BulkClient extends Client {
     public void execute() throws IOException {
         ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         int numberSend = 0;
-        this.socket.setSendBufferSize(this.sendBufferSize);
+        this.socket.setSendBufferSize(super.sendBufferSize);
         for (int i = 0; i < this.numberOfMBytes; i++) {
             byte[] mByte = Utility.generateBytes(1000000);
             BulkMessage message = new BulkMessage(mByte, this.numberOfMBytes, this.name);
