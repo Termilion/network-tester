@@ -5,7 +5,6 @@ import general.Message;
 
 import java.io.*;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.sql.Timestamp;
 
 public class LogServer extends Server {
