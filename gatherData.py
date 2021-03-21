@@ -1,9 +1,15 @@
-import pandas as pd;
+import pandas as pd
+import pickle as pkl
+import matplotlib.pyplot as plt
+import matplotlib
+import re
 
-statFile = open()
-serverLog = open()
+inPath = "./out"
 
-times = []
+statFile = open("%s/statTrace.txt" % (inPath))
+serverLog = open("%s/server.log" % (inPath))
+
+logTimes = []
 addresses = []
 names = []
 gps = []
@@ -11,14 +17,17 @@ delays = []
 
 for line in serverLog.readlines():
     split = line.split(";")
-    times.append(split[0])
+    logTimes.append(split[0])
     addresses.append(split[1])
     names.append(split[2])
     gps.append(split[3])
     delays.append(split[4])
 
-serverLogData = {"time": times, "adress": addresses, "name": names, "gp": gps, "delay": delays}
+serverLogData = {"time": logTimes, "adress": addresses, "name": names, "gp": gps, "delay": delays}
 df_serverLogs = pd.DataFrame(data=serverLogData)
+
+with open("%s/serverLog.pkl" % inPath, 'wb') as handle:
+    pkl.dump(df_serverLogs, handle)
 
 tcLine = False
 
@@ -34,17 +43,21 @@ tc_backlogBytes = []
 tc_backlogPkts = []
 tc_backlogRequeues = []
 
+tool = ""
+ss_regex = re.compile(r"[^-.:,\(\)\[\]\w]+")
+
 for line in statFile.readlines():
     if line.startswith("TRACE: "):
         times.append(int(line.split("TRACE: ")[1]))
     elif line.startswith("TOOL: "):
-        tool = line.split("TOOL: ")[1]
+        tool = line.split("TOOL: ")[1].strip()
     else:
         if tool == "ss":
-            if "java" in line:
-                split = line.split("        ")
+            if "CLOSE-WAIT" in line:
+                split = re.sub(ss_regex, ";", line).split(";")
                 ss_rcvQ.append(split[1])
                 ss_sndQ.append(split[1])
+                tool = ""
         elif tool == "tc":
             if "dev wlp2s0" in line:
                 tcLine = True
@@ -63,7 +76,7 @@ for line in statFile.readlines():
                 tcLine = False
 
 tracingData = {
-    "times": times,
+    "time": times,
     "ss_rcvQ": ss_rcvQ,
     "ss_sndQ": ss_sndQ,
     "tc_sentBytes": tc_sentBytes,
@@ -77,3 +90,28 @@ tracingData = {
 }
 
 df_tracingData = pd.DataFrame(data=tracingData)
+
+with open("%s/tracingData.pkl" % inPath, 'wb') as handle:
+    pkl.dump(df_tracingData, handle)
+
+font = {
+    'family' : 'DejaVu Sans',
+    'weight' : 'normal'
+}
+
+matplotlib.rc("font", **font)
+
+SMALL_SIZE = 10
+MEDIUM_SIZE = 12
+BIGGER_SIZE = 14
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
+plt.plot(df_tracingData["time"], df_tracingData["ss_rcvQ"])
+plt.show()
