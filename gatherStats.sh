@@ -19,8 +19,12 @@ do
 	echo "[$FILE] traced values at: $i ms"
 	echo "TRACE: $i" >> $FILE
 	echo "TOOL: ss" >> $FILE
-	ss -tmOH >> $FILE
-	echo "Tool: tc" >> $FILE
+	ss -tmOHi >> $FILE
+	echo "TOOL: tc" >> $FILE
 	tc -s qdisc >> $FILE
+	echo "TOOL: sock" >> $FILE
+	cat /proc/net/sockstat >> $FILE
+	echo "TOOL: tcpmem"
+	grep . /proc/sys/net/ipv4/tcp*mem >> $FILE
 	sleep $(expr $RATE / 1000)
 done
