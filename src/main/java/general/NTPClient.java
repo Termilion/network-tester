@@ -20,6 +20,7 @@ public class NTPClient {
         NTPUDPClient timeClient = new NTPUDPClient();
         InetAddress address = InetAddress.getByName(TIME_SERVER);
         TimeInfo timeInfo = timeClient.getTime(address);
+        timeInfo.computeDetails();
         return timeInfo.getOffset();
     }
 
