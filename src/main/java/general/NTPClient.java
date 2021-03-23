@@ -9,27 +9,23 @@ import java.sql.Timestamp;
 
 public class NTPClient {
     static final String TIME_SERVER = "time-a-g.nist.gov";
-    long baseTimeServer;
-    long baseTimeLocal;
 
-    long difference;
+    long offset;
 
     public NTPClient() throws IOException {
-        this.baseTimeServer = getServerTime();
-        this.baseTimeLocal = System.currentTimeMillis();
-        this.difference = this.baseTimeServer - this.baseTimeLocal;
+        this.offset = getServerTime();
     }
 
     private long getServerTime() throws IOException {
         NTPUDPClient timeClient = new NTPUDPClient();
         InetAddress address = InetAddress.getByName(TIME_SERVER);
         TimeInfo timeInfo = timeClient.getTime(address);
-        return timeInfo.getReturnTime();
+        return timeInfo.getOffset();
     }
 
     public long getCurrentTimeNormalized() {
         long currentTime = System.currentTimeMillis();
-        long normalized = currentTime + difference;
+        long normalized = currentTime + offset;
         return new Timestamp(normalized).getTime();
     }
 }
