@@ -38,7 +38,7 @@ public class ClientApplication implements Callable<Integer> {
             if (type.equals("b")) {
                 clients.add(new BulkClient(address, port, name, numberOfTransmissions, sendBufferSize));
             } else {
-                clients.add(new IoTClient(address, port, name, numberOfTransmissions, sendBufferSize));
+                clients.add(new IoTClient(address, port, name));
             }
         }
         return 0;

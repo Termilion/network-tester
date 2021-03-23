@@ -21,10 +21,10 @@ do
 	echo "TOOL: ss" >> $FILE
 	ss -tmOHi >> $FILE
 	echo "TOOL: tc" >> $FILE
-	tc -s qdisc >> $FILE
+	tc -s -r -d -N -j qdisc >> $FILE
 	echo "TOOL: sock" >> $FILE
 	cat /proc/net/sockstat >> $FILE
-	echo "TOOL: tcpmem"
+	echo "TOOL: tcpmem" >> $FILE
 	grep . /proc/sys/net/ipv4/tcp*mem >> $FILE
 	sleep $(expr $RATE / 1000)
 done

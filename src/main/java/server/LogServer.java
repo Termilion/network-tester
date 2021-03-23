@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 
 public class LogServer extends Server {
 
-    public LogServer(int port, int receiveBufferSize, BufferedWriter writer) {
+    public LogServer(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
         super(port, receiveBufferSize, writer);
     }
 
@@ -27,7 +27,7 @@ public class LogServer extends Server {
                 String name = message.getName();
                 String address = client.getInetAddress().getHostName();
                 long sendTime = message.getTimestamp().getTime();
-                long currentTime = new Timestamp(System.currentTimeMillis()).getTime();
+                long currentTime = this.ntp.getCurrentTimeNormalized();
                 float travelTimeInMS = currentTime - sendTime;
                 float sizeInByte = message.getPayload().length;
 

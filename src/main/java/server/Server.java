@@ -1,5 +1,7 @@
 package server;
 
+import general.NTPClient;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -10,12 +12,11 @@ public abstract class Server {
     ArrayList<Socket> connected = new ArrayList<>();
     ArrayList<Thread> clientThreads = new ArrayList<>();
 
-    public Server(int port, int receiveBufferSize, BufferedWriter writer) {
-        try {
-            listen(port, receiveBufferSize, writer);
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
+    NTPClient ntp;
+
+    public Server(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+        this.ntp = new NTPClient();
+        listen(port, receiveBufferSize, writer);
     }
 
     private void listen(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {

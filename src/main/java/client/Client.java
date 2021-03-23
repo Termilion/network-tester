@@ -1,5 +1,7 @@
 package client;
 
+import general.NTPClient;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -12,16 +14,26 @@ public abstract class Client {
 
     int waitTime = 10000; // 10s
 
-    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize) {
+    NTPClient ntp;
+
+    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize, int waitTime) throws IOException {
+        this(address, port, name, numberOfMBytes, numberOfTransmissions, sendBufferSize);
+        this.waitTime = waitTime;
+        this.ntp = new NTPClient();
+    }
+
+    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize) throws IOException {
         this.name = name;
         this.numberOfMBytes = numberOfMBytes;
         this.sendBufferSize = sendBufferSize;
+        this.ntp = new NTPClient();
+
         try {
             for (int i = 0; i < numberOfTransmissions; i++) {
                 connect(address, port);
                 execute();
                 close();
-                Thread.sleep(waitTime);
+                Thread.sleep(this.waitTime);
             }
         } catch(InterruptedException e) {
             System.out.println("Thread has been interrupted");

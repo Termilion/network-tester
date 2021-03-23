@@ -9,11 +9,11 @@ public abstract class Message implements Serializable {
     protected byte[] payload;
     protected Timestamp timestamp;
 
-    public Message(String type, String name, byte[] payload) {
+    public Message(String type, String name, byte[] payload, NTPClient client) {
         this.type = type;
         this.name = name;
         this.payload = payload;
-        this.timestamp = new Timestamp(System.currentTimeMillis());
+        this.timestamp = new Timestamp(client.getCurrentTimeNormalized());
     }
 
     public String getType() {
