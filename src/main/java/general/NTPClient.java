@@ -13,8 +13,10 @@ public class NTPClient {
     long offset;
 
     public NTPClient(String timeServer) throws IOException {
-        this.offset = getServerTime();
+        ConsoleLogger.log("started ntp process");
         this.timeServer = timeServer;
+        this.offset = getServerTime();
+        ConsoleLogger.log("finished ntp process");
     }
 
     private long getServerTime() throws IOException {
@@ -22,6 +24,7 @@ public class NTPClient {
         InetAddress address = InetAddress.getByName(timeServer);
         TimeInfo timeInfo = timeClient.getTime(address);
         timeInfo.computeDetails();
+        ConsoleLogger.log("ntp results: delay %s; offset %s");
         return timeInfo.getOffset();
     }
 

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 import general.BulkMessage;
+import general.ConsoleLogger;
 import general.Utility;
 
 public class BulkClient extends Client {
@@ -29,7 +30,13 @@ public class BulkClient extends Client {
             out.reset();
             numberSend++;
             if ((numberSend % 100) == 0) {
-                System.out.printf("%s: Send a hundred Mbyte! Current Number of Mbytes: %d\n", this.name, numberSend);
+                ConsoleLogger.log(
+                        String.format(
+                                "%s: Send a hundred Mbyte! Current Number of Mbytes: %d",
+                                this.name,
+                                numberSend
+                        )
+                );
             }
         }
         out.flush();

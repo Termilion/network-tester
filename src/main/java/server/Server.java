@@ -1,5 +1,6 @@
 package server;
 
+import general.ConsoleLogger;
 import general.NTPClient;
 
 import java.io.BufferedWriter;
@@ -22,7 +23,12 @@ public abstract class Server {
     private void listen(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
         ServerSocket socket = new ServerSocket(port);
         socket.setReceiveBufferSize(receiveBufferSize);
-        System.out.printf("opened server socket on address %s\n", socket.getInetAddress());
+        ConsoleLogger.log(
+                String.format(
+                        "opened server socket on address %s",
+                        socket.getInetAddress()
+                )
+        );
         while (true) {
             Socket client = socket.accept();
             Thread clientThread = new Thread() {

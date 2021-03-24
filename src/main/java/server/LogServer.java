@@ -1,6 +1,7 @@
 package server;
 
 import general.BulkMessage;
+import general.ConsoleLogger;
 import general.Message;
 
 import java.io.*;
@@ -39,9 +40,28 @@ public class LogServer extends Server {
                 if ("bulk".equals(type)) {
                     BulkMessage bulkMessage = (BulkMessage) message;
                     int maxSize = bulkMessage.getMaxSize();
-                    System.out.printf("[%s] %s: received message [%d/%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, maxSize, goodput, travelTimeInMS);
+                    ConsoleLogger.log(
+                            String.format(
+                                    "[%s] %s: received message [%d/%d]: %s Mbps (%s ms)",
+                                    address,
+                                    name,
+                                    numberOfMessages,
+                                    maxSize,
+                                    goodput,
+                                    travelTimeInMS
+                            )
+                    );
                 } else {
-                    System.out.printf("[%s] %s: received message [%d]: %s Mbps (%s ms)\n", address, name, numberOfMessages, goodput, travelTimeInMS);
+                    ConsoleLogger.log(
+                            String.format(
+                                    "[%s] %s: received message [%d]: %s Mbps (%s ms)",
+                                    address,
+                                    name,
+                                    numberOfMessages,
+                                    goodput,
+                                    travelTimeInMS
+                            )
+                    );
                 }
                 writer.write(String.format("%s;%s;%s;%s;%s", currentTime-initialTime, address, name, goodput, travelTimeInMS));
                 writer.newLine();

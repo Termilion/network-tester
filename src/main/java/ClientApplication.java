@@ -1,6 +1,7 @@
 import client.BulkClient;
 import client.Client;
 import client.IoTClient;
+import general.ConsoleLogger;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
@@ -37,7 +38,14 @@ public class ClientApplication implements Callable<Integer> {
     public Integer call() throws Exception {
         for (int i = 0; i < number; i++) {
             String name = String.format("%s_%d", namePrefix, i);
-            System.out.printf("Started %s: %s:%d\n", name, address, port);
+            ConsoleLogger.log(
+                    String.format(
+                            "Started %s: %s:%d",
+                            name,
+                            address,
+                            port
+                    )
+            );
             if (type.equals("b")) {
                 clients.add(new BulkClient(ntpAddress, address, port, name, numberOfTransmissions, sendBufferSize));
             } else {

@@ -1,5 +1,6 @@
 package client;
 
+import general.ConsoleLogger;
 import general.IoTMessage;
 import general.Utility;
 
@@ -27,7 +28,12 @@ public class IoTClient extends Client {
         byte[] mByte = Utility.generateBytes(1000000);
         IoTMessage message = new IoTMessage(mByte, this.name, this.ntp);
         out.writeObject(message);
-        System.out.printf("%s: Send an IoTMessage!", this.name);
+        ConsoleLogger.log(
+                String.format(
+                        "%s: Send an IoTMessage!",
+                        this.name
+                )
+        );
         out.flush();
         out.close();
     }

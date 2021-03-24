@@ -1,12 +1,13 @@
 /home/bielinski/Dokumente/network-tester/src/main/java/ClientApplication.java
-/home/bielinski/Dokumente/network-tester/src/main/java/client/BulkClient.java
 /home/bielinski/Dokumente/network-tester/src/main/java/general/BulkMessage.java
 /home/bielinski/Dokumente/network-tester/src/main/java/ServerApplication.java
 /home/bielinski/Dokumente/network-tester/src/main/java/client/IoTClient.java
 /home/bielinski/Dokumente/network-tester/src/main/java/general/Message.java
 /home/bielinski/Dokumente/network-tester/src/main/java/server/LogServer.java
 /home/bielinski/Dokumente/network-tester/src/main/java/client/Client.java
+/home/bielinski/Dokumente/network-tester/src/main/java/general/ConsoleLogger.java
 /home/bielinski/Dokumente/network-tester/src/main/java/general/Utility.java
-/home/bielinski/Dokumente/network-tester/src/main/java/server/Server.java
 /home/bielinski/Dokumente/network-tester/src/main/java/general/NTPClient.java
 /home/bielinski/Dokumente/network-tester/src/main/java/general/IoTMessage.java
+/home/bielinski/Dokumente/network-tester/src/main/java/client/BulkClient.java
+/home/bielinski/Dokumente/network-tester/src/main/java/server/Server.java
