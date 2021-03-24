@@ -9,12 +9,12 @@ import general.Utility;
 
 public class BulkClient extends Client {
 
-    public BulkClient(String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
-        super(address, port, name, 5000, numberOfTransmissions, sendBufferSize);
+    public BulkClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
+        super(ntpAddress, address, port, name, 5000, numberOfTransmissions, sendBufferSize);
     }
 
-    public BulkClient(String address, int port, String name, int numberOfTransmissions) throws IOException {
-        super(address, port, name, 5000, numberOfTransmissions, 1000);
+    public BulkClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
+        super(ntpAddress, address, port, name, 5000, numberOfTransmissions, 1000);
     }
 
     @Override

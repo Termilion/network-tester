@@ -10,6 +10,9 @@ public class ClientApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-a", "--address"}, defaultValue = "localhost", description = "Server IP address, default value: localhost")
     String address;
 
+    @CommandLine.Option(names = {"-ntp"}, defaultValue = "0.de.pool.ntp.org", description = "Address of the ntp server")
+    String ntpAddress;
+
     @CommandLine.Option(names = {"-p", "--port"}, defaultValue = "5000", description = "Number of the server port, default value: 5000")
     int port;
 
@@ -36,9 +39,9 @@ public class ClientApplication implements Callable<Integer> {
             String name = String.format("%s_%d", namePrefix, i);
             System.out.printf("Started %s: %s:%d\n", name, address, port);
             if (type.equals("b")) {
-                clients.add(new BulkClient(address, port, name, numberOfTransmissions, sendBufferSize));
+                clients.add(new BulkClient(ntpAddress, address, port, name, numberOfTransmissions, sendBufferSize));
             } else {
-                clients.add(new IoTClient(address, port, name));
+                clients.add(new IoTClient(ntpAddress, address, port, name));
             }
         }
         return 0;

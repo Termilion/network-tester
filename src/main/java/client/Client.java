@@ -16,17 +16,33 @@ public abstract class Client {
 
     NTPClient ntp;
 
-    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize, int waitTime) throws IOException {
-        this(address, port, name, numberOfMBytes, numberOfTransmissions, sendBufferSize);
+    public Client(
+            String ntpAddress,
+            String address,
+            int port,
+            String name,
+            int numberOfMBytes,
+            int numberOfTransmissions,
+            int sendBufferSize,
+            int waitTime
+    ) throws IOException {
+        this(ntpAddress, address, port, name, numberOfMBytes, numberOfTransmissions, sendBufferSize);
         this.waitTime = waitTime;
-        this.ntp = new NTPClient();
     }
 
-    public Client(String address, int port, String name, int numberOfMBytes, int numberOfTransmissions, int sendBufferSize) throws IOException {
+    public Client(
+            String ntpAddress,
+            String address,
+            int port,
+            String name,
+            int numberOfMBytes,
+            int numberOfTransmissions,
+            int sendBufferSize
+    ) throws IOException {
         this.name = name;
         this.numberOfMBytes = numberOfMBytes;
         this.sendBufferSize = sendBufferSize;
-        this.ntp = new NTPClient();
+        this.ntp = new NTPClient(ntpAddress);
 
         try {
             for (int i = 0; i < numberOfTransmissions; i++) {

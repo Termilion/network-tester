@@ -9,8 +9,8 @@ import java.sql.Timestamp;
 
 public class LogServer extends Server {
 
-    public LogServer(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
-        super(port, receiveBufferSize, writer);
+    public LogServer(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+        super(ntpAddress, port, receiveBufferSize, writer);
     }
 
     @Override

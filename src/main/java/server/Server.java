@@ -14,8 +14,8 @@ public abstract class Server {
 
     NTPClient ntp;
 
-    public Server(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
-        this.ntp = new NTPClient();
+    public Server(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+        this.ntp = new NTPClient(ntpAddress);
         listen(port, receiveBufferSize, writer);
     }
 

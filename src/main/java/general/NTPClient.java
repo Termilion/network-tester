@@ -8,17 +8,18 @@ import java.net.InetAddress;
 import java.sql.Timestamp;
 
 public class NTPClient {
-    static final String TIME_SERVER = "time-a-g.nist.gov";
+    String timeServer;
 
     long offset;
 
-    public NTPClient() throws IOException {
+    public NTPClient(String timeServer) throws IOException {
         this.offset = getServerTime();
+        this.timeServer = timeServer;
     }
 
     private long getServerTime() throws IOException {
         NTPUDPClient timeClient = new NTPUDPClient();
-        InetAddress address = InetAddress.getByName(TIME_SERVER);
+        InetAddress address = InetAddress.getByName(timeServer);
         TimeInfo timeInfo = timeClient.getTime(address);
         timeInfo.computeDetails();
         return timeInfo.getOffset();
