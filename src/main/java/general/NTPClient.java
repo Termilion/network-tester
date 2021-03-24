@@ -24,7 +24,7 @@ public class NTPClient {
         InetAddress address = InetAddress.getByName(timeServer);
         TimeInfo timeInfo = timeClient.getTime(address);
         timeInfo.computeDetails();
-        ConsoleLogger.log("ntp results: delay %s; offset %s");
+        ConsoleLogger.log(String.format("ntp results: delay %s; offset %s", timeInfo.getDelay(), timeInfo.getOffset()));
         return timeInfo.getOffset();
     }
 
