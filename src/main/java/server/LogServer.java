@@ -34,7 +34,7 @@ public class LogServer extends Server {
 
                 double goodput = -1;
                 if (travelTimeInMS > 0) {
-                    goodput = (sizeInByte / travelTimeInMS) / 1000;
+                    goodput = (sizeInByte * 8 / travelTimeInMS) / 1000;
                 }
 
                 if ("bulk".equals(type)) {
@@ -42,7 +42,7 @@ public class LogServer extends Server {
                     int maxSize = bulkMessage.getMaxSize();
                     ConsoleLogger.log(
                             String.format(
-                                    "[%s] %s: received message [%d/%d]: %s Mbps (%s ms)",
+                                    "[%s/Video] %s [%d/%d]: %.02f Mbps (%s ms)",
                                     address,
                                     name,
                                     numberOfMessages,
@@ -54,7 +54,7 @@ public class LogServer extends Server {
                 } else {
                     ConsoleLogger.log(
                             String.format(
-                                    "[%s] %s: received message [%d]: %s Mbps (%s ms)",
+                                    "[%s/IoT] %s [%d]: %.02f Mbps (%s ms)",
                                     address,
                                     name,
                                     numberOfMessages,
