@@ -8,17 +8,17 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Random;
 
-public class IoTClient extends Client {
+public class IoTSource extends Source {
 
-    public IoTClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
+    public IoTSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
         super(ntpAddress, address, port, name, 1, numberOfTransmissions, sendBufferSize, 100 * new Random().nextInt(10));
     }
 
-    public IoTClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
+    public IoTSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
         super(ntpAddress, address, port, name, 1, numberOfTransmissions, 1000, 100 * new Random().nextInt(10));
     }
 
-    public IoTClient(String ntpAddress, String address, int port, String name) throws IOException {
+    public IoTSource(String ntpAddress, String address, int port, String name) throws IOException {
         super(ntpAddress, address, port, name, 1, 100, 1000, 100 * new Random().nextInt(10));
     }
 

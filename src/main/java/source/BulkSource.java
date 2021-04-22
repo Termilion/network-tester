@@ -8,13 +8,13 @@ import general.BulkMessage;
 import general.ConsoleLogger;
 import general.Utility;
 
-public class BulkClient extends Client {
+public class BulkSource extends Source {
 
-    public BulkClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
+    public BulkSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
         super(ntpAddress, address, port, name, 5000, numberOfTransmissions, sendBufferSize);
     }
 
-    public BulkClient(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
+    public BulkSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
         super(ntpAddress, address, port, name, 5000, numberOfTransmissions, 1000);
     }
 

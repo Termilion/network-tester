@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public abstract class Client {
+public abstract class Source {
     Socket socket;
     String name;
     int sendBufferSize;
@@ -16,7 +16,7 @@ public abstract class Client {
 
     NTPClient ntp;
 
-    public Client(
+    public Source(
             String ntpAddress,
             String address,
             int port,
@@ -30,7 +30,7 @@ public abstract class Client {
         this.waitTime = waitTime;
     }
 
-    public Client(
+    public Source(
             String ntpAddress,
             String address,
             int port,
