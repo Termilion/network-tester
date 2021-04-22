@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.concurrent.Callable;
 
-public class ServerApplication implements Callable<Integer> {
+public class SourceApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-ntp"}, defaultValue = "0.de.pool.ntp.org", description = "Address of the ntp server")
     String ntpAddress;
 
@@ -38,6 +38,6 @@ public class ServerApplication implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        new CommandLine(new ServerApplication()).execute(args);
+        new CommandLine(new SourceApplication()).execute(args);
     }
 }

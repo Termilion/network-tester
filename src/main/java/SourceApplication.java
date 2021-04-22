@@ -7,7 +7,7 @@ import picocli.CommandLine;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
-public class ClientApplication implements Callable<Integer> {
+public class SinkApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-a", "--address"}, defaultValue = "localhost", description = "Server IP address, default value: localhost")
     String address;
 
@@ -56,7 +56,7 @@ public class ClientApplication implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        new CommandLine(new ClientApplication()).execute(args);
+        new CommandLine(new SinkApplication()).execute(args);
     }
 }
 
