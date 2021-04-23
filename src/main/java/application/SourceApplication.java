@@ -1,62 +1,39 @@
-import source.BulkSource;
-import source.Source;
-import source.IoTSource;
+package application;
+
+import application.source.BulkSource;
+import application.source.IoTSource;
 import general.ConsoleLogger;
-import picocli.CommandLine;
+import general.NTPClient;
 
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
+import java.net.InetAddress;
 
-public class SourceApplication implements Callable<Integer> {
-    @CommandLine.Option(names = {"-a", "--address"}, defaultValue = "localhost", description = "Server IP address, default value: localhost")
-    String address;
+public class SourceApplication extends Application {
+    final private String type;
+    final private InetAddress address;
+    final private int port;
+    final private NTPClient ntp;
 
-    @CommandLine.Option(names = {"-ntp"}, defaultValue = "0.de.pool.ntp.org", description = "Address of the ntp server")
-    String ntpAddress;
-
-    @CommandLine.Option(names = {"-p", "--port"}, defaultValue = "5000", description = "Number of the server port, default value: 5000")
-    int port;
-
-    @CommandLine.Option(names = {"-n", "-number"}, defaultValue = "1", description = "Number of Clients to start, default value: 3")
-    int number;
-
-    @CommandLine.Option(names = {"--name"}, defaultValue = "Client", description = "Prefix of the client names, default value: Client")
-    String namePrefix;
-
-    @CommandLine.Option(names = {"-l", "--loops"}, defaultValue = "3", description = "Number of sequential transmissions, default value: 3")
-    int numberOfTransmissions;
-
-    @CommandLine.Option(names = {"-t", "--type"}, defaultValue = "b", description = "type of the transmission. b = bulk, i = iot, default value: b")
-    String type;
-
-    @CommandLine.Option(names = {"-b", "--buffer"}, defaultValue = "1000", description = "SendBufferSize in packets, default value: 1000")
-    int sendBufferSize;
-
-    ArrayList<Source> sources = new ArrayList<>();
-
-    @Override
-    public Integer call() throws Exception {
-        for (int i = 0; i < number; i++) {
-            String name = String.format("%s_%d", namePrefix, i);
-            ConsoleLogger.log(
-                    String.format(
-                            "Started %s: %s:%d",
-                            name,
-                            address,
-                            port
-                    )
-            );
-            if (type.equals("b")) {
-                sources.add(new BulkSource(ntpAddress, address, port, name, numberOfTransmissions, sendBufferSize));
-            } else {
-                sources.add(new IoTSource(ntpAddress, address, port, name));
-            }
-        }
-        return 0;
+    public SourceApplication(String type, InetAddress address, int port, NTPClient ntp) {
+        this.type = type;
+        this.address = address;
+        this.port = port;
+        this.ntp = ntp;
     }
 
-    public static void main(String[] args) {
-        new CommandLine(new SourceApplication()).execute(args);
+
+    public void start() throws Exception {
+        ConsoleLogger.log(
+                String.format(
+                        "Started Source: %s:%d",
+                        address,
+                        port
+                )
+        );
+        if (type.equals("b")) {
+            new BulkSource(ntp, address.toString(), 5000, 10, 1000);
+        } else {
+            new IoTSource(ntp, address.toString(), port);
+        }
     }
 }
 

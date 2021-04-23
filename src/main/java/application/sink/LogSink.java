@@ -1,7 +1,8 @@
-package sink;
+package application.sink;
 
 import general.BulkPayload;
 import general.ConsoleLogger;
+import general.NTPClient;
 import general.Payload;
 
 import java.io.*;
@@ -10,8 +11,8 @@ import java.sql.Timestamp;
 
 public class LogSink extends Sink {
 
-    public LogSink(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
-        super(ntpAddress, port, receiveBufferSize, writer);
+    public LogSink(NTPClient ntp, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+        super(ntp, port, receiveBufferSize, writer);
     }
 
     @Override

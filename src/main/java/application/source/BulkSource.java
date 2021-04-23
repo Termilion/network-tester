@@ -1,4 +1,4 @@
-package source;
+package application.source;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -6,16 +6,17 @@ import java.io.ObjectOutputStream;
 
 import general.BulkPayload;
 import general.ConsoleLogger;
+import general.NTPClient;
 import general.Utility;
 
 public class BulkSource extends Source {
 
-    public BulkSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions, int sendBufferSize) throws IOException {
-        super(ntpAddress, address, port, name, 5000, numberOfTransmissions, sendBufferSize);
+    public BulkSource(NTPClient ntp, String address, int port, int numberOfTransmissions, int sendBufferSize) throws IOException {
+        super(ntp, address, port, 5000, numberOfTransmissions, sendBufferSize);
     }
 
-    public BulkSource(String ntpAddress, String address, int port, String name, int numberOfTransmissions) throws IOException {
-        super(ntpAddress, address, port, name, 5000, numberOfTransmissions, 1000);
+    public BulkSource(NTPClient ntp, String address, int port, int numberOfTransmissions) throws IOException {
+        super(ntp, address, port, 5000, numberOfTransmissions, 1000);
     }
 
     @Override
@@ -25,15 +26,14 @@ public class BulkSource extends Source {
         this.socket.setSendBufferSize(super.sendBufferSize);
         for (int i = 0; i < this.numberOfMBytes; i++) {
             byte[] mByte = Utility.generateBytes(1000000);
-            BulkPayload message = new BulkPayload(mByte, this.numberOfMBytes, this.name, this.ntp);
+            BulkPayload message = new BulkPayload(mByte, this.numberOfMBytes, this.ntp);
             out.writeUnshared(message);
             out.reset();
             numberSend++;
             if ((numberSend % 100) == 0) {
                 ConsoleLogger.log(
                         String.format(
-                                "%s: Send a hundred Mbyte! Current Number of Mbytes: %d",
-                                this.name,
+                                "Bulk-Source: Send a hundred Mbyte! Current Number of Mbytes: %d",
                                 numberSend
                         )
                 );

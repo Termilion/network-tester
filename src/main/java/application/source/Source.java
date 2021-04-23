@@ -1,4 +1,4 @@
-package source;
+package application.source;
 
 import general.NTPClient;
 
@@ -8,41 +8,37 @@ import java.net.UnknownHostException;
 
 public abstract class Source {
     Socket socket;
-    String name;
     int sendBufferSize;
     int numberOfMBytes;
 
-    int waitTime = 10000; // 10s
+    int waitTime = 1000; // 1s
 
     NTPClient ntp;
 
     public Source(
-            String ntpAddress,
+            NTPClient ntp,
             String address,
             int port,
-            String name,
             int numberOfMBytes,
             int numberOfTransmissions,
             int sendBufferSize,
             int waitTime
-    ) throws IOException {
-        this(ntpAddress, address, port, name, numberOfMBytes, numberOfTransmissions, sendBufferSize);
+    ) {
+        this(ntp, address, port, numberOfMBytes, numberOfTransmissions, sendBufferSize);
         this.waitTime = waitTime;
     }
 
     public Source(
-            String ntpAddress,
+            NTPClient ntp,
             String address,
             int port,
-            String name,
             int numberOfMBytes,
             int numberOfTransmissions,
             int sendBufferSize
-    ) throws IOException {
-        this.name = name;
+    ) {
         this.numberOfMBytes = numberOfMBytes;
         this.sendBufferSize = sendBufferSize;
-        this.ntp = new NTPClient(ntpAddress);
+        this.ntp = ntp;
 
         try {
             for (int i = 0; i < numberOfTransmissions; i++) {

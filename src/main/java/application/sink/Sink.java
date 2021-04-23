@@ -1,4 +1,4 @@
-package sink;
+package application.sink;
 
 import general.ConsoleLogger;
 import general.NTPClient;
@@ -15,8 +15,8 @@ public abstract class Sink {
 
     NTPClient ntp;
 
-    public Sink(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
-        this.ntp = new NTPClient(ntpAddress);
+    public Sink(NTPClient ntp, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+        this.ntp = ntp;
         listen(port, receiveBufferSize, writer);
     }
 

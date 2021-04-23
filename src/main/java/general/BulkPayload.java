@@ -2,11 +2,11 @@ package general;
 
 import java.io.Serializable;
 
-public class BulkMessage extends Message implements Serializable {
+public class BulkPayload extends Payload implements Serializable {
     int maxSize;
 
-    public BulkMessage(byte[] payload, int maxSize, String name, NTPClient client) {
-        super("bulk", name, payload, client);
+    public BulkPayload(byte[] payload, int maxSize, NTPClient client) {
+        super("bulk", payload, client);
         this.maxSize = maxSize;
     }
 

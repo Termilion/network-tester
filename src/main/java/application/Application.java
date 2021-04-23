@@ -1,2 +1,5 @@
-package application;public class Application {
+package application;
+
+public abstract class Application {
+    public abstract void start() throws Exception;
 }

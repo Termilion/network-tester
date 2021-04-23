@@ -3,15 +3,13 @@ package general;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-public abstract class Message implements Serializable {
+public abstract class Payload implements Serializable {
     protected String type;
-    protected String name;
     protected byte[] payload;
     protected Timestamp timestamp;
 
-    public Message(String type, String name, byte[] payload, NTPClient client) {
+    public Payload(String type, byte[] payload, NTPClient client) {
         this.type = type;
-        this.name = name;
         this.payload = payload;
         this.timestamp = new Timestamp(client.getCurrentTimeNormalized());
     }
@@ -20,9 +18,6 @@ public abstract class Message implements Serializable {
         return type;
     }
 
-    public String getName() {
-        return name;
-    }
 
     public byte[] getPayload() {
         return payload;
