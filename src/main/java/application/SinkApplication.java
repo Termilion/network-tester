@@ -1,12 +1,12 @@
 import picocli.CommandLine;
-import server.LogServer;
+import application.sink.LogSink;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.concurrent.Callable;
 
-public class SourceApplication implements Callable<Integer> {
+public class SinkApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-ntp"}, defaultValue = "0.de.pool.ntp.org", description = "Address of the ntp server")
     String ntpAddress;
 
@@ -27,7 +27,7 @@ public class SourceApplication implements Callable<Integer> {
         writer.write("Time;Address;Name;Goodput;Delay");
         writer.newLine();
         try {
-            new LogServer(ntpAddress, port, receiveBufferSize, writer);
+            new LogSink(ntpAddress, port, receiveBufferSize, writer);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -38,6 +38,6 @@ public class SourceApplication implements Callable<Integer> {
     }
 
     public static void main(String[] args) {
-        new CommandLine(new SourceApplication()).execute(args);
+        new CommandLine(new SinkApplication()).execute(args);
     }
 }

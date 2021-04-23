@@ -1,4 +1,4 @@
-package server;
+package sink;
 
 import general.ConsoleLogger;
 import general.NTPClient;
@@ -9,13 +9,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 
-public abstract class Server {
+public abstract class Sink {
     ArrayList<Socket> connected = new ArrayList<>();
     ArrayList<Thread> clientThreads = new ArrayList<>();
 
     NTPClient ntp;
 
-    public Server(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+    public Sink(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
         this.ntp = new NTPClient(ntpAddress);
         listen(port, receiveBufferSize, writer);
     }

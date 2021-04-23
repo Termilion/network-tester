@@ -1,13 +1,13 @@
-import client.BulkClient;
-import client.Client;
-import client.IoTClient;
+import source.BulkSource;
+import source.Source;
+import source.IoTSource;
 import general.ConsoleLogger;
 import picocli.CommandLine;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
-public class SinkApplication implements Callable<Integer> {
+public class SourceApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-a", "--address"}, defaultValue = "localhost", description = "Server IP address, default value: localhost")
     String address;
 
@@ -32,7 +32,7 @@ public class SinkApplication implements Callable<Integer> {
     @CommandLine.Option(names = {"-b", "--buffer"}, defaultValue = "1000", description = "SendBufferSize in packets, default value: 1000")
     int sendBufferSize;
 
-    ArrayList<Client> clients = new ArrayList<>();
+    ArrayList<Source> sources = new ArrayList<>();
 
     @Override
     public Integer call() throws Exception {
@@ -47,16 +47,16 @@ public class SinkApplication implements Callable<Integer> {
                     )
             );
             if (type.equals("b")) {
-                clients.add(new BulkClient(ntpAddress, address, port, name, numberOfTransmissions, sendBufferSize));
+                sources.add(new BulkSource(ntpAddress, address, port, name, numberOfTransmissions, sendBufferSize));
             } else {
-                clients.add(new IoTClient(ntpAddress, address, port, name));
+                sources.add(new IoTSource(ntpAddress, address, port, name));
             }
         }
         return 0;
     }
 
     public static void main(String[] args) {
-        new CommandLine(new SinkApplication()).execute(args);
+        new CommandLine(new SourceApplication()).execute(args);
     }
 }
 

@@ -1,10 +1,10 @@
-package client;
+package source;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import general.BulkMessage;
+import general.BulkPayload;
 import general.ConsoleLogger;
 import general.Utility;
 
@@ -25,7 +25,7 @@ public class BulkSource extends Source {
         this.socket.setSendBufferSize(super.sendBufferSize);
         for (int i = 0; i < this.numberOfMBytes; i++) {
             byte[] mByte = Utility.generateBytes(1000000);
-            BulkMessage message = new BulkMessage(mByte, this.numberOfMBytes, this.name, this.ntp);
+            BulkPayload message = new BulkPayload(mByte, this.numberOfMBytes, this.name, this.ntp);
             out.writeUnshared(message);
             out.reset();
             numberSend++;

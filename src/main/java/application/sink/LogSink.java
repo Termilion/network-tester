@@ -1,16 +1,16 @@
-package server;
+package sink;
 
-import general.BulkMessage;
+import general.BulkPayload;
 import general.ConsoleLogger;
-import general.Message;
+import general.Payload;
 
 import java.io.*;
 import java.net.Socket;
 import java.sql.Timestamp;
 
-public class LogServer extends Server {
+public class LogSink extends Sink {
 
-    public LogServer(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+    public LogSink(String ntpAddress, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
         super(ntpAddress, port, receiveBufferSize, writer);
     }
 
@@ -20,17 +20,17 @@ public class LogServer extends Server {
             ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             long initialTime = new Timestamp(System.currentTimeMillis()).getTime();
             long numberOfMessages = 0;
-            Message message = (Message) in.readUnshared();
+            Payload payload = (Payload) in.readUnshared();
 
             while (true) {
                 numberOfMessages++;
-                String type = message.getType();
-                String name = message.getName();
+                String type = payload.getType();
+                String name = payload.getName();
                 String address = client.getInetAddress().getHostName();
-                long sendTime = message.getTimestamp().getTime();
+                long sendTime = payload.getTimestamp().getTime();
                 long currentTime = this.ntp.getCurrentTimeNormalized();
                 float travelTimeInMS = currentTime - sendTime;
-                float sizeInByte = message.getPayload().length;
+                float sizeInByte = payload.getPayload().length;
 
                 double goodput = -1;
                 if (travelTimeInMS > 0) {
@@ -38,7 +38,7 @@ public class LogServer extends Server {
                 }
 
                 if ("bulk".equals(type)) {
-                    BulkMessage bulkMessage = (BulkMessage) message;
+                    BulkPayload bulkMessage = (BulkPayload) payload;
                     int maxSize = bulkMessage.getMaxSize();
                     ConsoleLogger.log(
                             String.format(
@@ -66,7 +66,7 @@ public class LogServer extends Server {
                 writer.write(String.format("%s;%s;%s;%s;%s", currentTime-initialTime, address, name, goodput, travelTimeInMS));
                 writer.newLine();
                 try {
-                    message = (Message) in.readObject();
+                    payload = (Payload) in.readObject();
                 } catch (EOFException e) {
                     break;
                 }

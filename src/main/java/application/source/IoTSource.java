@@ -1,7 +1,7 @@
-package client;
+package source;
 
 import general.ConsoleLogger;
-import general.IoTMessage;
+import general.IoTPayload;
 import general.Utility;
 
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class IoTSource extends Source {
     public void execute() throws IOException {
         ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
         byte[] mByte = Utility.generateBytes(1000000);
-        IoTMessage message = new IoTMessage(mByte, this.name, this.ntp);
+        IoTPayload message = new IoTPayload(mByte, this.name, this.ntp);
         out.writeObject(message);
         ConsoleLogger.log(
                 String.format(
