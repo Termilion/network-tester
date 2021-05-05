@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class Sink {
     ArrayList<Socket> connected = new ArrayList<>();
@@ -15,12 +16,17 @@ public abstract class Sink {
 
     NTPClient ntp;
 
-    public Sink(NTPClient ntp, int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+    int rcvBytes = 0;
+    List<Long> delay = new ArrayList<>();
+
+    int traceIntervalInMs = 50;
+
+    public Sink(NTPClient ntp, int port, int receiveBufferSize) throws IOException {
         this.ntp = ntp;
-        listen(port, receiveBufferSize, writer);
+        listen(port, receiveBufferSize);
     }
 
-    private void listen(int port, int receiveBufferSize, BufferedWriter writer) throws IOException {
+    private void listen(int port, int receiveBufferSize) throws IOException {
         ServerSocket socket = new ServerSocket(port);
         socket.setReceiveBufferSize(receiveBufferSize);
         ConsoleLogger.log(
@@ -29,12 +35,26 @@ public abstract class Sink {
                         socket.getInetAddress()
                 )
         );
+
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(traceIntervalInMs);
+                    scheduledOperation();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                super.run();
+            }
+        }.start();
+
         while (true) {
             Socket client = socket.accept();
             Thread clientThread = new Thread() {
                 @Override
                 public void run() {
-                    executeLogic(client, writer);
+                    executeLogic(client);
                     try {
                         if(!client.isClosed()) {
                             client.close();
@@ -51,5 +71,7 @@ public abstract class Sink {
         }
     }
 
-    public abstract void executeLogic(Socket client, BufferedWriter writer);
+    public abstract void scheduledOperation();
+
+    public abstract void executeLogic(Socket client);
 }

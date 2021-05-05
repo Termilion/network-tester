@@ -16,7 +16,7 @@ public class ServerThread extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    boolean direction;
+    boolean uplink;
     boolean mode;
     int waitTime;
     int delay;
@@ -26,10 +26,10 @@ public class ServerThread extends Thread {
 
     static final long ONE_MINUTE_IN_MILLIS=60000;
 
-    public ServerThread(Socket client, String ntpAddress, int waitTime) {
+    public ServerThread(Socket client, NTPClient ntp, int waitTime) {
         this.client = client;
         try {
-            this.ntp = new NTPClient(ntpAddress);
+            this.ntp = ntp;
             this.in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
         } catch(IOException e) {
@@ -41,26 +41,20 @@ public class ServerThread extends Thread {
     public void run() {
         try {
             NegotiationMessage negotiation = (NegotiationMessage) this.in.readUnshared();
-            this.direction = negotiation.getFlowDirection();
-            this.mode = negotiation.getFlowMode();
+            this.uplink = negotiation.isUplink();
+            this.mode = negotiation.isIoT();
             this.delay = negotiation.getStartDelay();
 
             // Build Corresponding Applications
-            if(negotiation.getFlowDirection()) {
+            if(negotiation.isUplink()) {
                 this.app = new SinkApplication(
                         5000,
                         1000,
                         ntp,
-                        String.format("./out/%s/server.log", client.getInetAddress())
+                        String.format("/out/%s_sink.log", client.getInetAddress().getHostAddress())
                 );
             } else {
-                if (negotiation.getFlowMode()) {
-                    // Build IoT Source
-                    app = new SourceApplication("i", client.getInetAddress(), client.getPort(), ntp, waitTime);
-                } else {
-                    // Build Bulk Source
-                    app = new SourceApplication("b", client.getInetAddress(), client.getPort(), ntp, waitTime);
-                }
+                app = new SourceApplication(negotiation.isIoT(), client.getInetAddress(), client.getPort(), ntp, waitTime);
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -70,7 +64,7 @@ public class ServerThread extends Thread {
     public void startLocalApplications(Date startTime) {
         try {
             // schedule application start
-            if (this.direction) {
+            if (this.uplink) {
                 app.start();
             } else {
                 Timer timer = new Timer();
@@ -97,12 +91,11 @@ public class ServerThread extends Thread {
         Date startTime = new Date(current + (ONE_MINUTE_IN_MILLIS) + delay);
 
         try {
-            TimeMessage msg = new TimeMessage(startTime);
+            TimeMessage msg = new TimeMessage(new Date(ntp.normalize(startTime)));
             out.writeObject(msg);
 
             // close connection to client
             client.close();
-            return startTime;
         } catch (Exception e) {
             e.printStackTrace();
         }

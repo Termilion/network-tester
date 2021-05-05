@@ -67,9 +67,11 @@ public abstract class Source {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(waitTime);
-                    close();
-                    transmit();
+                    while(true) {
+                        Thread.sleep(waitTime);
+                        close();
+                        transmit();
+                    }
                 } catch(Exception e) {
                     e.printStackTrace();
                 }

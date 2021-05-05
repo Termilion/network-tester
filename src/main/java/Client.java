@@ -9,6 +9,7 @@ import picocli.CommandLine;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
@@ -18,6 +19,8 @@ public class Client implements Callable<Integer> {
     private String address;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
+    @CommandLine.Parameters(index = "2", description = "address of the ntp server")
+    private String ntpAddress;
     @CommandLine.Option(names = {"-b", "--bufferSize"}, description = "maximum size of the tcp buffer [pkt]")
     private int bufferSize;
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
@@ -34,6 +37,8 @@ public class Client implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         Socket socket = new Socket(address, port);
+        ntp = new NTPClient(ntpAddress);
+
         ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
@@ -49,13 +54,9 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.direction) {
-            if (this.mode) {
-                app = new SourceApplication("iot", address, port, ntp, waitTime);
-            } else {
-                app = new SourceApplication("bulk", address, port, ntp, waitTime);
-            }
+            app = new SourceApplication(this.mode, address, port, ntp, waitTime);
         } else {
-            app = new SinkApplication(port, bufferSize, ntp, "/out/server.log");
+            app = new SinkApplication(port, bufferSize, ntp, String.format("/out/%s_sink.log", address.getHostAddress()));
         }
         return app;
     }
@@ -63,12 +64,13 @@ public class Client implements Callable<Integer> {
     public void negotiate(Socket socket, ObjectOutputStream out) throws Exception {
         System.out.println("sending negotiation message ...");
         out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay));
+        out.flush();
     }
 
     public void scheduleTransmission(Socket socket, ObjectInputStream in, Application app) throws Exception {
-        TimeMessage msg = (TimeMessage) in.readUnshared();
+        TimeMessage msg = (TimeMessage) in.readObject();
         socket.close();
-        Timer time = new Timer();
+        Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -79,7 +81,7 @@ public class Client implements Callable<Integer> {
                 }
             }
         };
-        time.schedule(task, msg.getTime());
+        timer.schedule(task, new Date(ntp.normalize(msg.getTime())));
     }
 
     public static void main(String[] args) {

@@ -18,7 +18,7 @@ public class NegotiationMessage implements Serializable {
         this.startDelay = startDelay;
     }
 
-    public boolean getFlowMode() {
+    public boolean isIoT() {
         return flowMode;
     }
 
@@ -26,7 +26,7 @@ public class NegotiationMessage implements Serializable {
         this.flowMode = flowMode;
     }
 
-    public boolean getFlowDirection() {
+    public boolean isUplink() {
         return flowDirection;
     }
 

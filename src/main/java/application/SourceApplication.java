@@ -7,13 +7,13 @@ import general.NTPClient;
 import java.net.InetAddress;
 
 public class SourceApplication extends Application {
-    final private String type;
+    final private boolean type;
     final private InetAddress address;
     final private int port;
     final private NTPClient ntp;
     final private int waitTime;
 
-    public SourceApplication(String type, InetAddress address, int port, NTPClient ntp, int waitTime) {
+    public SourceApplication(boolean type, InetAddress address, int port, NTPClient ntp, int waitTime) {
         this.type = type;
         this.address = address;
         this.port = port;
@@ -30,10 +30,10 @@ public class SourceApplication extends Application {
                         port
                 )
         );
-        if (type.equals("b")) {
-            new BulkSource(ntp, address.toString(), port, -1, 12e9, 1000);
+        if (!type) {
+            new BulkSource(ntp, address.toString(), port, waitTime, 12e9, 1000);
         } else {
-            new BulkSource(ntp, address.toString(), port, 1500, 1e6, 1000);
+            new BulkSource(ntp, address.toString(), port, waitTime, 1e6, 1000);
         }
     }
 }

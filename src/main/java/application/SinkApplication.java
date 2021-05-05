@@ -28,7 +28,7 @@ public class SinkApplication extends Application {
         File outFile = new File(filePath);
         outFile.getParentFile().mkdirs();
         BufferedWriter writer = new BufferedWriter(new FileWriter(outFile));
-        writer.write("Time;Address;Name;Goodput;Delay");
+        writer.write("Time;Address;Goodput;Delay");
         writer.newLine();
         try {
             new LogSink(
@@ -37,6 +37,7 @@ public class SinkApplication extends Application {
                     this.rcvBufferSize,
                     writer
             );
+            writer.flush();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

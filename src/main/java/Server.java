@@ -1,4 +1,5 @@
 import general.ConsoleLogger;
+import general.NTPClient;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -31,6 +32,7 @@ public class Server implements Callable<Integer> {
 
     public void initialHandshake() throws IOException {
         ServerSocket socket = new ServerSocket(this.port);
+        NTPClient ntpClient = new NTPClient(ntpAddress);
 
         Thread instructionThread = new Thread(() -> {
             Scanner input = new Scanner(System.in);
@@ -49,7 +51,7 @@ public class Server implements Callable<Integer> {
         while(true) {
             Socket client = socket.accept();
             if (!started) {
-                ServerThread clientThread = new ServerThread(client, ntpAddress, waitTime);
+                ServerThread clientThread = new ServerThread(client, ntpClient, waitTime);
                 clientThread.start();
                 threads.add(clientThread);
             } else {

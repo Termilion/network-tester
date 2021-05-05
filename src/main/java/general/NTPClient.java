@@ -5,6 +5,7 @@ import org.apache.commons.net.ntp.TimeInfo;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.Date;
 import java.sql.Timestamp;
 
 public class NTPClient {
@@ -32,5 +33,13 @@ public class NTPClient {
         long currentTime = System.currentTimeMillis();
         long normalized = currentTime + offset;
         return new Timestamp(normalized).getTime();
+    }
+
+    public long normalize(long time) {
+        return new Timestamp(time + offset).getTime();
+    }
+
+    public long normalize(Date time) {
+        return normalize(time.getTime());
     }
 }
