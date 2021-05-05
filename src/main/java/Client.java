@@ -4,80 +4,65 @@ import application.SourceApplication;
 import general.NTPClient;
 import general.NegotiationMessage;
 import general.TimeMessage;
+import picocli.CommandLine;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 
-public class Client {
-    private NTPClient ntp;
+public class Client implements Callable<Integer> {
+    @CommandLine.Parameters(index = "0", description = "ipv4 address to connect to")
     private String address;
+    @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
+    @CommandLine.Option(names = {"-b", "--bufferSize"}, description = "maximum size of the tcp buffer [pkt]")
     private int bufferSize;
-    private NegotiationMessage.FlowDirection direction;
-    private NegotiationMessage.FlowMode mode;
+    @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
+    private boolean direction;
+    @CommandLine.Option(names = {"-u"}, description = "start a downlink application")
+    private boolean mode;
+    @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset")
+    private int waitTime = -1;
+    @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
+    private int startDelay = 0;
 
-    public Client(String address, int port, String ntpAddress, int bufferSize, String type, String direction) {
-        try {
-            this.ntp = new NTPClient(ntpAddress);
-            this.address = address;
-            this.port = port;
-            this.bufferSize = bufferSize;
+    private NTPClient ntp;
 
-            Socket socket = new Socket(address, port);
-            ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-            ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+    @Override
+    public Integer call() throws Exception {
+        Socket socket = new Socket(address, port);
+        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
-            setupEnums(type, direction);
+        Application app = buildApplication(socket.getInetAddress());
 
-            Application app = buildApplication(socket.getInetAddress());
+        negotiate(socket, out);
 
-            negotiate(socket, out);
-
-            scheduleTransmission(socket, in, app);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void setupEnums(String type, String direction) {
-        if (type.equals("i")) {
-            this.mode = NegotiationMessage.FlowMode.iot;
-        } else {
-            this.mode = NegotiationMessage.FlowMode.bulk;
-        }
-
-        if (direction.equals("up")) {
-            this.direction = NegotiationMessage.FlowDirection.up;
-        } else {
-            this.direction = NegotiationMessage.FlowDirection.down;
-        }
+        scheduleTransmission(socket, in, app);
+        return 0;
     }
 
     public Application buildApplication(InetAddress address) {
         Application app;
 
-        switch (this.direction) {
-            case up:
-                switch (this.mode) {
-                    case iot:
-                        app = new SourceApplication("iot", address, port, ntp);
-                        break;
-                    default:
-                        app = new SourceApplication("bulk", address, port, ntp);
-                }
-                break;
-            default:
-                app = new SinkApplication(port, bufferSize, ntp, "/out/server.log");
+        if (this.direction) {
+            if (this.mode) {
+                app = new SourceApplication("iot", address, port, ntp, waitTime);
+            } else {
+                app = new SourceApplication("bulk", address, port, ntp, waitTime);
+            }
+        } else {
+            app = new SinkApplication(port, bufferSize, ntp, "/out/server.log");
         }
         return app;
     }
 
     public void negotiate(Socket socket, ObjectOutputStream out) throws Exception {
         System.out.println("sending negotiation message ...");
-        out.writeObject(new NegotiationMessage(this.mode, this.direction));
+        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay));
     }
 
     public void scheduleTransmission(Socket socket, ObjectInputStream in, Application app) throws Exception {
@@ -95,5 +80,10 @@ public class Client {
             }
         };
         time.schedule(task, msg.getTime());
+    }
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Client()).execute(args);
+        System.exit(exitCode);
     }
 }

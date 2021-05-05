@@ -1,7 +1,6 @@
 package application;
 
 import application.source.BulkSource;
-import application.source.IoTSource;
 import general.ConsoleLogger;
 import general.NTPClient;
 
@@ -12,12 +11,14 @@ public class SourceApplication extends Application {
     final private InetAddress address;
     final private int port;
     final private NTPClient ntp;
+    final private int waitTime;
 
-    public SourceApplication(String type, InetAddress address, int port, NTPClient ntp) {
+    public SourceApplication(String type, InetAddress address, int port, NTPClient ntp, int waitTime) {
         this.type = type;
         this.address = address;
         this.port = port;
         this.ntp = ntp;
+        this.waitTime = waitTime;
     }
 
 
@@ -30,9 +31,9 @@ public class SourceApplication extends Application {
                 )
         );
         if (type.equals("b")) {
-            new BulkSource(ntp, address.toString(), 5000, 10, 1000);
+            new BulkSource(ntp, address.toString(), port, -1, 12e9, 1000);
         } else {
-            new IoTSource(ntp, address.toString(), port);
+            new BulkSource(ntp, address.toString(), port, 1500, 1e6, 1000);
         }
     }
 }

@@ -1,5 +1,6 @@
 package general;
 
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class Utility {
@@ -15,5 +16,40 @@ public class Utility {
             mBytes[i] = generateBytes(1000000);
         }
         return mBytes;
+    }
+
+    public static byte[] encodeTime(byte[] payload, long time) throws Exception {
+        if (payload.length < Long.BYTES) {
+            throw new Exception("payload too small");
+        } else {
+            // convert long -> bytes
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.putLong(time);
+            byte[] tsArray = buffer.array();
+
+            // stash bytes in payload
+            for (int k = 0; k < tsArray.length; k++) {
+                payload[k] = tsArray[k];
+            }
+            return payload;
+        }
+    }
+
+    public static long decodeTime(byte[] payload) {
+        if (payload.length < Long.BYTES) {
+            return -1;
+        } else {
+            // extract first bytes
+            byte[] bytes = new byte[Long.BYTES];
+            for (int i = 0; i < Long.BYTES; i++) {
+                bytes[i] = payload[i];
+            }
+
+            // convert bytes -> long
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.put(bytes);
+            buffer.flip();
+            return buffer.getLong();
+        }
     }
 }

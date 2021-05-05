@@ -1,45 +1,39 @@
 package application.source;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.nio.ByteBuffer;
 
-import general.BulkPayload;
 import general.ConsoleLogger;
 import general.NTPClient;
 import general.Utility;
 
 public class BulkSource extends Source {
 
-    public BulkSource(NTPClient ntp, String address, int port, int numberOfTransmissions, int sendBufferSize) throws IOException {
-        super(ntp, address, port, 5000, numberOfTransmissions, sendBufferSize);
-    }
-
-    public BulkSource(NTPClient ntp, String address, int port, int numberOfTransmissions) throws IOException {
-        super(ntp, address, port, 5000, numberOfTransmissions, 1000);
+    public BulkSource(NTPClient ntp, String address, int port, int waitTime, double numBytesToSend, int bufferSize) throws IOException {
+        super(ntp, address, port, numBytesToSend, bufferSize, waitTime);
     }
 
     @Override
     public void execute() throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        OutputStream out = socket.getOutputStream();
         int numberSend = 0;
         this.socket.setSendBufferSize(super.sendBufferSize);
-        for (int i = 0; i < this.numberOfMBytes; i++) {
-            byte[] mByte = Utility.generateBytes(1000000);
-            BulkPayload message = new BulkPayload(mByte, this.numberOfMBytes, this.ntp);
-            out.writeUnshared(message);
-            out.reset();
-            numberSend++;
-            if ((numberSend % 100) == 0) {
-                ConsoleLogger.log(
-                        String.format(
-                                "Bulk-Source: Send a hundred Mbyte! Current Number of Mbytes: %d",
-                                numberSend
-                        )
-                );
+        double maxNumberOfPackets = Math.ceil((double) this.numberOfBytesToSend / 1000);
+        for (int j = 0; j < maxNumberOfPackets; j++) {
+            byte[] kByte = Utility.generateBytes(1000);
+            long time = this.ntp.getCurrentTimeNormalized();
+
+            try {
+                out.write(Utility.encodeTime(kByte, time));
+                out.flush();
+                numberSend++;
+                if (numberSend % 1000 == 0) {
+                    ConsoleLogger.log("Send an MByte!");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-        out.flush();
         out.close();
     }
 }

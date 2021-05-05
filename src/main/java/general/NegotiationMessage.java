@@ -3,40 +3,42 @@ package general;
 import java.io.Serializable;
 
 public class NegotiationMessage implements Serializable {
-    public enum FlowMode {
-        bulk,
-        iot
-    }
 
-    public enum FlowDirection {
-        down,
-        up
-    }
-
-    private FlowMode flowMode;
-    private FlowDirection flowDirection;
+    private boolean flowMode;
+    private boolean flowDirection;
+    int startDelay;
 
     public NegotiationMessage(
-            FlowMode flowMode,
-            FlowDirection flowDirection
+            boolean flowMode,
+            boolean flowDirection,
+            int startDelay
     ) {
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
+        this.startDelay = startDelay;
     }
 
-    public FlowMode getFlowMode() {
+    public boolean getFlowMode() {
         return flowMode;
     }
 
-    public void setFlowMode(FlowMode flowMode) {
+    public void setFlowMode(boolean flowMode) {
         this.flowMode = flowMode;
     }
 
-    public FlowDirection getFlowDirection() {
+    public boolean getFlowDirection() {
         return flowDirection;
     }
 
-    public void setFlowDirection(FlowDirection flowDirection) {
+    public void setFlowDirection(boolean flowDirection) {
         this.flowDirection = flowDirection;
+    }
+
+    public int getStartDelay() {
+        return startDelay;
+    }
+
+    public void setStartDelay(int startDelay) {
+        this.startDelay = startDelay;
     }
 }

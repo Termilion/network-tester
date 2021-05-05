@@ -1,12 +1,12 @@
 package application.sink;
 
-import general.BulkPayload;
 import general.ConsoleLogger;
 import general.NTPClient;
-import general.Payload;
+import general.Utility;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 
 public class LogSink extends Sink {
@@ -18,62 +18,47 @@ public class LogSink extends Sink {
     @Override
     public void executeLogic(Socket client, BufferedWriter writer) {
         try {
-            ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
+            InputStream in = client.getInputStream();
+
             long initialTime = new Timestamp(System.currentTimeMillis()).getTime();
             long numberOfMessages = 0;
-            Payload payload = (Payload) in.readUnshared();
+
+            byte[] payload = new byte[1000];
+            in.read(payload);
 
             while (true) {
-                numberOfMessages++;
-                String type = payload.getType();
-                String name = payload.getName();
+                long sendTime = Utility.decodeTime(payload);
+
                 String address = client.getInetAddress().getHostName();
-                long sendTime = payload.getTimestamp().getTime();
+
                 long currentTime = this.ntp.getCurrentTimeNormalized();
                 float travelTimeInMS = currentTime - sendTime;
-                float sizeInByte = payload.getPayload().length;
+                float sizeInByte = payload.length;
 
                 double goodput = -1;
                 if (travelTimeInMS > 0) {
-                    goodput = (sizeInByte * 8 / travelTimeInMS) / 1000;
+                    goodput = (sizeInByte * 8 / travelTimeInMS) / 1000000;
                 }
 
-                if ("bulk".equals(type)) {
-                    BulkPayload bulkMessage = (BulkPayload) payload;
-                    int maxSize = bulkMessage.getMaxSize();
-                    ConsoleLogger.log(
-                            String.format(
-                                    "[%s/Video] %s [%d/%d]: %.02f Mbps (%s ms)",
-                                    address,
-                                    name,
-                                    numberOfMessages,
-                                    maxSize,
-                                    goodput,
-                                    travelTimeInMS
-                            )
-                    );
-                } else {
-                    ConsoleLogger.log(
-                            String.format(
-                                    "[%s/IoT] %s [%d]: %.02f Mbps (%s ms)",
-                                    address,
-                                    name,
-                                    numberOfMessages,
-                                    goodput,
-                                    travelTimeInMS
-                            )
-                    );
-                }
-                writer.write(String.format("%s;%s;%s;%s;%s", currentTime-initialTime, address, name, goodput, travelTimeInMS));
+                ConsoleLogger.log(
+                        String.format(
+                                "[%s] [%d]: %.02f Mbps (%s ms)",
+                                address,
+                                numberOfMessages,
+                                goodput,
+                                travelTimeInMS
+                        )
+                );
+                writer.write(String.format("%s;%s;%s;%s", currentTime-initialTime, address, goodput, travelTimeInMS));
                 writer.newLine();
                 try {
-                    payload = (Payload) in.readObject();
+                    in.read(payload);
                 } catch (EOFException e) {
                     break;
                 }
             }
             in.close();
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

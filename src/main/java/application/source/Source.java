@@ -9,9 +9,12 @@ import java.net.UnknownHostException;
 public abstract class Source {
     Socket socket;
     int sendBufferSize;
-    int numberOfMBytes;
+    double numberOfBytesToSend;
+    String address;
+    int port;
 
-    int waitTime = 1000; // 1s
+
+    int waitTime = -1; // 1s
 
     NTPClient ntp;
 
@@ -19,36 +22,29 @@ public abstract class Source {
             NTPClient ntp,
             String address,
             int port,
-            int numberOfMBytes,
-            int numberOfTransmissions,
+            double numberOfBytesToSend,
             int sendBufferSize,
             int waitTime
     ) {
-        this(ntp, address, port, numberOfMBytes, numberOfTransmissions, sendBufferSize);
         this.waitTime = waitTime;
-    }
-
-    public Source(
-            NTPClient ntp,
-            String address,
-            int port,
-            int numberOfMBytes,
-            int numberOfTransmissions,
-            int sendBufferSize
-    ) {
-        this.numberOfMBytes = numberOfMBytes;
+        this.numberOfBytesToSend = numberOfBytesToSend;
         this.sendBufferSize = sendBufferSize;
         this.ntp = ntp;
+        this.address = address;
+        this.port = port;
 
+        if(waitTime > 0) {
+            reset(waitTime);
+        }
+
+        transmit();
+    }
+
+    protected void transmit() {
         try {
-            for (int i = 0; i < numberOfTransmissions; i++) {
-                connect(address, port);
-                execute();
-                close();
-                Thread.sleep(this.waitTime);
-            }
-        } catch(InterruptedException e) {
-            System.out.println("Thread has been interrupted");
+            connect(address, port);
+            execute();
+            close();
         } catch(UnknownHostException e) {
             System.out.printf("Server not found: %s:%d\n", address, port);
         } catch(IOException e) {
@@ -56,12 +52,29 @@ public abstract class Source {
         }
     }
 
-    private void connect(String address, int port) throws IOException {
+    protected void connect(String address, int port) throws IOException {
         socket = new Socket(address, port);
     }
 
-    private void close() throws IOException {
-        socket.close();
+    protected void close() throws IOException {
+        if(!socket.isClosed()) {
+            socket.close();
+        }
+    }
+
+    protected void reset(int waitTime) {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(waitTime);
+                    close();
+                    transmit();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
     }
 
     public abstract void execute() throws IOException;

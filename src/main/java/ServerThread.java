@@ -16,13 +16,17 @@ public class ServerThread extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    NegotiationMessage.FlowDirection direction;
-    NegotiationMessage.FlowMode mode;
+    boolean direction;
+    boolean mode;
+    int waitTime;
+    int delay;
 
     Application app;
     NTPClient ntp;
 
-    public ServerThread(Socket client, String ntpAddress) {
+    static final long ONE_MINUTE_IN_MILLIS=60000;
+
+    public ServerThread(Socket client, String ntpAddress, int waitTime) {
         this.client = client;
         try {
             this.ntp = new NTPClient(ntpAddress);
@@ -39,46 +43,34 @@ public class ServerThread extends Thread {
             NegotiationMessage negotiation = (NegotiationMessage) this.in.readUnshared();
             this.direction = negotiation.getFlowDirection();
             this.mode = negotiation.getFlowMode();
+            this.delay = negotiation.getStartDelay();
 
             // Build Corresponding Applications
-            switch(negotiation.getFlowDirection()) {
-                case down:
-                    switch (negotiation.getFlowMode()) {
-                        case iot:
-                            // Build IoT Source
-                            app = new SourceApplication("i", client.getInetAddress(), 5000, ntp);
-                            break;
-                        default:
-                            // Build Bulk Source
-                            app = new SourceApplication("b", client.getInetAddress(), 5000, ntp);
-                    }
-                    break;
-                case up:
-                    this.app = new SinkApplication(
-                            5000,
-                            1000,
-                            ntp,
-                            String.format("./out/%s/server.log", client.getInetAddress())
-                    );
-                    break;
+            if(negotiation.getFlowDirection()) {
+                this.app = new SinkApplication(
+                        5000,
+                        1000,
+                        ntp,
+                        String.format("./out/%s/server.log", client.getInetAddress())
+                );
+            } else {
+                if (negotiation.getFlowMode()) {
+                    // Build IoT Source
+                    app = new SourceApplication("i", client.getInetAddress(), client.getPort(), ntp, waitTime);
+                } else {
+                    // Build Bulk Source
+                    app = new SourceApplication("b", client.getInetAddress(), client.getPort(), ntp, waitTime);
+                }
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
-    public void sendOrder() {
+    public void startLocalApplications(Date startTime) {
         try {
-            // negotiate start time
-            Date startTime = new Date();
-            TimeMessage msg = new TimeMessage(startTime);
-            out.writeObject(msg);
-
-            // close connection to client
-            client.close();
-
             // schedule application start
-            if (this.direction == NegotiationMessage.FlowDirection.up) {
+            if (this.direction) {
                 app.start();
             } else {
                 Timer timer = new Timer();
@@ -97,5 +89,23 @@ public class ServerThread extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public Date sendInstructions() {
+        // negotiate start time
+        long current = new Date().getTime();
+        Date startTime = new Date(current + (ONE_MINUTE_IN_MILLIS) + delay);
+
+        try {
+            TimeMessage msg = new TimeMessage(startTime);
+            out.writeObject(msg);
+
+            // close connection to client
+            client.close();
+            return startTime;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return startTime;
     }
 }
