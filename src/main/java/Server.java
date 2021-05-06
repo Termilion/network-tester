@@ -1,21 +1,23 @@
 import general.ConsoleLogger;
 import general.NTPClient;
+import general.Utility;
 import picocli.CommandLine;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 public class Server implements Callable<Integer> {
-    @CommandLine.Parameters(index = "0", description = "port to start server on")
-    private int port;
+    @CommandLine.Option(names = {"-p", "--port"}, description = "port to start server on")
+    private int port = 5000;
 
-    @CommandLine.Option(names = {"-a", "--ntp"}, description = "address of the ntp server")
-    private String ntpAddress = "localhost";
+    @CommandLine.Option(names = {"-n", "--ntp"}, defaultValue = "ntp1.versatel.de",description = "address of the ntp server")
+    private String ntpAddress;
 
     @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset")
     private int waitTime = -1;
@@ -23,6 +25,8 @@ public class Server implements Callable<Integer> {
     ArrayList<ServerThread> threads = new ArrayList<>();
 
     boolean started = false;
+
+    int connected = 0;
 
     @Override
     public Integer call() throws Exception {
@@ -39,23 +43,33 @@ public class Server implements Callable<Integer> {
 
             // block until user input
             input.nextLine();
+            ConsoleLogger.log("starting simulation ...");
             started = true;
 
             for (ServerThread thread: threads) {
-                Date startTime = thread.sendInstructions();
-                thread.startLocalApplications(startTime);
+                ConsoleLogger.log("send instructions to node %s", thread.id);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        thread.sendInstructions();
+                        thread.startLocalApplications();
+                    }
+                }.start();
             }
         });
         instructionThread.start();
 
         while(true) {
             Socket client = socket.accept();
+            connected++;
             if (!started) {
-                ServerThread clientThread = new ServerThread(client, ntpClient, waitTime);
+                ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
+                ServerThread clientThread = new ServerThread(client, ntpClient, waitTime, connected);
                 clientThread.start();
                 threads.add(clientThread);
             } else {
-                ConsoleLogger.log(String.format("Connection attempt by %s, but already started", client.getInetAddress().getHostAddress()));
+                ConsoleLogger.log("Connection attempt by %s, but already started", client.getInetAddress().getHostAddress());
             }
         }
 
@@ -75,5 +89,10 @@ public class Server implements Callable<Integer> {
 
     public void setNtpAddress(String ntpAddress) {
         this.ntpAddress = ntpAddress;
+    }
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Server()).execute(args);
+        System.exit(exitCode);
     }
 }

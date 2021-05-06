@@ -11,8 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Sink {
-    ArrayList<Socket> connected = new ArrayList<>();
-    ArrayList<Thread> clientThreads = new ArrayList<>();
+    Socket client;
 
     NTPClient ntp;
 
@@ -21,27 +20,17 @@ public abstract class Sink {
 
     int traceIntervalInMs = 50;
 
-    public Sink(NTPClient ntp, int port, int receiveBufferSize) throws IOException {
+    public Sink(NTPClient ntp, int port, int receiveBufferSize, Object[] scheduleArgs) throws IOException {
         this.ntp = ntp;
-        listen(port, receiveBufferSize);
-    }
-
-    private void listen(int port, int receiveBufferSize) throws IOException {
-        ServerSocket socket = new ServerSocket(port);
-        socket.setReceiveBufferSize(receiveBufferSize);
-        ConsoleLogger.log(
-                String.format(
-                        "opened server socket on address %s",
-                        socket.getInetAddress()
-                )
-        );
 
         new Thread() {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(traceIntervalInMs);
-                    scheduledOperation();
+                    while (true) {
+                        Thread.sleep(traceIntervalInMs);
+                        scheduledOperation(scheduleArgs);
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -49,29 +38,31 @@ public abstract class Sink {
             }
         }.start();
 
+        ServerSocket socket = new ServerSocket(port);
+        ConsoleLogger.log("opened sink on address %s:%s", socket.getInetAddress().getHostAddress(), port);
+        socket.setReceiveBufferSize(receiveBufferSize);
+
         while (true) {
-            Socket client = socket.accept();
-            Thread clientThread = new Thread() {
-                @Override
-                public void run() {
-                    executeLogic(client);
-                    try {
-                        if(!client.isClosed()) {
-                            client.close();
-                        }
-                    } catch(IOException e) {
-                        e.printStackTrace();
-                    }
-                    super.run();
-                }
-            };
-            connected.add(client);
-            clientThreads.add(clientThread);
-            clientThread.start();
+            try {
+                client = socket.accept();
+                executeLogic();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                close();
+            }
         }
     }
 
-    public abstract void scheduledOperation();
+    public void close() throws IOException {
+        if (client != null) {
+            if (!client.isClosed()) {
+                client.close();
+            }
+        }
+    }
 
-    public abstract void executeLogic(Socket client);
+    public abstract void scheduledOperation(Object[] args);
+
+    public abstract void executeLogic();
 }

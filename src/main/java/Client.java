@@ -1,17 +1,16 @@
 import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
+import general.ConsoleLogger;
 import general.NTPClient;
 import general.NegotiationMessage;
-import general.TimeMessage;
+import general.InstructionMessage;
 import picocli.CommandLine;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 public class Client implements Callable<Integer> {
@@ -22,7 +21,7 @@ public class Client implements Callable<Integer> {
     @CommandLine.Parameters(index = "2", description = "address of the ntp server")
     private String ntpAddress;
     @CommandLine.Option(names = {"-b", "--bufferSize"}, description = "maximum size of the tcp buffer [pkt]")
-    private int bufferSize;
+    private int bufferSize = 1000;
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
     private boolean direction;
     @CommandLine.Option(names = {"-u"}, description = "start a downlink application")
@@ -33,55 +32,73 @@ public class Client implements Callable<Integer> {
     private int startDelay = 0;
 
     private NTPClient ntp;
+    ObjectOutputStream out;
+    ObjectInputStream in;
 
     @Override
     public Integer call() throws Exception {
+        ConsoleLogger.log("connecting to: %s", address);
         Socket socket = new Socket(address, port);
+        ConsoleLogger.log("connection established");
+
+        ConsoleLogger.log("opening out streams");
+        out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        out.flush();
+        ConsoleLogger.log("opening in streams");
+        in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+
         ntp = new NTPClient(ntpAddress);
 
-        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        ConsoleLogger.log("starting negotiation");
+        sendNegotiationMessage();
 
-        Application app = buildApplication(socket.getInetAddress());
+        ConsoleLogger.log("scheduling transmission");
+        InstructionMessage msg = receiveInstructionMessage();
+        int appPort = msg.getPort();
+        long scheduledTime = msg.getTime().getTime();
 
-        negotiate(socket, out);
+        out.flush();
+        socket.close();
 
-        scheduleTransmission(socket, in, app);
+        ConsoleLogger.log("building application");
+        Application app = buildApplication(socket.getInetAddress(), appPort);
+
+        scheduleApplicationStart(scheduledTime, app);
+        Scanner cli = new Scanner(System.in);
+        cli.nextLine();
         return 0;
     }
 
-    public Application buildApplication(InetAddress address) {
+    public Application buildApplication(InetAddress address, int appPort) {
         Application app;
 
         if (this.direction) {
-            app = new SourceApplication(this.mode, address, port, ntp, waitTime);
+            app = new SourceApplication(this.mode, address, appPort, ntp, waitTime);
         } else {
-            app = new SinkApplication(port, bufferSize, ntp, String.format("/out/%s_sink.log", address.getHostAddress()));
+            app = new SinkApplication(appPort, bufferSize, ntp, String.format("./out/%s_sink.log", address.getHostAddress()));
         }
         return app;
     }
 
-    public void negotiate(Socket socket, ObjectOutputStream out) throws Exception {
-        System.out.println("sending negotiation message ...");
-        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay));
+    public void sendNegotiationMessage() throws Exception {
+        ConsoleLogger.log("sending negotiation message");
+        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port));
         out.flush();
     }
 
-    public void scheduleTransmission(Socket socket, ObjectInputStream in, Application app) throws Exception {
-        TimeMessage msg = (TimeMessage) in.readObject();
-        socket.close();
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    app.start();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-        timer.schedule(task, new Date(ntp.normalize(msg.getTime())));
+    public InstructionMessage receiveInstructionMessage() throws Exception {
+        ConsoleLogger.log("waiting for instruction message");
+        InstructionMessage msg = (InstructionMessage) in.readObject();
+        ConsoleLogger.log("received instruction message");
+        return msg;
+    }
+
+    public void scheduleApplicationStart(long startTime, Application app) throws Exception {
+        long current = ntp.getCurrentTimeNormalized();
+        long waitTime = startTime - current;
+        ConsoleLogger.log("scheduled transmission in %s ms", waitTime);
+        Thread.sleep(waitTime);
+        app.start();
     }
 
     public static void main(String[] args) {

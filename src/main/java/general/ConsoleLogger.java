@@ -30,4 +30,8 @@ public class ConsoleLogger {
                 System.out.printf("[%s] %s\n", time, message);
         }
     }
+
+    public static void log(String message, Object... args) {
+        log(String.format(message, args));
+    }
 }

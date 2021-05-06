@@ -7,15 +7,26 @@ public class NegotiationMessage implements Serializable {
     private boolean flowMode;
     private boolean flowDirection;
     int startDelay;
+    int port;
 
     public NegotiationMessage(
             boolean flowMode,
             boolean flowDirection,
-            int startDelay
+            int startDelay,
+            int port
     ) {
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
         this.startDelay = startDelay;
+        this.port = port;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 
     public boolean isIoT() {

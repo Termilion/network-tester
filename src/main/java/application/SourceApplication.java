@@ -21,7 +21,6 @@ public class SourceApplication extends Application {
         this.waitTime = waitTime;
     }
 
-
     public void start() throws Exception {
         ConsoleLogger.log(
                 String.format(
@@ -31,9 +30,9 @@ public class SourceApplication extends Application {
                 )
         );
         if (!type) {
-            new BulkSource(ntp, address.toString(), port, waitTime, 12e9, 1000);
+            new BulkSource(ntp, address.getHostAddress(), port, waitTime, 12e9, 1000);
         } else {
-            new BulkSource(ntp, address.toString(), port, waitTime, 1e6, 1000);
+            new BulkSource(ntp, address.getHostAddress(), port, waitTime, 1e6, 1000);
         }
     }
 }

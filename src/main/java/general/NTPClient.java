@@ -14,7 +14,7 @@ public class NTPClient {
     long offset;
 
     public NTPClient(String timeServer) throws IOException {
-        ConsoleLogger.log("started ntp process");
+        ConsoleLogger.log(String.format("started ntp process to address: %s", timeServer));
         this.timeServer = timeServer;
         this.offset = getServerTime();
         ConsoleLogger.log("finished ntp process");

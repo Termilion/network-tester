@@ -20,7 +20,7 @@ public class BulkSource extends Source {
         this.socket.setSendBufferSize(super.sendBufferSize);
         double maxNumberOfPackets = Math.ceil((double) this.numberOfBytesToSend / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
-            byte[] kByte = Utility.generateBytes(1000);
+            byte[] kByte = new byte[1000];
             long time = this.ntp.getCurrentTimeNormalized();
 
             try {
@@ -32,6 +32,7 @@ public class BulkSource extends Source {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                break;
             }
         }
         out.close();

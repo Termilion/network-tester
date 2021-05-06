@@ -1,10 +1,10 @@
 package application.source;
 
+import general.ConsoleLogger;
 import general.NTPClient;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public abstract class Source {
     Socket socket;
@@ -12,7 +12,6 @@ public abstract class Source {
     double numberOfBytesToSend;
     String address;
     int port;
-
 
     int waitTime = -1; // 1s
 
@@ -33,32 +32,37 @@ public abstract class Source {
         this.address = address;
         this.port = port;
 
-        if(waitTime > 0) {
-            reset(waitTime);
-        }
-
-        transmit();
-    }
-
-    protected void transmit() {
         try {
+            ConsoleLogger.log("connecting to %s:%s", address, port);
             connect(address, port);
+
+            if(waitTime > 0) {
+                reset(waitTime);
+            }
             execute();
-            close();
-        } catch(UnknownHostException e) {
-            System.out.printf("Server not found: %s:%d\n", address, port);
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
+
     }
+
 
     protected void connect(String address, int port) throws IOException {
         socket = new Socket(address, port);
     }
 
     protected void close() throws IOException {
-        if(!socket.isClosed()) {
-            socket.close();
+        if (socket != null) {
+            if(!socket.isClosed()) {
+                socket.close();
+            }
         }
     }
 
@@ -70,10 +74,17 @@ public abstract class Source {
                     while(true) {
                         Thread.sleep(waitTime);
                         close();
-                        transmit();
+                        connect(address, port);
+                        execute();
                     }
                 } catch(Exception e) {
                     e.printStackTrace();
+                } finally {
+                    try {
+                        close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }.start();

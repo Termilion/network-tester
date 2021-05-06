@@ -1,4 +1,3 @@
-/home/termilus/projects/network-tester/src/main/java/general/TimeMessage.java
 /home/termilus/projects/network-tester/src/main/java/application/sink/LogSink.java
 /home/termilus/projects/network-tester/src/main/java/general/NegotiationMessage.java
 /home/termilus/projects/network-tester/src/main/java/application/SourceApplication.java
@@ -10,6 +9,8 @@
 /home/termilus/projects/network-tester/src/main/java/general/Utility.java
 /home/termilus/projects/network-tester/src/main/java/Server.java
 /home/termilus/projects/network-tester/src/main/java/application/source/BulkSource.java
+/home/termilus/projects/network-tester/src/main/java/general/InstructionMessage.java
 /home/termilus/projects/network-tester/src/main/java/ServerThread.java
+/home/termilus/projects/network-tester/src/main/java/App.java
 /home/termilus/projects/network-tester/src/main/java/Client.java
 /home/termilus/projects/network-tester/src/main/java/application/sink/Sink.java
