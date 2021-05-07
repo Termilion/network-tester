@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class Sink {
@@ -16,12 +17,13 @@ public abstract class Sink {
     NTPClient ntp;
 
     int rcvBytes = 0;
-    List<Long> delay = new ArrayList<>();
+    List<Long> delay;
 
     int traceIntervalInMs = 50;
 
     public Sink(NTPClient ntp, int port, int receiveBufferSize, Object[] scheduleArgs) throws IOException {
         this.ntp = ntp;
+        this.delay = Collections.synchronizedList(new ArrayList<>());
 
         new Thread() {
             @Override

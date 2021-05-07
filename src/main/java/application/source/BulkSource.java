@@ -28,7 +28,7 @@ public class BulkSource extends Source {
                 out.flush();
                 numberSend++;
                 if (numberSend % 1000 == 0) {
-                    ConsoleLogger.log("Send an MByte!");
+                    ConsoleLogger.log("%s | send an MByte!", socket.getInetAddress().getHostAddress());
                 }
             } catch (Exception e) {
                 e.printStackTrace();

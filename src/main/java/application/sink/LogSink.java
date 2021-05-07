@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class LogSink extends Sink {
@@ -17,7 +18,7 @@ public class LogSink extends Sink {
     String connectedAddress;
 
     public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath) throws IOException {
-        super(ntp, port, receiveBufferSize, new Object[]{filePath, new Timestamp(System.currentTimeMillis()).getTime()});
+        super(ntp, port, receiveBufferSize, new Object[]{filePath, new Timestamp(ntp.getCurrentTimeNormalized()).getTime()});
         createLogFile(filePath);
     }
 
@@ -37,9 +38,11 @@ public class LogSink extends Sink {
             InputStream in = client.getInputStream();
             DataInputStream dataInputStream = new DataInputStream(in);
 
-            connectedAddress = client.getInetAddress().getHostName();
+            connectedAddress = client.getInetAddress().getHostAddress();
 
             byte[] payload = new byte[1000];
+
+            int number = 0;
 
             while (true) {
                 try {
@@ -56,6 +59,11 @@ public class LogSink extends Sink {
 
                 // log rcv bytes
                 this.rcvBytes += payload.length;
+                number++;
+                if (number >= 1000) {
+                    ConsoleLogger.log("%s | received an MByte!", connectedAddress);
+                    number = 0;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -75,7 +83,7 @@ public class LogSink extends Sink {
         double traceIntervalInS = (double) traceIntervalInMs / 1000;
         double currentRcvMBits = (rcvBytes * 8) / 1e6;
         rcvBytes = 0;
-        delay = new ArrayList<>();
+        delay = Collections.synchronizedList(new ArrayList<>());
 
         // calculate metrics
         double goodput =  currentRcvMBits / traceIntervalInS;
@@ -84,7 +92,12 @@ public class LogSink extends Sink {
         for (long t : currentDelay) {
             delaySum += t;
         }
+
         double avgDelay = delaySum/currentDelay.size();
+
+        if (currentDelay.size() == 0) {
+            avgDelay = 0;
+        }
 
         long currentTime = this.ntp.getCurrentTimeNormalized();
         long simTime = currentTime-initialTime;
