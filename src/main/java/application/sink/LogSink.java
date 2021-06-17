@@ -63,7 +63,7 @@ public class LogSink extends Sink {
                 number++;
                 if (number >= 1000) {
                     total++;
-                    ConsoleLogger.log("%s | received an MByte! [% total]", connectedAddress, total);
+                    ConsoleLogger.log("%s | received an MByte! [%s total]", connectedAddress, total);
                     number = 0;
                 }
             }
