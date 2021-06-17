@@ -11,14 +11,14 @@ public class SourceApplication extends Application {
     final private InetAddress address;
     final private int port;
     final private NTPClient ntp;
-    final private int waitTime;
+    final private int resetTime;
 
-    public SourceApplication(boolean type, InetAddress address, int port, NTPClient ntp, int waitTime) {
-        this.type = type;
+    public SourceApplication(boolean mode, InetAddress address, int port, NTPClient ntp, int resetTime) {
+        this.type = mode;
         this.address = address;
         this.port = port;
         this.ntp = ntp;
-        this.waitTime = waitTime;
+        this.resetTime = resetTime;
     }
 
     public void start() throws Exception {
@@ -30,9 +30,11 @@ public class SourceApplication extends Application {
                 )
         );
         if (!type) {
-            new BulkSource(ntp, address.getHostAddress(), port, waitTime, 12e9, 1000);
+            ConsoleLogger.log("starting bulk source application");
+            new BulkSource(ntp, address.getHostAddress(), port, resetTime, 12e9, 1000);
         } else {
-            new BulkSource(ntp, address.getHostAddress(), port, waitTime, 1e6, 1000);
+            ConsoleLogger.log("starting IoT source application");
+            new BulkSource(ntp, address.getHostAddress(), port, resetTime, 1e6, 1000);
         }
     }
 }

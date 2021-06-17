@@ -18,16 +18,16 @@ public class Client implements Callable<Integer> {
     private String address;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
-    @CommandLine.Parameters(index = "2", description = "address of the ntp server")
+    @CommandLine.Option(names = {"-ntp"}, defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
     private String ntpAddress;
     @CommandLine.Option(names = {"-b", "--bufferSize"}, description = "maximum size of the tcp buffer [pkt]")
     private int bufferSize = 1000;
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
-    private boolean direction;
-    @CommandLine.Option(names = {"-u"}, description = "start a downlink application")
     private boolean mode;
+    @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
+    private boolean direction;
     @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset")
-    private int waitTime = -1;
+    private int resetTime = -1;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
     private int startDelay = 0;
 
@@ -37,28 +37,28 @@ public class Client implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        ntp = new NTPClient(ntpAddress);
+
         ConsoleLogger.log("connecting to: %s", address);
         Socket socket = new Socket(address, port);
         ConsoleLogger.log("connection established");
 
-        ConsoleLogger.log("opening out streams");
+        ConsoleLogger.log("opening streams");
         out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         out.flush();
-        ConsoleLogger.log("opening in streams");
         in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-
-        ntp = new NTPClient(ntpAddress);
 
         ConsoleLogger.log("starting negotiation");
         sendNegotiationMessage();
 
-        ConsoleLogger.log("scheduling transmission");
         InstructionMessage msg = receiveInstructionMessage();
         int appPort = msg.getPort();
         long scheduledTime = msg.getTime().getTime();
+        ConsoleLogger.log("scheduling transmission at %s", scheduledTime);
 
         out.flush();
         socket.close();
+        ConsoleLogger.log("connection closed");
 
         ConsoleLogger.log("building application");
         Application app = buildApplication(socket.getInetAddress(), appPort);
@@ -73,7 +73,7 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.direction) {
-            app = new SourceApplication(this.mode, address, appPort, ntp, waitTime);
+            app = new SourceApplication(this.mode, address, appPort, ntp, resetTime);
         } else {
             app = new SinkApplication(appPort, bufferSize, ntp, String.format("./out/%s_sink.log", address.getHostAddress()));
         }
@@ -82,7 +82,7 @@ public class Client implements Callable<Integer> {
 
     public void sendNegotiationMessage() throws Exception {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port));
+        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port, this.resetTime));
         out.flush();
     }
 

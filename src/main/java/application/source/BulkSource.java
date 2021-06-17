@@ -9,8 +9,8 @@ import general.Utility;
 
 public class BulkSource extends Source {
 
-    public BulkSource(NTPClient ntp, String address, int port, int waitTime, double numBytesToSend, int bufferSize) throws IOException {
-        super(ntp, address, port, numBytesToSend, bufferSize, waitTime);
+    public BulkSource(NTPClient ntp, String address, int port, int resetTime, double numBytesToSend, int bufferSize) throws IOException {
+        super(ntp, address, port, numBytesToSend, bufferSize, resetTime);
     }
 
     @Override

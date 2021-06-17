@@ -10,14 +10,13 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Date;
-import java.util.Scanner;
 
 public class ServerThread extends Thread {
     private Socket client;
 
     boolean uplink;
     boolean mode;
-    int waitTime;
+    int resetTime;
     int delay;
     int id;
 
@@ -33,10 +32,9 @@ public class ServerThread extends Thread {
     static final long SINK_WAIT_TIME=1000;
     static final long SOURCE_WAIT_TIME=2000;
 
-    public ServerThread(Socket client, NTPClient ntp, int waitTime, int id) {
+    public ServerThread(Socket client, NTPClient ntp, int id) {
         this.client = client;
         this.clientAddress = client.getInetAddress();
-        this.waitTime = waitTime;
         this.id = id;
         this.ntp = ntp;
 
@@ -61,6 +59,7 @@ public class ServerThread extends Thread {
             this.mode = negotiation.isIoT();
             this.delay = negotiation.getStartDelay();
             this.clientPort = negotiation.getPort() + (5*id);
+            this.resetTime = negotiation.getResetTime();
 
             // Build Corresponding Applications
             if(negotiation.isUplink()) {
@@ -71,7 +70,7 @@ public class ServerThread extends Thread {
                         String.format("./out/%s_sink.log", client.getInetAddress().getHostAddress())
                 );
             } else {
-                app = new SourceApplication(negotiation.isIoT(), clientAddress, clientPort, ntp, waitTime);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException e) {
@@ -84,8 +83,8 @@ public class ServerThread extends Thread {
             ConsoleLogger.log("%s | starting local application", client.getInetAddress());
             // schedule application start
             long waitTime = this.uplink ?
-                    ntp.normalize(SINK_WAIT_TIME + delay + this.waitTime) :
-                    ntp.normalize(SOURCE_WAIT_TIME + delay + this.waitTime);
+                    SINK_WAIT_TIME + delay :
+                    SOURCE_WAIT_TIME + delay;
             ConsoleLogger.log("%s | scheduled transmission in %s ms", clientAddress, waitTime);
             Thread.sleep(waitTime);
             app.start();
@@ -98,7 +97,7 @@ public class ServerThread extends Thread {
         ConsoleLogger.log("%s | sending instruction message", client.getInetAddress());
         // negotiate start time
         long current = ntp.getCurrentTimeNormalized();
-        Date startTime = this.uplink ? new Date(current + (SOURCE_WAIT_TIME) + delay + waitTime) : new Date(current + SINK_WAIT_TIME + delay + waitTime);
+        Date startTime = this.uplink ? new Date(current + SOURCE_WAIT_TIME + delay) : new Date(current + SINK_WAIT_TIME + delay);
         try {
             InstructionMessage msg = new InstructionMessage(startTime, clientPort);
             out.writeObject(msg);

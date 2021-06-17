@@ -16,11 +16,8 @@ public class Server implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--port"}, description = "port to start server on")
     private int port = 5000;
 
-    @CommandLine.Option(names = {"-n", "--ntp"}, defaultValue = "ntp1.versatel.de",description = "address of the ntp server")
+    @CommandLine.Option(names = {"-n", "--ntp"}, defaultValue = "ptbtime1.ptb.de",description = "address of the ntp server")
     private String ntpAddress;
-
-    @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset")
-    private int waitTime = -1;
 
     ArrayList<ServerThread> threads = new ArrayList<>();
 
@@ -65,7 +62,7 @@ public class Server implements Callable<Integer> {
             connected++;
             if (!started) {
                 ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
-                ServerThread clientThread = new ServerThread(client, ntpClient, waitTime, connected);
+                ServerThread clientThread = new ServerThread(client, ntpClient, connected);
                 clientThread.start();
                 threads.add(clientThread);
             } else {

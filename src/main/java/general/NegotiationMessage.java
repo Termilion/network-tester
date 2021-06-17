@@ -8,12 +8,18 @@ public class NegotiationMessage implements Serializable {
     private boolean flowDirection;
     int startDelay;
     int port;
+    int resetTime;
+
+    public int getResetTime() {
+        return resetTime;
+    }
 
     public NegotiationMessage(
             boolean flowMode,
             boolean flowDirection,
             int startDelay,
-            int port
+            int port,
+            int resetTime
     ) {
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;

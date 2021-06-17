@@ -13,8 +13,6 @@ public abstract class Source {
     String address;
     int port;
 
-    int waitTime = -1; // 1s
-
     NTPClient ntp;
 
     public Source(
@@ -23,9 +21,8 @@ public abstract class Source {
             int port,
             double numberOfBytesToSend,
             int sendBufferSize,
-            int waitTime
+            int resetTime
     ) {
-        this.waitTime = waitTime;
         this.numberOfBytesToSend = numberOfBytesToSend;
         this.sendBufferSize = sendBufferSize;
         this.ntp = ntp;
@@ -36,8 +33,8 @@ public abstract class Source {
             ConsoleLogger.log("connecting to %s:%s", address, port);
             connect(address, port);
 
-            if(waitTime > 0) {
-                reset(waitTime);
+            if(resetTime > 0) {
+                reset(resetTime);
             }
             execute();
         } catch (IOException e) {
@@ -66,13 +63,13 @@ public abstract class Source {
         }
     }
 
-    protected void reset(int waitTime) {
+    protected void reset(int resetTime) {
         new Thread() {
             @Override
             public void run() {
                 try {
                     while(true) {
-                        Thread.sleep(waitTime);
+                        Thread.sleep(resetTime);
                         close();
                         connect(address, port);
                         execute();
