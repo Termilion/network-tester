@@ -9,22 +9,25 @@ public class NegotiationMessage implements Serializable {
     int startDelay;
     int port;
     int resetTime;
-
-    public int getResetTime() {
-        return resetTime;
-    }
+    int sndBuf;
+    int rcvBuf;
 
     public NegotiationMessage(
             boolean flowMode,
             boolean flowDirection,
             int startDelay,
             int port,
-            int resetTime
+            int resetTime,
+            int sndBuf,
+            int rcvBuf
     ) {
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
         this.startDelay = startDelay;
         this.port = port;
+        this.resetTime = resetTime;
+        this.sndBuf = sndBuf;
+        this.rcvBuf = rcvBuf;
     }
 
     public int getPort() {
@@ -57,5 +60,17 @@ public class NegotiationMessage implements Serializable {
 
     public void setStartDelay(int startDelay) {
         this.startDelay = startDelay;
+    }
+
+    public int getSndBuf() {
+        return sndBuf;
+    }
+
+    public int getRcvBuf() {
+        return rcvBuf;
+    }
+
+    public int getResetTime() {
+        return resetTime;
     }
 }

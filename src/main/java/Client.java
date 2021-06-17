@@ -20,8 +20,6 @@ public class Client implements Callable<Integer> {
     private int port;
     @CommandLine.Option(names = {"-ntp"}, defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
     private String ntpAddress;
-    @CommandLine.Option(names = {"-b", "--bufferSize"}, description = "maximum size of the tcp buffer [pkt]")
-    private int bufferSize = 1000;
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
     private boolean mode;
     @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
@@ -30,6 +28,10 @@ public class Client implements Callable<Integer> {
     private int resetTime = -1;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
     private int startDelay = 0;
+    @CommandLine.Option(names = {"-sb", "--sndBuf"}, description = "size of the tcp send buffer in bytes")
+    private int sndBuf = -1;
+    @CommandLine.Option(names = {"-rb", "--rcvBuf"}, description = "size of the tcp receive buffer in bytes")
+    private int rcvBuf = -1;
 
     private NTPClient ntp;
     ObjectOutputStream out;
@@ -73,16 +75,16 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.direction) {
-            app = new SourceApplication(this.mode, address, appPort, ntp, resetTime);
+            app = new SourceApplication(this.mode, address, appPort, ntp, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, bufferSize, ntp, String.format("./out/%s_sink.log", address.getHostAddress()));
+            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/%s_sink.log", address.getHostAddress()));
         }
         return app;
     }
 
     public void sendNegotiationMessage() throws Exception {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port, this.resetTime));
+        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
         out.flush();
     }
 

@@ -43,6 +43,7 @@ public class LogSink extends Sink {
             byte[] payload = new byte[1000];
 
             int number = 0;
+            int total = 0;
 
             while (true) {
                 try {
@@ -61,7 +62,8 @@ public class LogSink extends Sink {
                 this.rcvBytes += payload.length;
                 number++;
                 if (number >= 1000) {
-                    ConsoleLogger.log("%s | received an MByte!", connectedAddress);
+                    total++;
+                    ConsoleLogger.log("%s | received an MByte! [% total]", connectedAddress, total);
                     number = 0;
                 }
             }
@@ -76,7 +78,6 @@ public class LogSink extends Sink {
         long initialTime = (long) args[1];
 
         // trace values
-        double currentRcvBytes = rcvBytes;
         List<Long> currentDelay = delay;
 
         // reset values

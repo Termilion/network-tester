@@ -42,7 +42,9 @@ public abstract class Sink {
 
         ServerSocket socket = new ServerSocket(port);
         ConsoleLogger.log("opened sink on address %s:%s", socket.getInetAddress().getHostAddress(), port);
-        //socket.setReceiveBufferSize(receiveBufferSize);
+        if (receiveBufferSize > 0) {
+            socket.setReceiveBufferSize(receiveBufferSize);
+        }
 
         while (true) {
             try {

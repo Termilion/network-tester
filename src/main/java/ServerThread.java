@@ -60,17 +60,19 @@ public class ServerThread extends Thread {
             this.delay = negotiation.getStartDelay();
             this.clientPort = negotiation.getPort() + (5*id);
             this.resetTime = negotiation.getResetTime();
+            int sndBuf = negotiation.getSndBuf();
+            int rcvBuf = negotiation.getRcvBuf();
 
             // Build Corresponding Applications
             if(negotiation.isUplink()) {
                 this.app = new SinkApplication(
                         clientPort,
-                        1000,
+                        rcvBuf,
                         ntp,
                         String.format("./out/%s_sink.log", client.getInetAddress().getHostAddress())
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime, sndBuf);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException e) {

@@ -12,13 +12,18 @@ public class SourceApplication extends Application {
     final private int port;
     final private NTPClient ntp;
     final private int resetTime;
+    final private int sndBuf;
 
-    public SourceApplication(boolean mode, InetAddress address, int port, NTPClient ntp, int resetTime) {
+    final private double BULK_DATA = 12e9;
+    final private double IOT_DATA = 1e6;
+
+    public SourceApplication(boolean mode, InetAddress address, int port, NTPClient ntp, int resetTime, int sndBuf) {
         this.type = mode;
         this.address = address;
         this.port = port;
         this.ntp = ntp;
         this.resetTime = resetTime;
+        this.sndBuf = sndBuf;
     }
 
     public void start() throws Exception {
@@ -31,10 +36,10 @@ public class SourceApplication extends Application {
         );
         if (!type) {
             ConsoleLogger.log("starting bulk source application");
-            new BulkSource(ntp, address.getHostAddress(), port, resetTime, 12e9, 1000);
+            new BulkSource(ntp, address.getHostAddress(), port, resetTime, BULK_DATA, sndBuf);
         } else {
             ConsoleLogger.log("starting IoT source application");
-            new BulkSource(ntp, address.getHostAddress(), port, resetTime, 1e6, 1000);
+            new BulkSource(ntp, address.getHostAddress(), port, resetTime, IOT_DATA, sndBuf);
         }
     }
 }
