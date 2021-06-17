@@ -20,7 +20,7 @@ public class BulkSource extends Source {
         if (super.sendBufferSize > 0) {
             this.socket.setSendBufferSize(super.sendBufferSize);
         }
-        double maxNumberOfPackets = Math.ceil((double) this.numberOfBytesToSend / 1000);
+        double maxNumberOfPackets = Math.ceil(this.numberOfBytesToSend / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
             byte[] kByte = new byte[1000];
             long time = this.ntp.getCurrentTimeNormalized();
@@ -30,14 +30,14 @@ public class BulkSource extends Source {
                 out.flush();
                 numberSend++;
                 if (numberSend % 1000 == 0) {
-                    ConsoleLogger.log("%s | send an MByte! [%s / %s]", socket.getInetAddress().getHostAddress(), j+1, maxNumberOfPackets);
+                    ConsoleLogger.log("%s | send an MByte! [%s / %s]", socket.getInetAddress().getHostAddress(), j+1, (long) maxNumberOfPackets);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
             }
         }
-        ConsoleLogger.log("%s | finished transmission of %s bytes", socket.getInetAddress().getHostAddress(), this.numberOfBytesToSend);
+        ConsoleLogger.log("%s | finished transmission of %s bytes", socket.getInetAddress().getHostAddress(), (long) this.numberOfBytesToSend);
         out.close();
     }
 }
