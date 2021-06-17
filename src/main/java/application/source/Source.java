@@ -70,6 +70,7 @@ public abstract class Source {
                 try {
                     while(true) {
                         Thread.sleep(resetTime);
+                        ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
                         close();
                         connect(address, port);
                         execute();
