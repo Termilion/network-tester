@@ -17,7 +17,7 @@ public class BulkSource extends Source {
     public void execute() throws IOException {
         OutputStream out = socket.getOutputStream();
         int numberSend = 0;
-        this.socket.setSendBufferSize(super.sendBufferSize);
+        // this.socket.setSendBufferSize(super.sendBufferSize);
         double maxNumberOfPackets = Math.ceil((double) this.numberOfBytesToSend / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
             byte[] kByte = new byte[1000];
