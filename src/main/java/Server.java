@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
+@CommandLine.Command(name = "Server", description = "Starts an instruction server, which clients can connect to.")
 public class Server implements Callable<Integer> {
     @CommandLine.Option(names = {"-p", "--port"}, description = "port to start server on")
     private int port = 5000;

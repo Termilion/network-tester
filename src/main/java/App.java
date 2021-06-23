@@ -1,24 +1,21 @@
-import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
-public class App implements Callable<Integer> {
+@CommandLine.Command(subcommands = {
+        Server.class,
+        Client.class
+})
+public class App implements Runnable {
 
-    @CommandLine.Parameters(index = "0", description = "The file whose checksum to calculate.")
-    private String address;
-
-    @CommandLine.Option(names = {"-i", "--iot"}, description = "b for bulk, i for iot")
-    private boolean iot = false;
-
-    @CommandLine.Option(names = {"-u", "--up"}, description = "set for uplink nodes")
-    private boolean up = false;
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
 
     @Override
-    public Integer call() throws Exception {
-        return 0;
+    public void run() {
+        throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new App()).execute(args);
-        System.exit(exitCode);
+        CommandLine commandLine = new CommandLine(new App());
+        System.exit(commandLine.execute(args));
     }
 }

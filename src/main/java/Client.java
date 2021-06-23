@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 
+@CommandLine.Command(name = "Client", description = "Starts a client which connects to the instruction server.")
 public class Client implements Callable<Integer> {
     @CommandLine.Parameters(index = "0", description = "ipv4 address to connect to")
     private String address;
