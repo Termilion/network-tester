@@ -2,9 +2,9 @@ import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
 import general.ConsoleLogger;
+import general.InstructionMessage;
 import general.NTPClient;
 import general.NegotiationMessage;
-import general.InstructionMessage;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -19,6 +19,7 @@ public class ServerThread extends Thread {
     int resetTime;
     int delay;
     int id;
+    int simDuration;
 
     InetAddress clientAddress;
     int clientPort;
@@ -29,14 +30,15 @@ public class ServerThread extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    static final long SINK_WAIT_TIME=1000;
-    static final long SOURCE_WAIT_TIME=2000;
+    static final long SINK_WAIT_TIME = 1000;
+    static final long SOURCE_WAIT_TIME = 2000;
 
-    public ServerThread(Socket client, NTPClient ntp, int id) {
+    public ServerThread(Socket client, NTPClient ntp, int id, int simDuration) {
         this.client = client;
         this.clientAddress = client.getInetAddress();
         this.id = id;
         this.ntp = ntp;
+        this.simDuration = simDuration;
 
         try {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
@@ -58,14 +60,14 @@ public class ServerThread extends Thread {
             this.uplink = negotiation.isUplink();
             this.mode = negotiation.isIoT();
             this.delay = negotiation.getStartDelay();
-            this.clientPort = negotiation.getPort() + (5*id);
+            this.clientPort = negotiation.getPort() + (5 * id);
             this.resetTime = negotiation.getResetTime();
             int sndBuf = negotiation.getSndBuf();
             int rcvBuf = negotiation.getRcvBuf();
 
             // Build Corresponding Applications
-            if(negotiation.isUplink()) {
-                this.app = new SinkApplication(
+            if (negotiation.isUplink()) {
+                app = new SinkApplication(
                         clientPort,
                         rcvBuf,
                         ntp,
@@ -75,7 +77,7 @@ public class ServerThread extends Thread {
                 app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime, sndBuf);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();
         }
     }
@@ -84,12 +86,13 @@ public class ServerThread extends Thread {
         try {
             ConsoleLogger.log("%s | starting local application", client.getInetAddress());
             // schedule application start
-            long waitTime = this.uplink ?
-                    SINK_WAIT_TIME + delay :
-                    SOURCE_WAIT_TIME + delay;
-            ConsoleLogger.log("%s | scheduled transmission in %s ms", clientAddress, waitTime);
-            Thread.sleep(waitTime);
-            app.start();
+
+            long current = ntp.getCurrentTimeNormalized();
+            Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
+            Date stopTime = new Date(current + delay + simDuration * 1000L);
+
+            ConsoleLogger.log("Server calculated stopTime is " + stopTime);
+            app.stopOn(stopTime).startOn(startTime).start(ntp);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -100,8 +103,9 @@ public class ServerThread extends Thread {
         // negotiate start time
         long current = ntp.getCurrentTimeNormalized();
         Date startTime = this.uplink ? new Date(current + SOURCE_WAIT_TIME + delay) : new Date(current + SINK_WAIT_TIME + delay);
+        Date stopTime = new Date(current + delay + simDuration * 1000L);
         try {
-            InstructionMessage msg = new InstructionMessage(startTime, clientPort);
+            InstructionMessage msg = new InstructionMessage(startTime, stopTime, clientPort);
             out.writeObject(msg);
         } catch (Exception e) {
             e.printStackTrace();

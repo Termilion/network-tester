@@ -1,16 +1,17 @@
 package application.source;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-
 import general.ConsoleLogger;
 import general.NTPClient;
 import general.Utility;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
+
 public class BulkSource extends Source {
 
-    public BulkSource(NTPClient ntp, String address, int port, int resetTime, double numBytesToSend, int bufferSize) throws IOException {
-        super(ntp, address, port, numBytesToSend, bufferSize, resetTime);
+    public BulkSource(NTPClient ntp, String address, int port, int resetTime, Date stopTime, int bufferSize) throws IOException {
+        super(ntp, address, port, bufferSize, resetTime, stopTime);
     }
 
     @Override
@@ -20,8 +21,7 @@ public class BulkSource extends Source {
         if (super.sendBufferSize > 0) {
             this.socket.setSendBufferSize(super.sendBufferSize);
         }
-        double maxNumberOfPackets = Math.ceil(this.numberOfBytesToSend / 1000);
-        for (int j = 0; j < maxNumberOfPackets; j++) {
+        while (isRunning) {
             byte[] kByte = new byte[1000];
             long time = this.ntp.getCurrentTimeNormalized();
 
@@ -30,14 +30,14 @@ public class BulkSource extends Source {
                 out.flush();
                 numberSend++;
                 if (numberSend % 100000 == 0) {
-                    ConsoleLogger.log("%s | send 100 MByte! [%s / %s packets]", socket.getInetAddress().getHostAddress(), j+1, (long) maxNumberOfPackets);
+                    ConsoleLogger.log("%s | send 100 MByte! [%s]", socket.getInetAddress().getHostAddress(), numberSend);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
             }
         }
-        ConsoleLogger.log("%s | finished transmission of %s bytes", socket.getInetAddress().getHostAddress(), (long) this.numberOfBytesToSend);
+        ConsoleLogger.log("%s | stopped transmission. %s bytes send", socket.getInetAddress().getHostAddress(), numberSend);
         out.close();
     }
 }

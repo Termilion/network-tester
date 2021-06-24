@@ -5,20 +5,17 @@ import general.NTPClient;
 import general.Utility;
 
 import java.io.*;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class LogSink extends Sink {
 
     String connectedAddress;
 
-    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath) throws IOException {
-        super(ntp, port, receiveBufferSize, new Object[]{filePath, new Timestamp(ntp.getCurrentTimeNormalized()).getTime()});
+    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date stopTime) throws IOException {
+        super(ntp, port, receiveBufferSize, stopTime, new Object[]{filePath, ntp.getCurrentTimeNormalized()});
         createLogFile(filePath);
     }
 
@@ -45,7 +42,7 @@ public class LogSink extends Sink {
             int number = 0;
             int total = 0;
 
-            while (true) {
+            while (isRunning) {
                 try {
                     dataInputStream.readFully(payload);
                 } catch (EOFException e) {
@@ -81,7 +78,7 @@ public class LogSink extends Sink {
         List<Long> currentDelay = delay;
 
         // reset values
-        double traceIntervalInS = (double) traceIntervalInMs / 1000;
+        double traceIntervalInS = (double) TRACE_INTERVAL_IN_MS / 1000;
         double currentRcvMBits = (rcvBytes * 8) / 1e6;
         rcvBytes = 0;
         delay = Collections.synchronizedList(new ArrayList<>());
@@ -94,10 +91,12 @@ public class LogSink extends Sink {
             delaySum += t;
         }
 
-        double avgDelay = delaySum/currentDelay.size();
+        double avgDelay;
 
         if (currentDelay.size() == 0) {
             avgDelay = 0;
+        } else {
+            avgDelay = delaySum / currentDelay.size();
         }
 
         long currentTime = this.ntp.getCurrentTimeNormalized();
@@ -107,6 +106,7 @@ public class LogSink extends Sink {
         try {
             File outFile = new File(filePath);
             BufferedWriter writer = new BufferedWriter(new FileWriter(outFile, true));
+            //TODO print iot/bulk, uplink/downlink (into filename)
             writer.write(String.format("%s;%s;%.02f;%.02f", simTime, connectedAddress, goodput, avgDelay));
             writer.newLine();
             writer.flush();

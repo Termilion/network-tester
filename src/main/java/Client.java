@@ -2,15 +2,18 @@ import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
 import general.ConsoleLogger;
+import general.InstructionMessage;
 import general.NTPClient;
 import general.NegotiationMessage;
-import general.InstructionMessage;
 import picocli.CommandLine;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Scanner;
+import java.util.Date;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "Client", description = "Starts a client which connects to the instruction server.")
@@ -25,7 +28,7 @@ public class Client implements Callable<Integer> {
     private boolean mode;
     @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
     private boolean direction;
-    @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset")
+    @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset in milliseconds")
     private int resetTime = -1;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
     private int startDelay = 0;
@@ -56,8 +59,10 @@ public class Client implements Callable<Integer> {
 
         InstructionMessage msg = receiveInstructionMessage();
         int appPort = msg.getPort();
-        long scheduledTime = msg.getTime().getTime();
-        ConsoleLogger.log("scheduling transmission at %s", scheduledTime);
+        Date startTime = msg.getStartTime();
+        Date stopTime = msg.getStopTime();
+        ConsoleLogger.log("Client received stopTime is " + stopTime);
+        ConsoleLogger.log("scheduling transmission at %s", startTime);
 
         out.flush();
         socket.close();
@@ -66,9 +71,7 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("building application");
         Application app = buildApplication(socket.getInetAddress(), appPort);
 
-        scheduleApplicationStart(scheduledTime, app);
-        Scanner cli = new Scanner(System.in);
-        cli.nextLine();
+        scheduleApplicationStart(startTime, app, stopTime);
         return 0;
     }
 
@@ -96,12 +99,9 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public void scheduleApplicationStart(long startTime, Application app) throws Exception {
-        long current = ntp.getCurrentTimeNormalized();
-        long waitTime = startTime - current;
-        ConsoleLogger.log("scheduled transmission in %s ms", waitTime);
-        Thread.sleep(waitTime);
-        app.start();
+    public void scheduleApplicationStart(Date startTime, Application app, Date stopTime) throws Exception {
+        ConsoleLogger.log("Client received stopTime is " + stopTime);
+        app.stopOn(stopTime).startOn(startTime).start(ntp);
     }
 
     public static void main(String[] args) {

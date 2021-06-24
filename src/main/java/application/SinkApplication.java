@@ -1,13 +1,7 @@
 package application;
 
-import general.NTPClient;
-import picocli.CommandLine;
 import application.sink.LogSink;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.util.concurrent.Callable;
+import general.NTPClient;
 
 public class SinkApplication extends Application {
     String filePath;
@@ -24,13 +18,14 @@ public class SinkApplication extends Application {
     }
 
     @Override
-    public void start() throws Exception {
+    public void doOnStart() throws Exception {
         try {
             new LogSink(
                     this.ntp,
                     this.port,
                     this.rcvBufferSize,
-                    filePath
+                    filePath,
+                    stopTime
             );
         } catch (Exception e) {
             e.printStackTrace();

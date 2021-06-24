@@ -4,16 +4,23 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class InstructionMessage implements Serializable {
-    private Date time;
+    //TODO Flowid?
+    private Date startTime;
+    private Date stopTime;
     private int port;
 
-    public InstructionMessage(Date time, int port) {
-        this.time = time;
+    public InstructionMessage(Date startTime, Date stopTime, int port) {
+        this.startTime = startTime;
+        this.stopTime = stopTime;
         this.port = port;
     }
 
-    public Date getTime() {
-        return time;
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public Date getStopTime() {
+        return stopTime;
     }
 
     public int getPort() {
@@ -24,7 +31,7 @@ public class InstructionMessage implements Serializable {
         this.port = port;
     }
 
-    public void setTime(Date time) {
-        this.time = time;
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
     }
 }
