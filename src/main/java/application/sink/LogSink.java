@@ -16,8 +16,8 @@ public class LogSink extends Sink {
     int id;
     int mode;
 
-    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date stopTime, int id, boolean mode) throws IOException {
-        super(ntp, port, receiveBufferSize, stopTime, new Object[]{filePath, ntp.getCurrentTimeNormalized()});
+    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
+        super(ntp, port, receiveBufferSize, stopTime, new Object[]{filePath, simulationBegin});
         this.id = id;
         this.mode = booleanToInt(mode);
         createLogFile(filePath);
@@ -76,7 +76,7 @@ public class LogSink extends Sink {
     @Override
     public void scheduledOperation(Object[] args) {
         String filePath = (String) args[0];
-        long initialTime = (long) args[1];
+        Date simulationBegin = (Date) args[1];
 
         // trace values
         List<Long> currentDelay = delay;
@@ -104,7 +104,7 @@ public class LogSink extends Sink {
         }
 
         long currentTime = this.ntp.getCurrentTimeNormalized();
-        double simTime = (currentTime-initialTime)/1000.0;
+        double simTime = (currentTime-simulationBegin.getTime())/1000.0;
 
         // write to file
         try {

@@ -41,10 +41,12 @@ public class Client implements Callable<Integer> {
         int id = msg.getId();
         int appPort = msg.getServerPort();
         int resultPort = msg.getResultPort();
+        Date simulationBegin = msg.getSimulationBegin();
         Date startTime = msg.getStartTime();
         Date stopTime = msg.getStopTime();
-        ConsoleLogger.log("Client received stopTime is " + stopTime);
-        ConsoleLogger.log("scheduling transmission at %s", startTime);
+        ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
+        ConsoleLogger.log("Client startTime %s", startTime);
+        ConsoleLogger.log("Client stopTime %s", stopTime);
 
 
         ConsoleLogger.log("connection closed");
@@ -52,7 +54,7 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("building application");
         Application app = buildApplication(id, address, appPort);
 
-        scheduleApplicationStart(startTime, app, stopTime);
+        scheduleApplicationStart(simulationBegin, startTime, app, stopTime);
 
         if (!uplink) {
             // only sinks need to do the post handshake
@@ -63,7 +65,7 @@ public class Client implements Callable<Integer> {
     }
 
     public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
-        ntp = new NTPClient(ntpAddress);
+        ntp = NTPClient.create(ntpAddress);
 
         ConsoleLogger.log("connecting to: %s", address);
         Socket socket = new Socket(address, port);
@@ -107,9 +109,8 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public void scheduleApplicationStart(Date startTime, Application app, Date stopTime) throws Exception {
-        ConsoleLogger.log("Client received stopTime is " + stopTime);
-        app.stopOn(stopTime).startOn(startTime).start(ntp);
+    public void scheduleApplicationStart(Date simulationBegin, Date startTime, Application app, Date stopTime) throws Exception {
+        app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).start(ntp);
     }
 
     public void postHandshake(int id, int resultPort, String logFilePath) throws Exception {

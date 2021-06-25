@@ -90,7 +90,6 @@ public abstract class Source {
     }
 
     protected void stopOn(Date stopTime) {
-        ConsoleLogger.log("Stopping sink on " + stopTime);
         new Thread(() -> {
             try {
                 long now = ntp.getCurrentTimeNormalized();

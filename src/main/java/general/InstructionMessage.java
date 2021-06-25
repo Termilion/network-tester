@@ -5,13 +5,15 @@ import java.util.Date;
 
 public class InstructionMessage implements Serializable {
     private final int id;
+    private final Date simulationBegin;
     private final Date startTime;
     private final Date stopTime;
     private final int serverPort;
     private final int resultPort;
 
-    public InstructionMessage(int id, Date startTime, Date stopTime, int serverPort, int resultPort) {
+    public InstructionMessage(int id, Date simulationBegin, Date startTime, Date stopTime, int serverPort, int resultPort) {
         this.id = id;
+        this.simulationBegin = simulationBegin;
         this.startTime = startTime;
         this.stopTime = stopTime;
         this.serverPort = serverPort;
@@ -20,6 +22,10 @@ public class InstructionMessage implements Serializable {
 
     public int getId() {
         return id;
+    }
+
+    public Date getSimulationBegin() {
+        return simulationBegin;
     }
 
     public Date getStartTime() {

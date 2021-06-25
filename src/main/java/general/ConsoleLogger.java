@@ -1,7 +1,7 @@
 package general;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 enum LOG_LEVEL {
     ERROR,
@@ -17,7 +17,13 @@ public class ConsoleLogger {
     }
 
     public static void log(String message, LOG_LEVEL level) {
-        String time = formatter.format(new Timestamp(System.currentTimeMillis()));
+        long currentTime;
+        try {
+            currentTime = NTPClient.getInstance().getCurrentTimeNormalized();
+        } catch (NullPointerException e) {
+            currentTime = System.currentTimeMillis();
+        }
+        String time = formatter.format(new Date(currentTime));
 
         switch (level) {
             case WARN:

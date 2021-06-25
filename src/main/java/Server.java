@@ -41,7 +41,7 @@ public class Server implements Callable<Integer> {
 
     public void initialHandshake() throws IOException, InterruptedException {
         ServerSocket socket = new ServerSocket(this.port);
-        NTPClient ntpClient = new NTPClient(ntpAddress);
+        NTPClient ntpClient = NTPClient.create(ntpAddress);
 
         ArrayList<InitialHandshakeThread> handshakeThreads = new ArrayList<>();
 
@@ -71,6 +71,10 @@ public class Server implements Callable<Integer> {
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
 
+        // simulation begin is now
+        long current = ntpClient.getCurrentTimeNormalized();
+        Date simulationBegin = new Date(current);
+
         for (InitialHandshakeThread thread: handshakeThreads) {
             if (!thread.uplink) {
                 connectedSinksPreTransmission++;
@@ -79,8 +83,8 @@ public class Server implements Callable<Integer> {
                 Thread transmissionThread = new Thread(() -> {
                     try {
                         // send the initial instructions
-                        thread.sendInstructions();
-                        Application app = thread.getApplication();
+                        thread.sendInstructions(simulationBegin);
+                        Application app = thread.getApplication(simulationBegin);
                         // use the same thread to start the transmitting/receiving application
                         app.start(ntpClient);
                     } catch (Exception e) {

@@ -9,9 +9,12 @@ import general.NegotiationMessage;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class InitialHandshakeThread extends Thread {
+    static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+
     private final Socket client;
 
     boolean uplink;
@@ -31,8 +34,8 @@ public class InitialHandshakeThread extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    static final long SINK_WAIT_TIME = 1000;
-    static final long SOURCE_WAIT_TIME = 2000;
+    static final long SINK_WAIT_TIME = 5000;
+    static final long SOURCE_WAIT_TIME = 10000;
 
     public InitialHandshakeThread(Socket client, NTPClient ntp, int id, int simDuration, int resultPort) {
         this.client = client;
@@ -94,7 +97,7 @@ public class InitialHandshakeThread extends Thread {
         }
     }
 
-    public Application getApplication() {
+    public Application getApplication(Date simulationBegin) {
         ConsoleLogger.log("%s | building local application", client.getInetAddress());
         // schedule application start
 
@@ -102,18 +105,18 @@ public class InitialHandshakeThread extends Thread {
         Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
         Date stopTime = new Date(current + delay + simDuration * 1000L);
 
-        ConsoleLogger.log("Server calculated stopTime is " + stopTime);
-        return app.stopOn(stopTime).startOn(startTime);
+        return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime);
     }
 
-    public void sendInstructions() {
-        ConsoleLogger.log("%s | sending instruction message", client.getInetAddress());
+    public void sendInstructions(Date simulationBegin) {
         // negotiate start time
         long current = ntp.getCurrentTimeNormalized();
         Date startTime = this.uplink ? new Date(current + SOURCE_WAIT_TIME + delay) : new Date(current + SINK_WAIT_TIME + delay);
-        Date stopTime = new Date(current + delay + simDuration * 1000L);
+        Date stopTime = new Date(current + simDuration * 1000L);
+
+        ConsoleLogger.log("%s | sending instruction message. Begin: %s Start: %s Stop: %s", client.getInetAddress(), simulationBegin, startTime, stopTime);
         try {
-            InstructionMessage msg = new InstructionMessage(id, startTime, stopTime, clientPort, resultPort);
+            InstructionMessage msg = new InstructionMessage(id, simulationBegin, startTime, stopTime, clientPort, resultPort);
             out.writeObject(msg);
         } catch (Exception e) {
             e.printStackTrace();

@@ -29,6 +29,7 @@ public class SinkApplication extends Application {
                     this.port,
                     this.rcvBufferSize,
                     filePath,
+                    simulationBegin,
                     stopTime,
                     id,
                     mode
