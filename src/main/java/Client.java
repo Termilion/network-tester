@@ -89,7 +89,7 @@ public class Client implements Callable<Integer> {
         if (this.uplink) {
             app = new SourceApplication(this.mode, ipaddress, appPort, ntp, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/sink_flow_%d_%s.log", id, getModeString()));
+            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/sink_flow_%d_%s.csv", id, getModeString()), id, mode);
         }
         return app;
     }

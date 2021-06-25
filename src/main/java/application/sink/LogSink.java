@@ -13,9 +13,13 @@ import java.util.List;
 public class LogSink extends Sink {
 
     String connectedAddress;
+    int id;
+    int mode;
 
-    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date stopTime) throws IOException {
+    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date stopTime, int id, boolean mode) throws IOException {
         super(ntp, port, receiveBufferSize, stopTime, new Object[]{filePath, ntp.getCurrentTimeNormalized()});
+        this.id = id;
+        this.mode = booleanToInt(mode);
         createLogFile(filePath);
     }
 
@@ -23,7 +27,7 @@ public class LogSink extends Sink {
         File outFile = new File(filePath);
         outFile.getParentFile().mkdirs();
         BufferedWriter writer = new BufferedWriter(new FileWriter(outFile, false));
-        writer.write("Time;Address;Goodput;Delay");
+        writer.write("time,flow,type,address,sink_gp,delay_data_ms");
         writer.newLine();
         writer.flush();
         writer.close();
@@ -100,19 +104,26 @@ public class LogSink extends Sink {
         }
 
         long currentTime = this.ntp.getCurrentTimeNormalized();
-        long simTime = currentTime-initialTime;
+        double simTime = (currentTime-initialTime)/1000.0;
 
         // write to file
         try {
             File outFile = new File(filePath);
             BufferedWriter writer = new BufferedWriter(new FileWriter(outFile, true));
-            //TODO print iot/bulk, uplink/downlink (into filename)
-            writer.write(String.format("%s;%s;%.02f;%.02f", simTime, connectedAddress, goodput, avgDelay));
+            writer.write(String.format("%.06f,%d,%d,%s,%.02f,%.02f", simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
             writer.flush();
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private int booleanToInt(boolean mode) {
+        if (mode) {
+            return 1;
+        } else {
+            return 0;
         }
     }
 }

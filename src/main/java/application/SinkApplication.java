@@ -7,14 +7,18 @@ public class SinkApplication extends Application {
     String filePath;
     int port;
     int rcvBufferSize;
+    int id;
+    boolean mode;
 
     NTPClient ntp;
 
-    public SinkApplication(int port, int rcvBufferSize, NTPClient ntp, String filePath) {
+    public SinkApplication(int port, int rcvBufferSize, NTPClient ntp, String filePath, int id, boolean mode) {
         this.filePath = filePath;
         this.port = port;
         this.rcvBufferSize = rcvBufferSize;
         this.ntp = ntp;
+        this.id = id;
+        this.mode = mode;
     }
 
     @Override
@@ -25,7 +29,9 @@ public class SinkApplication extends Application {
                     this.port,
                     this.rcvBufferSize,
                     filePath,
-                    stopTime
+                    stopTime,
+                    id,
+                    mode
             );
         } catch (Exception e) {
             e.printStackTrace();

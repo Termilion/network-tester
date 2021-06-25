@@ -73,7 +73,9 @@ public class InitialHandshakeThread extends Thread {
                         clientPort,
                         rcvBuf,
                         ntp,
-                        String.format("./out/sink_flow_%d_%s.log", id, getModeString())
+                        String.format("./out/sink_flow_%d_%s.csv", id, getModeString()),
+                        id,
+                        mode
                 );
             } else {
                 app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime, sndBuf);
