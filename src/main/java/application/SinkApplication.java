@@ -31,4 +31,8 @@ public class SinkApplication extends Application {
             e.printStackTrace();
         }
     }
+
+    public String getFilePath() {
+        return filePath;
+    }
 }

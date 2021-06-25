@@ -4,15 +4,22 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class InstructionMessage implements Serializable {
-    //TODO Flowid?
-    private Date startTime;
-    private Date stopTime;
-    private int port;
+    private final int id;
+    private final Date startTime;
+    private final Date stopTime;
+    private final int serverPort;
+    private final int resultPort;
 
-    public InstructionMessage(Date startTime, Date stopTime, int port) {
+    public InstructionMessage(int id, Date startTime, Date stopTime, int serverPort, int resultPort) {
+        this.id = id;
         this.startTime = startTime;
         this.stopTime = stopTime;
-        this.port = port;
+        this.serverPort = serverPort;
+        this.resultPort = resultPort;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public Date getStartTime() {
@@ -23,15 +30,11 @@ public class InstructionMessage implements Serializable {
         return stopTime;
     }
 
-    public int getPort() {
-        return port;
+    public int getServerPort() {
+        return serverPort;
     }
 
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public void setStartTime(Date startTime) {
-        this.startTime = startTime;
+    public int getResultPort() {
+        return resultPort;
     }
 }

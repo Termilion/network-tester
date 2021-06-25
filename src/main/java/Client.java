@@ -1,18 +1,12 @@
 import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
-import general.ConsoleLogger;
-import general.InstructionMessage;
-import general.NTPClient;
-import general.NegotiationMessage;
+import general.*;
 import picocli.CommandLine;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
+import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.util.Date;
 import java.util.concurrent.Callable;
 
@@ -27,7 +21,7 @@ public class Client implements Callable<Integer> {
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
     private boolean mode;
     @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
-    private boolean direction;
+    private boolean uplink;
     @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset in milliseconds")
     private int resetTime = -1;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
@@ -38,11 +32,37 @@ public class Client implements Callable<Integer> {
     private int rcvBuf = -1;
 
     private NTPClient ntp;
-    ObjectOutputStream out;
-    ObjectInputStream in;
 
     @Override
     public Integer call() throws Exception {
+
+        InstructionMessage msg = initialHandshake();
+
+        int id = msg.getId();
+        int appPort = msg.getServerPort();
+        int resultPort = msg.getResultPort();
+        Date startTime = msg.getStartTime();
+        Date stopTime = msg.getStopTime();
+        ConsoleLogger.log("Client received stopTime is " + stopTime);
+        ConsoleLogger.log("scheduling transmission at %s", startTime);
+
+
+        ConsoleLogger.log("connection closed");
+
+        ConsoleLogger.log("building application");
+        Application app = buildApplication(id, address, appPort);
+
+        scheduleApplicationStart(startTime, app, stopTime);
+
+        if (!uplink) {
+            // only sinks need to do the post handshake
+            String path = ((SinkApplication) app).getFilePath();
+            postHandshake(id, resultPort, path);
+        }
+        return 0;
+    }
+
+    public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
         ntp = new NTPClient(ntpAddress);
 
         ConsoleLogger.log("connecting to: %s", address);
@@ -50,49 +70,37 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("connection established");
 
         ConsoleLogger.log("opening streams");
-        out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         out.flush();
-        in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
         ConsoleLogger.log("starting negotiation");
-        sendNegotiationMessage();
+        sendNegotiationMessage(out);
 
-        InstructionMessage msg = receiveInstructionMessage();
-        int appPort = msg.getPort();
-        Date startTime = msg.getStartTime();
-        Date stopTime = msg.getStopTime();
-        ConsoleLogger.log("Client received stopTime is " + stopTime);
-        ConsoleLogger.log("scheduling transmission at %s", startTime);
-
+        InstructionMessage msg = receiveInstructionMessage(in);
         out.flush();
         socket.close();
-        ConsoleLogger.log("connection closed");
-
-        ConsoleLogger.log("building application");
-        Application app = buildApplication(socket.getInetAddress(), appPort);
-
-        scheduleApplicationStart(startTime, app, stopTime);
-        return 0;
+        return msg;
     }
 
-    public Application buildApplication(InetAddress address, int appPort) {
+    public Application buildApplication(int id, String ipaddress, int appPort) {
         Application app;
 
-        if (this.direction) {
-            app = new SourceApplication(this.mode, address, appPort, ntp, resetTime, this.sndBuf);
+        if (this.uplink) {
+            app = new SourceApplication(this.mode, ipaddress, appPort, ntp, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/%s_sink.log", address.getHostAddress()));
+            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/sink_flow_%d_%s.log", id, getModeString()));
         }
         return app;
     }
 
-    public void sendNegotiationMessage() throws Exception {
+    public void sendNegotiationMessage(ObjectOutputStream out) throws IOException {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.mode, this.direction, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
+        out.writeObject(new NegotiationMessage(this.mode, this.uplink, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
         out.flush();
     }
 
-    public InstructionMessage receiveInstructionMessage() throws Exception {
+    public InstructionMessage receiveInstructionMessage(ObjectInputStream in) throws IOException, ClassNotFoundException {
         ConsoleLogger.log("waiting for instruction message");
         InstructionMessage msg = (InstructionMessage) in.readObject();
         ConsoleLogger.log("received instruction message");
@@ -102,6 +110,41 @@ public class Client implements Callable<Integer> {
     public void scheduleApplicationStart(Date startTime, Application app, Date stopTime) throws Exception {
         ConsoleLogger.log("Client received stopTime is " + stopTime);
         app.stopOn(stopTime).startOn(startTime).start(ntp);
+    }
+
+    public void postHandshake(int id, int resultPort, String logFilePath) throws Exception {
+        ConsoleLogger.log("Finished! Submitting results...");
+        //wait a short time, to ensure the receiving socket is open
+        Thread.sleep(3000);
+
+        Socket socket = new Socket(address, resultPort);
+        ConsoleLogger.log("connection established");
+
+        ConsoleLogger.log("opening streams");
+        ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        out.flush();
+        //ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+
+        byte[] fileContent = Files.readAllBytes(new File(logFilePath).toPath());
+
+        sendResultMessage(out, id, fileContent);
+
+        out.flush();
+        socket.close();
+    }
+
+    public void sendResultMessage(ObjectOutputStream out, int id, byte[] fileContent) throws IOException {
+        ConsoleLogger.log("sending result message");
+        out.writeObject(new ResultMessage(id, this.mode, this.uplink, fileContent));
+        out.flush();
+    }
+
+    private String getModeString() {
+        if (mode) {
+            return "iot";
+        } else {
+            return "bulk";
+        }
     }
 
     public static void main(String[] args) {

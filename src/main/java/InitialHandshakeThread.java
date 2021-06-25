@@ -11,8 +11,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Date;
 
-public class ServerThread extends Thread {
-    private Socket client;
+public class InitialHandshakeThread extends Thread {
+    private final Socket client;
 
     boolean uplink;
     boolean mode;
@@ -21,8 +21,9 @@ public class ServerThread extends Thread {
     int id;
     int simDuration;
 
-    InetAddress clientAddress;
+    String clientAddress;
     int clientPort;
+    int resultPort;
 
     Application app;
     NTPClient ntp;
@@ -33,12 +34,13 @@ public class ServerThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public ServerThread(Socket client, NTPClient ntp, int id, int simDuration) {
+    public InitialHandshakeThread(Socket client, NTPClient ntp, int id, int simDuration, int resultPort) {
         this.client = client;
-        this.clientAddress = client.getInetAddress();
+        this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = id;
         this.ntp = ntp;
         this.simDuration = simDuration;
+        this.resultPort = resultPort;
 
         try {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
@@ -71,7 +73,7 @@ public class ServerThread extends Thread {
                         clientPort,
                         rcvBuf,
                         ntp,
-                        String.format("./out/%s_sink.log", client.getInetAddress().getHostAddress())
+                        String.format("./out/sink_flow_%d_%s.log", id, getModeString())
                 );
             } else {
                 app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime, sndBuf);
@@ -82,20 +84,24 @@ public class ServerThread extends Thread {
         }
     }
 
-    public void startLocalApplications() {
-        try {
-            ConsoleLogger.log("%s | starting local application", client.getInetAddress());
-            // schedule application start
-
-            long current = ntp.getCurrentTimeNormalized();
-            Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
-            Date stopTime = new Date(current + delay + simDuration * 1000L);
-
-            ConsoleLogger.log("Server calculated stopTime is " + stopTime);
-            app.stopOn(stopTime).startOn(startTime).start(ntp);
-        } catch (Exception e) {
-            e.printStackTrace();
+    private String getModeString() {
+        if (mode) {
+            return "iot";
+        } else {
+            return "bulk";
         }
+    }
+
+    public Application getApplication() {
+        ConsoleLogger.log("%s | building local application", client.getInetAddress());
+        // schedule application start
+
+        long current = ntp.getCurrentTimeNormalized();
+        Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
+        Date stopTime = new Date(current + delay + simDuration * 1000L);
+
+        ConsoleLogger.log("Server calculated stopTime is " + stopTime);
+        return app.stopOn(stopTime).startOn(startTime);
     }
 
     public void sendInstructions() {
@@ -105,7 +111,7 @@ public class ServerThread extends Thread {
         Date startTime = this.uplink ? new Date(current + SOURCE_WAIT_TIME + delay) : new Date(current + SINK_WAIT_TIME + delay);
         Date stopTime = new Date(current + delay + simDuration * 1000L);
         try {
-            InstructionMessage msg = new InstructionMessage(startTime, stopTime, clientPort);
+            InstructionMessage msg = new InstructionMessage(id, startTime, stopTime, clientPort, resultPort);
             out.writeObject(msg);
         } catch (Exception e) {
             e.printStackTrace();
