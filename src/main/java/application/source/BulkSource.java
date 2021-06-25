@@ -33,7 +33,10 @@ public class BulkSource extends Source {
                     ConsoleLogger.log("%s | send 100 MByte! [%s]", socket.getInetAddress().getHostAddress(), numberSend);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                // if source isn't running anymore and the socket fails, there is no need to print the stacktrace
+                if (isRunning) {
+                    e.printStackTrace();
+                }
                 break;
             }
         }

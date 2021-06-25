@@ -1,13 +1,16 @@
 import application.Application;
 import general.ConsoleLogger;
 import general.NTPClient;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.csv.CSVRecord;
 import picocli.CommandLine;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "Server", description = "Starts an instruction server, which clients can connect to.")
@@ -116,7 +119,43 @@ public class Server implements Callable<Integer> {
             thread.join();
         }
 
-        //TODO mergeOutFiles();
+        mergeOutFiles();
+    }
+
+    private void mergeOutFiles() throws IOException {
+        File outDir = new File("./out/");
+        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith("sink_flow_") && name.endsWith(".csv"));
+
+        if (csvFiles == null) {
+            throw new FileNotFoundException("No csv files found!");
+        }
+
+        List<CSVRecord> csvRecordsList = new ArrayList<>();
+        List<String> headers = new ArrayList<>();
+
+        for (File file : csvFiles) {
+            Reader inputStreamReader = new InputStreamReader(new FileInputStream(file));
+            CSVParser csvParser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(inputStreamReader);
+            if (headers.isEmpty()) {
+                headers = csvParser.getHeaderNames();
+            }
+
+            csvParser.forEach(csvRecordsList::add);
+        }
+
+        Comparator<CSVRecord> comparator = Comparator.comparing(r -> Float.valueOf(r.get("time")));
+        csvRecordsList.sort(comparator);
+
+        File outFile = new File(outDir, "goodput.csv");
+        FileOutputStream out = new FileOutputStream(outFile);
+        Writer outputStreamWriter = new OutputStreamWriter(out);
+        CSVPrinter cvsPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);
+        cvsPrinter.printRecords(headers);
+        cvsPrinter.printRecords(csvRecordsList);
+        cvsPrinter.flush();
+        cvsPrinter.close();
+
+        ConsoleLogger.log("Finished merging out files...");
     }
 
     public static void main(String[] args) {
