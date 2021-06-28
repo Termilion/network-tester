@@ -7,10 +7,12 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.sql.Time;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 public abstract class Sink implements Closeable {
     ServerSocket socket;
@@ -26,6 +28,9 @@ public abstract class Sink implements Closeable {
 
     boolean isRunning = true;
 
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
+
     public Sink(NTPClient ntp, int port, int receiveBufferSize, Date stopTime) throws IOException {
         this.ntp = ntp;
         this.delay = Collections.synchronizedList(new ArrayList<>());
@@ -40,31 +45,8 @@ public abstract class Sink implements Closeable {
     }
 
     public void start() throws IOException {
-        new Thread(() -> {
-            try {
-                while (isRunning) {
-                    Thread.sleep(TRACE_INTERVAL_IN_MS);
-                    if (!isRunning)
-                        break;
-                    scheduledWriteOutput();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }).start();
-
-        new Thread(() -> {
-            try {
-                while (isRunning) {
-                    Thread.sleep(LOG_INTERVAL_IN_MS);
-                    if (!isRunning)
-                        break;
-                    scheduledLoggingOutput();
-                }
-            } catch (InterruptedException e) {
-                // ignore
-            }
-        }).start();
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
 
         while (isRunning) {
             try {
@@ -94,6 +76,11 @@ public abstract class Sink implements Closeable {
     @Override
     public void close() throws IOException {
         isRunning = false;
+        scheduler.shutdown();
+        for (ScheduledFuture<?> sf : scheduledTasks) {
+            sf.cancel(true);
+        }
+        scheduledTasks.clear();
         if (socket != null && !socket.isClosed()) {
             socket.close();
         }
@@ -101,21 +88,20 @@ public abstract class Sink implements Closeable {
     }
 
     protected void stopOn(Date stopTime) {
-        new Thread(() -> {
+        long now = ntp.getCurrentTimeNormalized();
+        long duration = stopTime.getTime() - now;
+        if (duration < 0) {
+            throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
+        }
+        scheduledTasks.add(scheduler.schedule(() -> {
             try {
-                long now = ntp.getCurrentTimeNormalized();
-                long duration = stopTime.getTime() - now;
-                if (duration < 0) {
-                    throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
-                }
-                Thread.sleep(duration);
                 isRunning = false;
                 ConsoleLogger.log("%s | stopping sink", socket.getInetAddress().getHostAddress());
                 close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+        }, duration, TimeUnit.MILLISECONDS));
     }
 
     public abstract void scheduledWriteOutput();

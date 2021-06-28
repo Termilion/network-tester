@@ -6,7 +6,14 @@ import general.NTPClient;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("BusyWait")
 public abstract class Source implements Closeable {
@@ -14,12 +21,15 @@ public abstract class Source implements Closeable {
     int sendBufferSize;
     String address;
     int port;
+    int resetTime;
+    Date stopTime;
 
     NTPClient ntp;
 
     boolean isRunning = true;
 
-    Thread resetThread;
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+    Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
     public Source(
             NTPClient ntp,
@@ -33,6 +43,8 @@ public abstract class Source implements Closeable {
         this.ntp = ntp;
         this.address = address;
         this.port = port;
+        this.resetTime = resetTime;
+        this.stopTime = stopTime;
 
         if(resetTime > 0) {
             reset(resetTime);
@@ -44,6 +56,7 @@ public abstract class Source implements Closeable {
         }
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public void start() throws IOException, InterruptedException {
         try {
             ConsoleLogger.log("connecting to %s:%s", address, port);
@@ -52,10 +65,13 @@ public abstract class Source implements Closeable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (resetThread != null) {
-            // if execute finishes earlier than the simulation (resetThread) lasts, keep waiting
-            resetThread.join();
-        }
+
+
+        long now = ntp.getCurrentTimeNormalized();
+        long buffer = 5000L;
+        long timeout = stopTime.getTime() - now + buffer;
+        scheduler.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+
         try {
             close();
         } catch (IOException e) {
@@ -70,55 +86,47 @@ public abstract class Source implements Closeable {
     @Override
     public void close() throws IOException {
         isRunning = false;
+        scheduler.shutdown();
+        for (ScheduledFuture<?> sf : scheduledTasks) {
+            sf.cancel(true);
+        }
+        scheduledTasks.clear();
         if (socket != null && !socket.isClosed()) {
             socket.close();
         }
     }
 
     protected void reset(int resetTime) {
-        resetThread = new Thread(() -> {
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(() -> {
             try {
-                while (isRunning) {
-                    Thread.sleep(resetTime);
-                    if (!isRunning) {
-                        break;
-                    }
-                    ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
-                    if (socket != null && !socket.isClosed()) {
-                        socket.close();
-                    }
-                    connect(address, port);
-                    execute();
+                ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
                 }
+                connect(address, port);
+                execute();
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                try {
-                    close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
-        });
-        resetThread.start();
+        }, resetTime, resetTime, TimeUnit.MILLISECONDS));
     }
 
     protected void stopOn(Date stopTime) {
-        new Thread(() -> {
+        long now = ntp.getCurrentTimeNormalized();
+        long duration = stopTime.getTime() - now;
+        if (duration < 0) {
+            throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
+        }
+        ConsoleLogger.log("Stopping source in "+ duration +"ms");
+        scheduledTasks.add(scheduler.schedule(() -> {
             try {
-                long now = ntp.getCurrentTimeNormalized();
-                long duration = stopTime.getTime() - now;
-                if (duration < 0) {
-                    throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
-                }
-                Thread.sleep(duration);
                 isRunning = false;
-                ConsoleLogger.log("%s | stopping source", socket.getInetAddress().getHostAddress());
+                ConsoleLogger.log("%s | stopping sink", socket.getInetAddress().getHostAddress());
                 close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }).start();
+        }, duration, TimeUnit.MILLISECONDS));
     }
 
     public abstract void execute() throws IOException;
