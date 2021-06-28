@@ -3,12 +3,13 @@ package application.source;
 import general.ConsoleLogger;
 import general.NTPClient;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Date;
 
 @SuppressWarnings("BusyWait")
-public abstract class Source {
+public abstract class Source implements Closeable {
     Socket socket;
     int sendBufferSize;
     String address;
@@ -18,6 +19,8 @@ public abstract class Source {
 
     boolean isRunning = true;
 
+    Thread resetThread;
+
     public Source(
             NTPClient ntp,
             String address,
@@ -25,39 +28,45 @@ public abstract class Source {
             int sendBufferSize,
             int resetTime,
             Date stopTime
-    ) {
+    ) throws IOException {
         this.sendBufferSize = sendBufferSize;
         this.ntp = ntp;
         this.address = address;
         this.port = port;
 
+        if(resetTime > 0) {
+            reset(resetTime);
+        }
+        stopOn(stopTime);
+
+        if (this.sendBufferSize > 0) {
+            this.socket.setSendBufferSize(this.sendBufferSize);
+        }
+    }
+
+    public void start() throws IOException, InterruptedException {
         try {
             ConsoleLogger.log("connecting to %s:%s", address, port);
             connect(address, port);
-
-            if(resetTime > 0) {
-                reset(resetTime);
-            }
-            stopOn(stopTime);
             execute();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
-
+        // if execute finishes earlier than the simulation (resetThread) lasts, keep waiting
+        resetThread.join();
+        try {
+            close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void connect(String address, int port) throws IOException {
         socket = new Socket(address, port);
     }
 
-    protected void close() throws IOException {
+    @Override
+    public void close() throws IOException {
         isRunning = false;
         if (socket != null && !socket.isClosed()) {
             socket.close();
@@ -65,15 +74,17 @@ public abstract class Source {
     }
 
     protected void reset(int resetTime) {
-        new Thread(() -> {
+        resetThread = new Thread(() -> {
             try {
-                while (true) {
+                while (isRunning) {
                     Thread.sleep(resetTime);
                     if (!isRunning) {
                         break;
                     }
                     ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
-                    close();
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
                     connect(address, port);
                     execute();
                 }
@@ -86,7 +97,8 @@ public abstract class Source {
                     e.printStackTrace();
                 }
             }
-        }).start();
+        });
+        resetThread.start();
     }
 
     protected void stopOn(Date stopTime) {

@@ -28,8 +28,6 @@ public class PostHandshakeThread extends Thread {
         this.clientAddress = client.getInetAddress();
 
         try {
-            //this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
-            //this.out.flush();
             this.in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             ConsoleLogger.log("connection to client: %s successful", client.getInetAddress());
         } catch (IOException e) {

@@ -124,7 +124,6 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("opening streams");
         ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         out.flush();
-        //ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
         byte[] fileContent = Files.readAllBytes(new File(logFilePath).toPath());
 

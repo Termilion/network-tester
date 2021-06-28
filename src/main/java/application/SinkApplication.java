@@ -1,7 +1,11 @@
 package application;
 
 import application.sink.LogSink;
+import application.sink.Sink;
+import general.ConsoleLogger;
 import general.NTPClient;
+
+import java.io.IOException;
 
 public class SinkApplication extends Application {
     String filePath;
@@ -11,6 +15,8 @@ public class SinkApplication extends Application {
     boolean mode;
 
     NTPClient ntp;
+
+    Sink sink;
 
     public SinkApplication(int port, int rcvBufferSize, NTPClient ntp, String filePath, int id, boolean mode) {
         this.filePath = filePath;
@@ -24,7 +30,7 @@ public class SinkApplication extends Application {
     @Override
     public void doOnStart() throws Exception {
         try {
-            new LogSink(
+            sink = new LogSink(
                     this.ntp,
                     this.port,
                     this.rcvBufferSize,
@@ -34,8 +40,16 @@ public class SinkApplication extends Application {
                     id,
                     mode
             );
+            sink.start();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (sink != null) {
+            sink.close();
         }
     }
 

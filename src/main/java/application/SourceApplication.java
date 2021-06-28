@@ -2,9 +2,11 @@ package application;
 
 import application.source.BulkSource;
 import application.source.IoTSource;
+import application.source.Source;
 import general.ConsoleLogger;
 import general.NTPClient;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 public class SourceApplication extends Application {
@@ -14,6 +16,8 @@ public class SourceApplication extends Application {
     final private NTPClient ntp;
     final private int resetTime;
     final private int sndBuf;
+
+    Source source;
 
     public SourceApplication(boolean mode, String ipaddress, int port, NTPClient ntp, int resetTime, int sndBuf) {
         this.type = mode;
@@ -35,10 +39,18 @@ public class SourceApplication extends Application {
         );
         if (!type) {
             ConsoleLogger.log("starting bulk source application");
-            new BulkSource(ntp, ipaddress, port, resetTime, stopTime, sndBuf);
+            source = new BulkSource(ntp, ipaddress, port, resetTime, simulationBegin, stopTime, sndBuf);
         } else {
             ConsoleLogger.log("starting IoT source application");
-            new IoTSource(ntp, ipaddress, port, resetTime, stopTime, sndBuf);
+            source = new IoTSource(ntp, ipaddress, port, resetTime, simulationBegin, stopTime, sndBuf);
+        }
+        source.start();
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (source != null) {
+            source.close();
         }
     }
 }

@@ -11,18 +11,17 @@ import java.util.Date;
 public class IoTSource extends Source {
 
     public static final double IOT_DATA_SIZE = 1e6;
+    Date simulationBegin;
 
-    public IoTSource(NTPClient ntp, String address, int port, int resetTime, Date stopTime, int bufferSize) throws IOException {
+    public IoTSource(NTPClient ntp, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
         super(ntp, address, port, bufferSize, resetTime, stopTime);
+        this.simulationBegin = simulationBegin;
     }
 
     @Override
     public void execute() throws IOException {
         OutputStream out = socket.getOutputStream();
         int numberSend = 0;
-        if (super.sendBufferSize > 0) {
-            this.socket.setSendBufferSize(super.sendBufferSize);
-        }
 
         double maxNumberOfPackets = Math.ceil(IOT_DATA_SIZE / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
@@ -38,6 +37,8 @@ public class IoTSource extends Source {
                         ConsoleLogger.log("%s | send one MByte! [%s]", socket.getInetAddress().getHostAddress(), numberSend);
                     }
                 } catch (Exception e) {
+                    double simTime = (time-simulationBegin.getTime())/1000.0;
+                    ConsoleLogger.log("Source: Exception at simTime " + simTime);
                     e.printStackTrace();
                     break;
                 }

@@ -11,17 +11,18 @@ import java.util.Date;
 
 public class BulkSource extends Source {
 
-    public BulkSource(NTPClient ntp, String address, int port, int resetTime, Date stopTime, int bufferSize) throws IOException {
+    Date simulationBegin;
+
+    public BulkSource(NTPClient ntp, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
         super(ntp, address, port, bufferSize, resetTime, stopTime);
+        this.simulationBegin = simulationBegin;
     }
 
     @Override
     public void execute() throws IOException {
         OutputStream out = socket.getOutputStream();
         int numberSend = 0;
-        if (super.sendBufferSize > 0) {
-            this.socket.setSendBufferSize(super.sendBufferSize);
-        }
+
         while (isRunning) {
             byte[] kByte = new byte[1000];
             long time = this.ntp.getCurrentTimeNormalized();
@@ -36,6 +37,8 @@ public class BulkSource extends Source {
             } catch (Exception e) {
                 // if source isn't running anymore and the socket fails, there is no need to print the stacktrace
                 if (isRunning) {
+                    double simTime = (time-simulationBegin.getTime())/1000.0;
+                    ConsoleLogger.log("Source: Exception at simTime " + simTime);
                     e.printStackTrace();
                 }
                 break;

@@ -32,11 +32,26 @@ public class Server implements Callable<Integer> {
     int connectedSinksPreTransmission = 0;
     int connectedSinksPostTransmission = 0;
 
+    File outDir = new File("./out/");
+
     @Override
     public Integer call() throws Exception {
+        clearOutFolder();
         initialHandshake();
         postHandshake();
         return 0;
+    }
+
+    public void clearOutFolder() throws IOException {
+        File[] files = outDir.listFiles((dir, name) -> name.endsWith(".csv"));
+        if (files != null) {
+            for (File file : files) {
+                boolean deleted = file.delete();
+                if (!deleted) {
+                    throw new IOException("Could not delete file " + file.getPath());
+                }
+            }
+        }
     }
 
     public void initialHandshake() throws IOException, InterruptedException {
@@ -127,7 +142,6 @@ public class Server implements Callable<Integer> {
     }
 
     private void mergeOutFiles() throws IOException {
-        File outDir = new File("./out/");
         File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith("sink_flow_") && name.endsWith(".csv"));
 
         if (csvFiles == null) {
@@ -153,11 +167,11 @@ public class Server implements Callable<Integer> {
         File outFile = new File(outDir, "goodput.csv");
         FileOutputStream out = new FileOutputStream(outFile);
         Writer outputStreamWriter = new OutputStreamWriter(out);
-        CSVPrinter cvsPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);
-        cvsPrinter.printRecords(headers);
-        cvsPrinter.printRecords(csvRecordsList);
-        cvsPrinter.flush();
-        cvsPrinter.close();
+        CSVPrinter csvPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);
+        csvPrinter.printRecord(headers);
+        csvPrinter.printRecords(csvRecordsList);
+        csvPrinter.flush();
+        csvPrinter.close();
 
         ConsoleLogger.log("Finished merging out files...");
     }

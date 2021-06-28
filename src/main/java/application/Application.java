@@ -3,10 +3,12 @@ package application;
 import general.ConsoleLogger;
 import general.NTPClient;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public abstract class Application {
+public abstract class Application implements Closeable {
     static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
 
     Date simulationBegin;
@@ -45,4 +47,7 @@ public abstract class Application {
     }
 
     protected abstract void doOnStart() throws Exception;
+
+    @Override
+    public abstract void close() throws IOException;
 }

@@ -15,22 +15,33 @@ public class LogSink extends Sink {
     String connectedAddress;
     int id;
     int mode;
+    Date simulationBegin;
+
+    File outFile;
+    BufferedWriter writer;
+
+    boolean closed = false;
 
     public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
-        super(ntp, port, receiveBufferSize, stopTime, new Object[]{filePath, simulationBegin});
+        super(ntp, port, receiveBufferSize, stopTime);
         this.id = id;
         this.mode = booleanToInt(mode);
+        this.simulationBegin = simulationBegin;
         createLogFile(filePath);
     }
 
     public void createLogFile(String filePath) throws IOException {
-        File outFile = new File(filePath);
+        outFile = new File(filePath);
         outFile.getParentFile().mkdirs();
-        BufferedWriter writer = new BufferedWriter(new FileWriter(outFile, false));
+        if (outFile.exists()) {
+            boolean deleted = outFile.delete();
+            if (!deleted) {
+                throw new IOException("Can not delete " + filePath);
+            }
+        }
+        writer = new BufferedWriter(new FileWriter(outFile, true));
         writer.write("time,flow,type,address,sink_gp,delay_data_ms");
         writer.newLine();
-        writer.flush();
-        writer.close();
     }
 
     @Override
@@ -62,9 +73,9 @@ public class LogSink extends Sink {
                 // log rcv bytes
                 this.rcvBytes += payload.length;
                 number++;
-                if (number >= 1000) {
+                if (number >= 100000) {
                     total++;
-                    ConsoleLogger.log("%s | received an MByte! [%s total]", connectedAddress, total);
+                    ConsoleLogger.log("%s | received 100 MByte! [%s total]", connectedAddress, total);
                     number = 0;
                 }
             }
@@ -74,9 +85,7 @@ public class LogSink extends Sink {
     }
 
     @Override
-    public void scheduledOperation(Object[] args) {
-        String filePath = (String) args[0];
-        Date simulationBegin = (Date) args[1];
+    public void scheduledOperation() {
 
         // trace values
         List<Long> currentDelay = delay;
@@ -108,15 +117,23 @@ public class LogSink extends Sink {
 
         // write to file
         try {
-            File outFile = new File(filePath);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(outFile, true));
             writer.write(String.format("%.06f,%d,%d,%s,%.02f,%.02f", simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
-            writer.flush();
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        if (closed) {
+            // already closed. Nothing to do
+            return;
+        }
+        writer.flush();
+        writer.close();
+        closed = true;
     }
 
     private int booleanToInt(boolean mode) {

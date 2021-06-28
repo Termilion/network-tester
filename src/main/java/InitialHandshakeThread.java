@@ -34,8 +34,8 @@ public class InitialHandshakeThread extends Thread {
     ObjectInputStream in;
     ObjectOutputStream out;
 
-    static final long SINK_WAIT_TIME = 5000;
-    static final long SOURCE_WAIT_TIME = 10000;
+    static final long SINK_WAIT_TIME = 1000;
+    static final long SOURCE_WAIT_TIME = 2000;
 
     public InitialHandshakeThread(Socket client, NTPClient ntp, int id, int simDuration, int resultPort) {
         this.client = client;
@@ -103,7 +103,7 @@ public class InitialHandshakeThread extends Thread {
 
         long current = ntp.getCurrentTimeNormalized();
         Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
-        Date stopTime = new Date(current + delay + simDuration * 1000L);
+        Date stopTime = new Date(current + simDuration * 1000L);
 
         return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime);
     }
