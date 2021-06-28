@@ -15,7 +15,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("BusyWait")
 public abstract class Source implements Closeable {
     Socket socket;
     int sendBufferSize;
@@ -65,7 +64,6 @@ public abstract class Source implements Closeable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
         long now = ntp.getCurrentTimeNormalized();
         long buffer = 5000L;

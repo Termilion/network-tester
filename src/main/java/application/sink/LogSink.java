@@ -17,6 +17,9 @@ public class LogSink extends Sink {
     File outFile;
     BufferedWriter writer;
 
+    int rcvBytes = 0;
+    List<Long> delay;
+
     boolean closed = false;
     long totalRcvBytes = 0;
     long totalRcvPackets = 0;
@@ -28,6 +31,7 @@ public class LogSink extends Sink {
         this.id = id;
         this.mode = booleanToInt(mode);
         this.simulationBegin = simulationBegin;
+        this.delay = Collections.synchronizedList(new ArrayList<>());
         createLogFile(filePath);
     }
 
@@ -66,6 +70,10 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.ntp.getCurrentTimeNormalized();
                 long delayTime = currentTime - sendTime;
+                ConsoleLogger.log("Delay is " + delayTime + "ms");
+                if (delayTime < 0) {
+                    throw new IllegalStateException("Negative delay");
+                }
                 delay.add(delayTime);
 
                 // log rcv bytes

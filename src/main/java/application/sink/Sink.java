@@ -20,9 +20,6 @@ public abstract class Sink implements Closeable {
 
     NTPClient ntp;
 
-    int rcvBytes = 0;
-    List<Long> delay;
-
     static final int TRACE_INTERVAL_IN_MS = 50;
     static final int LOG_INTERVAL_IN_MS = 1000;
 
@@ -33,7 +30,6 @@ public abstract class Sink implements Closeable {
 
     public Sink(NTPClient ntp, int port, int receiveBufferSize, Date stopTime) throws IOException {
         this.ntp = ntp;
-        this.delay = Collections.synchronizedList(new ArrayList<>());
 
         stopOn(stopTime);
 
