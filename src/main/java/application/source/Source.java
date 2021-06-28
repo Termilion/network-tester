@@ -52,8 +52,10 @@ public abstract class Source implements Closeable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        // if execute finishes earlier than the simulation (resetThread) lasts, keep waiting
-        resetThread.join();
+        if (resetThread != null) {
+            // if execute finishes earlier than the simulation (resetThread) lasts, keep waiting
+            resetThread.join();
+        }
         try {
             close();
         } catch (IOException e) {

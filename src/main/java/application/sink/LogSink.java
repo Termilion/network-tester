@@ -5,10 +5,7 @@ import general.NTPClient;
 import general.Utility;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class LogSink extends Sink {
 
@@ -21,6 +18,10 @@ public class LogSink extends Sink {
     BufferedWriter writer;
 
     boolean closed = false;
+    long totalRcvBytes = 0;
+    long totalRcvPackets = 0;
+    double lastGoodputMpbs = 0;
+    double lastDelay = 0;
 
     public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
         super(ntp, port, receiveBufferSize, stopTime);
@@ -54,9 +55,6 @@ public class LogSink extends Sink {
 
             byte[] payload = new byte[1000];
 
-            int number = 0;
-            int total = 0;
-
             while (isRunning) {
                 try {
                     dataInputStream.readFully(payload);
@@ -72,12 +70,8 @@ public class LogSink extends Sink {
 
                 // log rcv bytes
                 this.rcvBytes += payload.length;
-                number++;
-                if (number >= 100000) {
-                    total++;
-                    ConsoleLogger.log("%s | received 100 MByte! [%s total]", connectedAddress, total);
-                    number = 0;
-                }
+                this.totalRcvBytes += payload.length;
+                this.totalRcvPackets++;
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -85,8 +79,7 @@ public class LogSink extends Sink {
     }
 
     @Override
-    public void scheduledOperation() {
-
+    public void scheduledWriteOutput() {
         // trace values
         List<Long> currentDelay = delay;
 
@@ -98,6 +91,7 @@ public class LogSink extends Sink {
 
         // calculate metrics
         double goodput =  currentRcvMBits / traceIntervalInS;
+        lastGoodputMpbs = goodput;
 
         double delaySum = 0;
         for (long t : currentDelay) {
@@ -111,17 +105,25 @@ public class LogSink extends Sink {
         } else {
             avgDelay = delaySum / currentDelay.size();
         }
+        lastDelay = avgDelay;
 
         long currentTime = this.ntp.getCurrentTimeNormalized();
         double simTime = (currentTime-simulationBegin.getTime())/1000.0;
 
         // write to file
         try {
-            writer.write(String.format("%.06f,%d,%d,%s,%.02f,%.02f", simTime, id, mode, connectedAddress, goodput, avgDelay));
+            writer.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%.02f,%.02f", simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void scheduledLoggingOutput() {
+        long currentTime = this.ntp.getCurrentTimeNormalized();
+        double simTime = (currentTime-simulationBegin.getTime())/1000.0;
+        ConsoleLogger.log("%s | %.02fs | received %d packets, %d bytes [%.02f Mbps] [%.02f ms]", connectedAddress, simTime, totalRcvPackets, totalRcvBytes, lastGoodputMpbs, lastDelay);
     }
 
     @Override
@@ -131,9 +133,9 @@ public class LogSink extends Sink {
             // already closed. Nothing to do
             return;
         }
+        closed = true;
         writer.flush();
         writer.close();
-        closed = true;
     }
 
     private int booleanToInt(boolean mode) {

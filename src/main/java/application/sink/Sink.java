@@ -22,6 +22,7 @@ public abstract class Sink implements Closeable {
     List<Long> delay;
 
     static final int TRACE_INTERVAL_IN_MS = 50;
+    static final int LOG_INTERVAL_IN_MS = 1000;
 
     boolean isRunning = true;
 
@@ -45,16 +46,28 @@ public abstract class Sink implements Closeable {
                     Thread.sleep(TRACE_INTERVAL_IN_MS);
                     if (!isRunning)
                         break;
-                    scheduledOperation();
+                    scheduledWriteOutput();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();
 
+        new Thread(() -> {
+            try {
+                while (isRunning) {
+                    Thread.sleep(LOG_INTERVAL_IN_MS);
+                    if (!isRunning)
+                        break;
+                    scheduledLoggingOutput();
+                }
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }).start();
+
         while (isRunning) {
             try {
-                ConsoleLogger.log("Accepting new clients on " + socket.getLocalSocketAddress() + ":"+socket.getLocalPort());
                 client = socket.accept();
                 executeLogic();
             } catch (Exception e) {
@@ -105,7 +118,9 @@ public abstract class Sink implements Closeable {
         }).start();
     }
 
-    public abstract void scheduledOperation();
+    public abstract void scheduledWriteOutput();
+
+    public abstract void scheduledLoggingOutput();
 
     public abstract void executeLogic();
 }
