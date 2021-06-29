@@ -35,11 +35,11 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
     }
 
     protected volatile AtomicLong timerOffset = new AtomicLong(0);
+
     final static short PACKET_CLASS = 2700; // random
     static final Random r = new Random();
     static final String UPNP_ADDRESS = "239.255.255.250";
     static final int UPNP_MULTI_PORT = 1900;
-
     static final int BROADCAST_INTERVAL = 3000;
 
     final ByteBuffer bin, bout;
@@ -141,21 +141,18 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
                 try {
                     DecentralizedClockSync.this.bin.clear();
                     final DatagramPacket dp = new DatagramPacket(DecentralizedClockSync.this.bin.array(), DecentralizedClockSync.this.bin.capacity());
-                    ConsoleLogger.log("Waiting for next packet");
                     DecentralizedClockSync.this.ms.receive(dp);  // BLOCK HERE
                     DecentralizedClockSync.this.bin.rewind();
                     final long now = DecentralizedClockSync.this.getAdjustedTime();
                     final short pclass = DecentralizedClockSync.this.bin.getShort();
                     if (PACKET_CLASS != pclass) {
                         // Random packet, skipping
-                        ConsoleLogger.log("Random Packet");
                         continue;
                     }
 
                     final int id = DecentralizedClockSync.this.bin.getInt();
                     if (id == DecentralizedClockSync.this.myId) {
                         // My own packet, skipping
-                        ConsoleLogger.log("my own packet");
                         continue;
                     }
 
@@ -165,10 +162,9 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
                         continue;
                     }
 
-                    ConsoleLogger.log("Got relevant Packet: %d %d %d", pclass, id, ts);
                     final long ahead = ts - now;
                     DecentralizedClockSync.this.timerOffset.addAndGet(ahead >> 1);
-                    ConsoleLogger.log("Other peer is %d ahead of me, catching up halfway with a new offset of %d", ahead, timerOffset.get());
+                    ConsoleLogger.log("Other peer %d ms ahead, catching up halfway with a new offset of %d", ahead, timerOffset.get());
                 } catch (final IOException ex) {
                     ex.printStackTrace();
                     this.running = false;

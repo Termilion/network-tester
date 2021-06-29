@@ -50,6 +50,7 @@ public class Server implements Callable<Integer> {
         if (exclusive.distributedTime) {
             DecentralizedClockSync dcs = DecentralizedClockSync.getInstance();
             dcs.start();
+            timeClient = dcs;
         } else {
             timeClient = NTPClient.create(exclusive.ntpAddress);
         }
