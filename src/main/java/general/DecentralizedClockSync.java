@@ -163,10 +163,9 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
                     }
 
                     final long ahead = ts - now;
-                    DecentralizedClockSync.this.timerOffset.addAndGet(ahead >> 1);
-                    ConsoleLogger.log("Other peer %d ms ahead, catching up halfway with a new offset of %d", ahead, timerOffset.get());
+                    DecentralizedClockSync.this.timerOffset.addAndGet(ahead);
+                    ConsoleLogger.log("Other peer %d ms ahead, catching up with a new offset of %d", ahead, timerOffset.get());
                 } catch (final IOException ex) {
-                    ex.printStackTrace();
                     this.running = false;
                 }
             }

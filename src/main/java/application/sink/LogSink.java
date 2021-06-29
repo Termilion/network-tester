@@ -71,9 +71,14 @@ public class LogSink extends Sink {
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
                 ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s", sendTime, currentTime, delayTime);
-                if (delayTime < 0) {
-                    //TODO check why delay is negative
+                if (delayTime < -50) {
+                    // TODO check why delay is negative
+                    // if delay is less than epsilon (-50) abort. Something went wrong during time sync
                     throw new IllegalStateException("Negative delay");
+                }
+                if (delayTime < 0) {
+                    // if delay is within epsilon [-50:0] set to 0. Precision error during time sync.
+                    delayTime = 0;
                 }
                 delay.add(delayTime);
 
