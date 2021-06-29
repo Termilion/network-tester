@@ -1,1 +1,5 @@
 out/
+target/classes/
+target/maven-status/
+target/archive-tmp/
+target/generated-sources/
