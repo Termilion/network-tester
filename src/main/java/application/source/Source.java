@@ -1,12 +1,11 @@
 package application.source;
 
 import general.ConsoleLogger;
-import general.NTPClient;
+import general.TimeProvider;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,15 +22,15 @@ public abstract class Source implements Closeable {
     int resetTime;
     Date stopTime;
 
-    NTPClient ntp;
+    TimeProvider timeProvider;
 
-    boolean isRunning = true;
+    volatile boolean isRunning = true;
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
     public Source(
-            NTPClient ntp,
+            TimeProvider timeProvider,
             String address,
             int port,
             int sendBufferSize,
@@ -39,7 +38,7 @@ public abstract class Source implements Closeable {
             Date stopTime
     ) throws IOException {
         this.sendBufferSize = sendBufferSize;
-        this.ntp = ntp;
+        this.timeProvider = timeProvider;
         this.address = address;
         this.port = port;
         this.resetTime = resetTime;
@@ -65,7 +64,7 @@ public abstract class Source implements Closeable {
             e.printStackTrace();
         }
 
-        long now = ntp.getCurrentTimeNormalized();
+        long now = timeProvider.getAdjustedTime();
         long buffer = 5000L;
         long timeout = stopTime.getTime() - now + buffer;
         scheduler.awaitTermination(timeout, TimeUnit.MILLISECONDS);
@@ -110,7 +109,7 @@ public abstract class Source implements Closeable {
     }
 
     protected void stopOn(Date stopTime) {
-        long now = ntp.getCurrentTimeNormalized();
+        long now = timeProvider.getAdjustedTime();
         long duration = stopTime.getTime() - now;
         if (duration < 0) {
             throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);

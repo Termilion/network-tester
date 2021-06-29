@@ -19,7 +19,7 @@ public class ConsoleLogger {
     public static void log(String message, LOG_LEVEL level) {
         long currentTime;
         try {
-            currentTime = NTPClient.getInstance().getCurrentTimeNormalized();
+            currentTime = NTPClient.getInstance().getAdjustedTime();
         } catch (NullPointerException e) {
             currentTime = System.currentTimeMillis();
         }

@@ -5,13 +5,14 @@ import org.apache.commons.net.ntp.TimeInfo;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Date;
 
-public class NTPClient {
+public class NTPClient extends TimeProvider {
     String timeServer;
     long offset;
 
     private static NTPClient instance;
+
+    private NTPUDPClient timeClient;
 
     public static NTPClient getInstance() throws NullPointerException {
         synchronized (NTPClient.class) {
@@ -44,7 +45,7 @@ public class NTPClient {
     }
 
     private long getServerTime() throws IOException {
-        NTPUDPClient timeClient = new NTPUDPClient();
+        timeClient = new NTPUDPClient();
         InetAddress address = InetAddress.getByName(timeServer);
         TimeInfo timeInfo = timeClient.getTime(address);
         timeInfo.computeDetails();
@@ -52,17 +53,14 @@ public class NTPClient {
         return timeInfo.getOffset();
     }
 
-    public long getCurrentTimeNormalized() {
+    @Override
+    public long getAdjustedTime() {
         long currentTime = System.currentTimeMillis();
-        long normalized = currentTime + offset;
-        return normalized;
+        return currentTime + offset;
     }
 
-    public long normalize(long time) {
-        return time + offset;
-    }
-
-    public long normalize(Date time) {
-        return normalize(time.getTime());
+    @Override
+    public void close() throws IOException {
+        timeClient.close();
     }
 }

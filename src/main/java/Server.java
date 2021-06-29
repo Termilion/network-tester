@@ -1,6 +1,8 @@
 import application.Application;
 import general.ConsoleLogger;
+import general.DecentralizedClockSync;
 import general.NTPClient;
+import general.TimeProvider;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -20,8 +22,15 @@ public class Server implements Callable<Integer> {
 
     private int resultPort() { return port + 1; }
 
-    @CommandLine.Option(names = {"-n", "--ntp"}, defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
-    private String ntpAddress;
+    @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1")
+    Exclusive exclusive;
+
+    static class Exclusive {
+        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
+        private String ntpAddress;
+        @CommandLine.Option(names = "--distributedTime", description = "address of the ntp server")
+        private boolean distributedTime;
+    }
 
     @CommandLine.Option(names = {"-t", "--time"}, defaultValue = "30", description = "Simulation duration in seconds.")
     private int simDuration = 30;
@@ -34,8 +43,17 @@ public class Server implements Callable<Integer> {
 
     File outDir = new File("./out/");
 
+    TimeProvider timeClient;
+
     @Override
     public Integer call() throws Exception {
+        if (exclusive.distributedTime) {
+            DecentralizedClockSync dcs = DecentralizedClockSync.getInstance();
+            dcs.start();
+        } else {
+            timeClient = NTPClient.create(exclusive.ntpAddress);
+        }
+
         clearOutFolder();
         initialHandshake();
         postHandshake();
@@ -56,7 +74,6 @@ public class Server implements Callable<Integer> {
 
     public void initialHandshake() throws IOException, InterruptedException {
         ServerSocket socket = new ServerSocket(this.port);
-        NTPClient ntpClient = NTPClient.create(ntpAddress);
 
         ArrayList<InitialHandshakeThread> handshakeThreads = new ArrayList<>();
 
@@ -68,7 +85,7 @@ public class Server implements Callable<Integer> {
                     Socket client = socket.accept();
                     connected++;
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
-                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, ntpClient, connected, simDuration, resultPort());
+                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, connected, simDuration, resultPort());
                     clientThread.start();
                     handshakeThreads.add(clientThread);
                 } catch (IOException e) {
@@ -81,13 +98,14 @@ public class Server implements Callable<Integer> {
 
         // block until user input
         input.nextLine();
+        timeClient.close();
         ConsoleLogger.log("starting simulation ...");
         startedTransmission = true;
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
 
         // simulation begin is now
-        long current = ntpClient.getCurrentTimeNormalized();
+        long current = timeClient.getAdjustedTime();
         Date simulationBegin = new Date(current);
 
         for (InitialHandshakeThread thread: handshakeThreads) {
@@ -101,7 +119,7 @@ public class Server implements Callable<Integer> {
                         thread.sendInstructions(simulationBegin);
                         Application app = thread.getApplication(simulationBegin);
                         // use the same thread to start the transmitting/receiving application
-                        app.start(ntpClient);
+                        app.start(timeClient);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

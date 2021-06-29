@@ -1,20 +1,19 @@
 package application.source;
 
 import general.ConsoleLogger;
-import general.NTPClient;
+import general.TimeProvider;
 import general.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.SocketException;
 import java.util.Date;
 
 public class BulkSource extends Source {
 
     Date simulationBegin;
 
-    public BulkSource(NTPClient ntp, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
-        super(ntp, address, port, bufferSize, resetTime, stopTime);
+    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
+        super(timeProvider, address, port, bufferSize, resetTime, stopTime);
         this.simulationBegin = simulationBegin;
     }
 
@@ -25,7 +24,7 @@ public class BulkSource extends Source {
 
         while (isRunning) {
             byte[] kByte = new byte[1000];
-            long time = this.ntp.getCurrentTimeNormalized();
+            long time = this.timeProvider.getAdjustedTime();
 
             try {
                 out.write(Utility.encodeTime(kByte, time));

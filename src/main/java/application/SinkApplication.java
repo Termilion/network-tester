@@ -2,8 +2,7 @@ package application;
 
 import application.sink.LogSink;
 import application.sink.Sink;
-import general.ConsoleLogger;
-import general.NTPClient;
+import general.TimeProvider;
 
 import java.io.IOException;
 
@@ -14,15 +13,15 @@ public class SinkApplication extends Application {
     int id;
     boolean mode;
 
-    NTPClient ntp;
+    TimeProvider timeProvider;
 
     Sink sink;
 
-    public SinkApplication(int port, int rcvBufferSize, NTPClient ntp, String filePath, int id, boolean mode) {
+    public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode) {
         this.filePath = filePath;
         this.port = port;
         this.rcvBufferSize = rcvBufferSize;
-        this.ntp = ntp;
+        this.timeProvider = timeProvider;
         this.id = id;
         this.mode = mode;
     }
@@ -31,7 +30,7 @@ public class SinkApplication extends Application {
     public void doOnStart() throws Exception {
         try {
             sink = new LogSink(
-                    this.ntp,
+                    this.timeProvider,
                     this.port,
                     this.rcvBufferSize,
                     filePath,

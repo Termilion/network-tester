@@ -1,7 +1,7 @@
 package application.sink;
 
 import general.ConsoleLogger;
-import general.NTPClient;
+import general.TimeProvider;
 import general.Utility;
 
 import java.io.*;
@@ -26,8 +26,8 @@ public class LogSink extends Sink {
     double lastGoodputMpbs = 0;
     double lastDelay = 0;
 
-    public LogSink(NTPClient ntp, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
-        super(ntp, port, receiveBufferSize, stopTime);
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
+        super(timeProvider, port, receiveBufferSize, stopTime);
         this.id = id;
         this.mode = booleanToInt(mode);
         this.simulationBegin = simulationBegin;
@@ -68,7 +68,7 @@ public class LogSink extends Sink {
                 }
                 // calc delay
                 long sendTime = Utility.decodeTime(payload);
-                long currentTime = this.ntp.getCurrentTimeNormalized();
+                long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
                 ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s", sendTime, currentTime, delayTime);
                 if (delayTime < 0) {
@@ -116,7 +116,7 @@ public class LogSink extends Sink {
         }
         lastDelay = avgDelay;
 
-        long currentTime = this.ntp.getCurrentTimeNormalized();
+        long currentTime = this.timeProvider.getAdjustedTime();
         double simTime = (currentTime-simulationBegin.getTime())/1000.0;
 
         // write to file
@@ -130,7 +130,7 @@ public class LogSink extends Sink {
 
     @Override
     public void scheduledLoggingOutput() {
-        long currentTime = this.ntp.getCurrentTimeNormalized();
+        long currentTime = this.timeProvider.getAdjustedTime();
         double simTime = (currentTime-simulationBegin.getTime())/1000.0;
         ConsoleLogger.log("%s | %.02fs | received %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, simTime, totalRcvPackets, lastGoodputMpbs, lastDelay);
     }

@@ -16,8 +16,15 @@ public class Client implements Callable<Integer> {
     private String address;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
-    @CommandLine.Option(names = {"-n", "--ntp"}, defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
-    private String ntpAddress;
+    @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1")
+    Exclusive exclusive;
+
+    static class Exclusive {
+        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
+        private String ntpAddress;
+        @CommandLine.Option(names = "--distributedTime", description = "address of the ntp server")
+        private boolean distributedTime;
+    }
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
     private boolean mode;
     @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
@@ -31,10 +38,16 @@ public class Client implements Callable<Integer> {
     @CommandLine.Option(names = {"-rb", "--rcvBuf"}, description = "size of the tcp receive buffer in bytes")
     private int rcvBuf = -1;
 
-    private NTPClient ntp;
+    TimeProvider timeClient;
 
     @Override
     public Integer call() throws Exception {
+        if (exclusive.distributedTime) {
+            DecentralizedClockSync dcs = DecentralizedClockSync.getInstance();
+            dcs.start();
+        } else {
+            timeClient = NTPClient.create(exclusive.ntpAddress);
+        }
 
         InstructionMessage msg = initialHandshake();
 
@@ -48,8 +61,8 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("Client startTime %s", startTime);
         ConsoleLogger.log("Client stopTime %s", stopTime);
 
-
         ConsoleLogger.log("connection closed");
+        timeClient.close();
 
         ConsoleLogger.log("building application");
         Application app = buildApplication(id, address, appPort);
@@ -65,8 +78,6 @@ public class Client implements Callable<Integer> {
     }
 
     public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
-        ntp = NTPClient.create(ntpAddress);
-
         ConsoleLogger.log("connecting to: %s", address);
         Socket socket = new Socket(address, port);
         ConsoleLogger.log("connection established");
@@ -89,9 +100,9 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.uplink) {
-            app = new SourceApplication(this.mode, ipaddress, appPort, ntp, resetTime, this.sndBuf);
+            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, ntp, String.format("./out/sink_flow_%d_%s.csv", id, getModeString()), id, mode);
+            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/sink_flow_%d_%s.csv", id, getModeString()), id, mode);
         }
         return app;
     }
@@ -110,7 +121,7 @@ public class Client implements Callable<Integer> {
     }
 
     public void scheduleApplicationStart(Date simulationBegin, Date startTime, Application app, Date stopTime) throws Exception {
-        app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).start(ntp);
+        app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).start(timeClient);
     }
 
     public void postHandshake(int id, int resultPort, String logFilePath) throws Exception {

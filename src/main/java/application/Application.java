@@ -2,6 +2,7 @@ package application;
 
 import general.ConsoleLogger;
 import general.NTPClient;
+import general.TimeProvider;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -33,12 +34,12 @@ public abstract class Application implements Closeable {
         return this;
     }
 
-    public final void start(NTPClient ntp) throws Exception {
+    public final void start(TimeProvider timeProvider) throws Exception {
         if (simulationBegin == null || startTime == null || stopTime == null) {
             throw new InstantiationException("simulationBegin, startTime or stopTime was not set");
         }
 
-        long current = ntp.getCurrentTimeNormalized();
+        long current = timeProvider.getAdjustedTime();
         long waitTime = startTime.getTime() - current;
         ConsoleLogger.log("scheduled transmission in %s ms", waitTime);
         Thread.sleep(waitTime);

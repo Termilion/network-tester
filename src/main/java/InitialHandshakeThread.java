@@ -1,10 +1,7 @@
 import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
-import general.ConsoleLogger;
-import general.InstructionMessage;
-import general.NTPClient;
-import general.NegotiationMessage;
+import general.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -26,7 +23,7 @@ public class InitialHandshakeThread extends Thread {
     int resultPort;
 
     Application app;
-    NTPClient ntp;
+    TimeProvider timeProvider;
 
     ObjectInputStream in;
     ObjectOutputStream out;
@@ -34,11 +31,11 @@ public class InitialHandshakeThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public InitialHandshakeThread(Socket client, NTPClient ntp, int id, int simDuration, int resultPort) {
+    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int id, int simDuration, int resultPort) {
         this.client = client;
         this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = id;
-        this.ntp = ntp;
+        this.timeProvider = timeProvider;
         this.simDuration = simDuration;
         this.resultPort = resultPort;
 
@@ -72,13 +69,13 @@ public class InitialHandshakeThread extends Thread {
                 app = new SinkApplication(
                         clientPort,
                         rcvBuf,
-                        ntp,
+                        timeProvider,
                         String.format("./out/sink_flow_%d_%s.csv", id, getModeString()),
                         id,
                         mode
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, ntp, resetTime, sndBuf);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {

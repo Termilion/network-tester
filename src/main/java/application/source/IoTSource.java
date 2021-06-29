@@ -2,11 +2,11 @@ package application.source;
 
 import general.ConsoleLogger;
 import general.NTPClient;
+import general.TimeProvider;
 import general.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Date;
 
 public class IoTSource extends Source {
@@ -14,8 +14,8 @@ public class IoTSource extends Source {
     public static final double IOT_DATA_SIZE = 1e6;
     Date simulationBegin;
 
-    public IoTSource(NTPClient ntp, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
-        super(ntp, address, port, bufferSize, resetTime, stopTime);
+    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
+        super(timeProvider, address, port, bufferSize, resetTime, stopTime);
         this.simulationBegin = simulationBegin;
     }
 
@@ -27,7 +27,7 @@ public class IoTSource extends Source {
         double maxNumberOfPackets = Math.ceil(IOT_DATA_SIZE / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
             byte[] kByte = new byte[1000];
-            long time = this.ntp.getCurrentTimeNormalized();
+            long time = this.timeProvider.getAdjustedTime();
 
             if (isRunning) {
                 try {

@@ -1,13 +1,12 @@
 package application.sink;
 
 import general.ConsoleLogger;
-import general.NTPClient;
+import general.TimeProvider;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -18,18 +17,18 @@ public abstract class Sink implements Closeable {
     ServerSocket socket;
     Socket client;
 
-    NTPClient ntp;
+    TimeProvider timeProvider;
 
     static final int TRACE_INTERVAL_IN_MS = 50;
     static final int LOG_INTERVAL_IN_MS = 1000;
 
-    boolean isRunning = true;
+    volatile boolean isRunning = true;
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(NTPClient ntp, int port, int receiveBufferSize, Date stopTime) throws IOException {
-        this.ntp = ntp;
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, Date stopTime) throws IOException {
+        this.timeProvider = timeProvider;
 
         stopOn(stopTime);
 
@@ -84,7 +83,7 @@ public abstract class Sink implements Closeable {
     }
 
     protected void stopOn(Date stopTime) {
-        long now = ntp.getCurrentTimeNormalized();
+        long now = timeProvider.getAdjustedTime();
         long duration = stopTime.getTime() - now;
         if (duration < 0) {
             throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
