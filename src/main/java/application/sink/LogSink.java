@@ -70,7 +70,7 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.ntp.getCurrentTimeNormalized();
                 long delayTime = currentTime - sendTime;
-                ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s, bytes %s", sendTime, currentTime, delayTime, Arrays.toString(payload));
+                ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s", sendTime, currentTime, delayTime);
                 if (delayTime < 0) {
                     //TODO check why delay is negative
                     throw new IllegalStateException("Negative delay");
