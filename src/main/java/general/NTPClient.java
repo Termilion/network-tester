@@ -54,7 +54,7 @@ public class NTPClient {
 
     public long getCurrentTimeNormalized() {
         long currentTime = System.currentTimeMillis();
-        long normalized = currentTime - offset;
+        long normalized = currentTime + offset;
         return normalized;
     }
 
