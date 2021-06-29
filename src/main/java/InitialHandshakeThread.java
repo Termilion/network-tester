@@ -7,20 +7,17 @@ import general.NTPClient;
 import general.NegotiationMessage;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class InitialHandshakeThread extends Thread {
-    static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
 
     private final Socket client;
 
     boolean uplink;
     boolean mode;
     int resetTime;
-    int delay;
+    int extraDelay;
     int id;
     int simDuration;
 
@@ -64,7 +61,7 @@ public class InitialHandshakeThread extends Thread {
             ConsoleLogger.log("%s | received negotiation message", client.getInetAddress());
             this.uplink = negotiation.isUplink();
             this.mode = negotiation.isIoT();
-            this.delay = negotiation.getStartDelay();
+            this.extraDelay = negotiation.getStartDelay();
             this.clientPort = negotiation.getPort() + (5 * id);
             this.resetTime = negotiation.getResetTime();
             int sndBuf = negotiation.getSndBuf();
@@ -101,18 +98,18 @@ public class InitialHandshakeThread extends Thread {
         ConsoleLogger.log("%s | building local application", client.getInetAddress());
         // schedule application start
 
-        long current = ntp.getCurrentTimeNormalized();
-        Date startTime = this.uplink ? new Date(current + SINK_WAIT_TIME + delay) : new Date(current + SOURCE_WAIT_TIME + delay);
-        Date stopTime = new Date(current + simDuration * 1000L);
+        long begin = simulationBegin.getTime();
+        Date startTime = this.uplink ? new Date(begin + SINK_WAIT_TIME + extraDelay) : new Date(begin + SOURCE_WAIT_TIME + extraDelay);
+        Date stopTime = new Date(begin + simDuration * 1000L);
 
         return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime);
     }
 
     public void sendInstructions(Date simulationBegin) {
         // negotiate start time
-        long current = ntp.getCurrentTimeNormalized();
-        Date startTime = this.uplink ? new Date(current + SOURCE_WAIT_TIME + delay) : new Date(current + SINK_WAIT_TIME + delay);
-        Date stopTime = new Date(current + simDuration * 1000L);
+        long begin = simulationBegin.getTime();
+        Date startTime = this.uplink ? new Date(begin + SOURCE_WAIT_TIME + extraDelay) : new Date(begin + SINK_WAIT_TIME + extraDelay);
+        Date stopTime = new Date(begin + simDuration * 1000L);
 
         ConsoleLogger.log("%s | sending instruction message. Begin: %s Start: %s Stop: %s", client.getInetAddress(), simulationBegin, startTime, stopTime);
         try {

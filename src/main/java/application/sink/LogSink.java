@@ -70,8 +70,9 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.ntp.getCurrentTimeNormalized();
                 long delayTime = currentTime - sendTime;
-                ConsoleLogger.log("Delay is " + delayTime + "ms");
+                ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s, bytes %s", sendTime, currentTime, delayTime, Arrays.toString(payload));
                 if (delayTime < 0) {
+                    //TODO check why delay is negative
                     throw new IllegalStateException("Negative delay");
                 }
                 delay.add(delayTime);
@@ -131,16 +132,16 @@ public class LogSink extends Sink {
     public void scheduledLoggingOutput() {
         long currentTime = this.ntp.getCurrentTimeNormalized();
         double simTime = (currentTime-simulationBegin.getTime())/1000.0;
-        ConsoleLogger.log("%s | %.02fs | received %d packets, %d bytes [%.02f Mbps] [%.02f ms]", connectedAddress, simTime, totalRcvPackets, totalRcvBytes, lastGoodputMpbs, lastDelay);
+        ConsoleLogger.log("%s | %.02fs | received %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, simTime, totalRcvPackets, lastGoodputMpbs, lastDelay);
     }
 
     @Override
     public void close() throws IOException {
-        super.close();
         if (closed) {
             // already closed. Nothing to do
             return;
         }
+        super.close();
         closed = true;
         writer.flush();
         writer.close();

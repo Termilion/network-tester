@@ -82,7 +82,7 @@ public abstract class Source implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         isRunning = false;
         scheduler.shutdown();
         for (ScheduledFuture<?> sf : scheduledTasks) {
@@ -119,7 +119,7 @@ public abstract class Source implements Closeable {
         scheduledTasks.add(scheduler.schedule(() -> {
             try {
                 isRunning = false;
-                ConsoleLogger.log("%s | stopping sink", socket.getInetAddress().getHostAddress());
+                ConsoleLogger.log("%s | stopping source", socket.getInetAddress().getHostAddress());
                 close();
             } catch (Exception e) {
                 e.printStackTrace();

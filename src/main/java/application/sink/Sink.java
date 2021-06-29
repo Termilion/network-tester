@@ -70,7 +70,7 @@ public abstract class Sink implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         isRunning = false;
         scheduler.shutdown();
         for (ScheduledFuture<?> sf : scheduledTasks) {

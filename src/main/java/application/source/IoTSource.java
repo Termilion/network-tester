@@ -6,6 +6,7 @@ import general.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Date;
 
 public class IoTSource extends Source {
@@ -30,7 +31,9 @@ public class IoTSource extends Source {
 
             if (isRunning) {
                 try {
-                    out.write(Utility.encodeTime(kByte, time));
+                    byte[] bytes = Utility.encodeTime(kByte, time);
+                    out.write(bytes);
+                    ConsoleLogger.log("Sending paket: SendTime %s, bytes %s", time, Arrays.toString(bytes));
                     out.flush();
                     numberSend++;
                     if (numberSend % 1000 == 0) {
