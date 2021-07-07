@@ -1,7 +1,6 @@
 package application.source;
 
 import general.ConsoleLogger;
-import general.NTPClient;
 import general.TimeProvider;
 import general.Utility;
 
@@ -33,7 +32,6 @@ public class IoTSource extends Source {
                 try {
                     byte[] bytes = Utility.encodeTime(kByte, time);
                     out.write(bytes);
-                    ConsoleLogger.log("Sending paket: SendTime %s", time);
                     out.flush();
                     numberSend++;
                     if (numberSend % 1000 == 0) {

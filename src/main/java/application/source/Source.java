@@ -77,6 +77,7 @@ public abstract class Source implements Closeable {
     }
 
     protected void connect(String address, int port) throws IOException {
+        ConsoleLogger.log("Source: Connecting to %s:%s", address, port);
         socket = new Socket(address, port);
     }
 

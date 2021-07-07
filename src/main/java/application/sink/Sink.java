@@ -7,7 +7,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -32,8 +34,8 @@ public abstract class Sink implements Closeable {
 
         stopOn(stopTime);
 
+        ConsoleLogger.log("Opening sink on port %s", port);
         socket = new ServerSocket(port);
-        ConsoleLogger.log("opened sink on address %s:%s", socket.getInetAddress().getHostAddress(), port);
         if (receiveBufferSize > 0) {
             socket.setReceiveBufferSize(receiveBufferSize);
         }

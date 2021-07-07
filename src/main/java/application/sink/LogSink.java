@@ -70,7 +70,6 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
-                ConsoleLogger.log("Received paket: SendTime %s CurrentTime %s Delay %s", sendTime, currentTime, delayTime);
                 if (delayTime < -50) {
                     // TODO check why delay is negative
                     // if delay is less than epsilon (-50) abort. Something went wrong during time sync
@@ -141,7 +140,7 @@ public class LogSink extends Sink {
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         if (closed) {
             // already closed. Nothing to do
             return;

@@ -12,6 +12,7 @@ import picocli.CommandLine;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -35,11 +36,13 @@ public class Server implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--time"}, defaultValue = "30", description = "Simulation duration in seconds.")
     private int simDuration = 30;
 
+    @CommandLine.Option(names = "--runs", defaultValue = "15", description = "Number of repetitions that are performed")
+    private int runs = 15;
+
     boolean startedTransmission = false;
 
-    int connected = 0;
-    int connectedSinksPreTransmission = 0;
-    int connectedSinksPostTransmission = 0;
+    int connectedPreTransmission = 0;
+    int connectedPostTransmission = 0;
 
     File outDir = new File("./out/");
 
@@ -48,16 +51,22 @@ public class Server implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         if (exclusive.distributedTime) {
-            DecentralizedClockSync dcs = DecentralizedClockSync.getInstance();
-            dcs.start();
-            timeClient = dcs;
+            timeClient = DecentralizedClockSync.getInstance();
         } else {
             timeClient = NTPClient.create(exclusive.ntpAddress);
         }
 
         clearOutFolder();
-        initialHandshake();
-        postHandshake();
+        for (int run = 0; run < runs; run++) {
+            ConsoleLogger.log("Initializing run %d", run);
+            timeClient.startSyncTime();
+            List<InitialHandshakeThread> initialHandshakeThreads = initialHandshake();
+            timeClient.stopSyncTime();
+            transmission(initialHandshakeThreads);
+            boolean reconnectAfterPostHandshake = (run < runs);
+            postHandshake(run, reconnectAfterPostHandshake);
+        }
+        timeClient.close();
         return 0;
     }
 
@@ -73,8 +82,10 @@ public class Server implements Callable<Integer> {
         }
     }
 
-    public void initialHandshake() throws IOException, InterruptedException {
+    public List<InitialHandshakeThread> initialHandshake() throws IOException {
+        ConsoleLogger.log("Opening InitialHandshake Socket on port %s", this.port);
         ServerSocket socket = new ServerSocket(this.port);
+        startedTransmission = false;
 
         ArrayList<InitialHandshakeThread> handshakeThreads = new ArrayList<>();
 
@@ -84,13 +95,17 @@ public class Server implements Callable<Integer> {
             while (!startedTransmission) {
                 try {
                     Socket client = socket.accept();
-                    connected++;
+                    connectedPreTransmission++;
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
-                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, connected, simDuration, resultPort());
+                    int defaultId = connectedPreTransmission - 1;
+                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort());
                     clientThread.start();
                     handshakeThreads.add(clientThread);
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    if (!(e instanceof SocketException && startedTransmission)) {
+                        // print any error that is not a SocketException and every SocketException that occurs while transmission hasn't started yet
+                        e.printStackTrace();
+                    }
                 }
             }
         }).start();
@@ -99,34 +114,37 @@ public class Server implements Callable<Integer> {
 
         // block until user input
         input.nextLine();
-        timeClient.close();
-        ConsoleLogger.log("starting simulation ...");
         startedTransmission = true;
+        socket.close();
+
+        return handshakeThreads;
+    }
+
+    public void transmission(List<InitialHandshakeThread> handshakeThreads) throws InterruptedException {
+        ConsoleLogger.log("starting simulation ...");
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
 
         // simulation begin is now
         long current = timeClient.getAdjustedTime();
         Date simulationBegin = new Date(current);
+        ConsoleLogger.simulationBegin = simulationBegin;
 
-        for (InitialHandshakeThread thread: handshakeThreads) {
-            if (!thread.uplink) {
-                connectedSinksPreTransmission++;
-            }
+        for (InitialHandshakeThread thread : handshakeThreads) {
             ConsoleLogger.log("send instructions to node %s", thread.id);
-                Thread transmissionThread = new Thread(() -> {
-                    try {
-                        // send the initial instructions
-                        thread.sendInstructions(simulationBegin);
-                        Application app = thread.getApplication(simulationBegin);
-                        // use the same thread to start the transmitting/receiving application
-                        app.start(timeClient);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
-                transmissionThread.start();
-                transmissionThreads.add(transmissionThread);
+            Thread transmissionThread = new Thread(() -> {
+                try {
+                    // send the initial instructions
+                    thread.sendInstructions(simulationBegin);
+                    Application app = thread.getApplication(simulationBegin);
+                    // use the same thread to start the transmitting/receiving application
+                    app.start(timeClient);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+            transmissionThread.start();
+            transmissionThreads.add(transmissionThread);
         }
 
         // wait for all threads to complete
@@ -137,31 +155,34 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.log("simulation finished ...");
     }
 
-    public void postHandshake() throws IOException, InterruptedException {
+    public void postHandshake(int run, boolean reconnectAfterPostHandshake) throws IOException, InterruptedException {
+        ConsoleLogger.log("Opening PostHandshake socket on port %s", this.resultPort());
         ServerSocket socket = new ServerSocket(this.resultPort());
         ConsoleLogger.log("Waiting to receive results...");
 
         ArrayList<Thread> threads = new ArrayList<>();
 
-        while (connectedSinksPostTransmission < connectedSinksPreTransmission) {
+        while (connectedPostTransmission < connectedPreTransmission) {
             Socket client = socket.accept();
-            connectedSinksPostTransmission++;
+            connectedPostTransmission++;
             ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
-            PostHandshakeThread clientThread = new PostHandshakeThread(client);
+            PostHandshakeThread clientThread = new PostHandshakeThread(client, run, reconnectAfterPostHandshake);
             clientThread.start();
             threads.add(clientThread);
         }
+
+        socket.close();
 
         // wait for all threads to complete
         for (Thread thread : threads) {
             thread.join();
         }
 
-        mergeOutFiles();
+        mergeOutFiles(run);
     }
 
-    private void mergeOutFiles() throws IOException {
-        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith("sink_flow_") && name.endsWith(".csv"));
+    private void mergeOutFiles(int run) throws IOException {
+        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith(String.format("sink_run_%d", run)) && name.endsWith(".csv"));
 
         if (csvFiles == null) {
             throw new FileNotFoundException("No csv files found!");
@@ -183,7 +204,7 @@ public class Server implements Callable<Integer> {
         Comparator<CSVRecord> comparator = Comparator.comparing(r -> Float.valueOf(r.get("time")));
         csvRecordsList.sort(comparator);
 
-        File outFile = new File(outDir, "goodput.csv");
+        File outFile = new File(outDir, String.format("hardware-%d-goodput.csv", run));
         FileOutputStream out = new FileOutputStream(outFile);
         Writer outputStreamWriter = new OutputStreamWriter(out);
         CSVPrinter csvPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);

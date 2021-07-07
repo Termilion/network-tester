@@ -1,17 +1,16 @@
-import application.Application;
-import application.SinkApplication;
-import application.SourceApplication;
-import general.*;
+import general.ConsoleLogger;
+import general.ResultMessage;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
 
 public class PostHandshakeThread extends Thread {
     private final Socket client;
+    int run;
+    boolean reconnectAfterPostHandshake;
 
     boolean uplink;
     boolean mode;
@@ -21,13 +20,17 @@ public class PostHandshakeThread extends Thread {
     InetAddress clientAddress;
 
     ObjectInputStream in;
-    //ObjectOutputStream out;
+    ObjectOutputStream out;
 
-    public PostHandshakeThread(Socket client) {
+    public PostHandshakeThread(Socket client, int run, boolean reconnectAfterPostHandshake) {
         this.client = client;
         this.clientAddress = client.getInetAddress();
+        this.run = run;
+        this.reconnectAfterPostHandshake = reconnectAfterPostHandshake;
 
         try {
+            this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
+            this.out.flush();
             this.in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
             ConsoleLogger.log("connection to client: %s successful", client.getInetAddress());
         } catch (IOException e) {
@@ -46,8 +49,14 @@ public class PostHandshakeThread extends Thread {
             this.id = result.getId();
             this.fileContent = result.getFileContent();
 
-            Path path = new File(String.format("./out/sink_flow_%d_%s.csv", id, getModeString())).toPath();
-            Files.write(path, fileContent);
+            ConsoleLogger.log("%s | sending whether reconnect after handshake", client.getInetAddress());
+            out.writeObject(reconnectAfterPostHandshake);
+            out.flush();
+
+            if (!uplink) {
+                Path path = new File(String.format("./out/sink_run_%d_flow_%d_%s.csv", run, id, getModeString())).toPath();
+                Files.write(path, fileContent);
+            }
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();
         }

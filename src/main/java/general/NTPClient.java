@@ -8,7 +8,7 @@ import java.net.InetAddress;
 
 public class NTPClient extends TimeProvider {
     String timeServer;
-    long offset;
+    volatile long offset;
 
     private static NTPClient instance;
 
@@ -24,7 +24,7 @@ public class NTPClient extends TimeProvider {
         }
     }
 
-    public static NTPClient create(String timeServer) throws IOException {
+    public static NTPClient create(String timeServer) {
         if (instance == null) {
             synchronized (NTPClient.class) {
                 if (instance == null) {
@@ -37,9 +37,13 @@ public class NTPClient extends TimeProvider {
         return instance;
     }
 
-    private NTPClient(String timeServer) throws IOException {
-        ConsoleLogger.log(String.format("started ntp process to address: %s", timeServer));
+    private NTPClient(String timeServer) {
         this.timeServer = timeServer;
+    }
+
+    @Override
+    public void startSyncTime() throws IOException {
+        ConsoleLogger.log(String.format("started ntp process to address: %s", timeServer));
         this.offset = getServerTime();
         ConsoleLogger.log("finished ntp process");
     }

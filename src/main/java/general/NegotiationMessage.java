@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class NegotiationMessage implements Serializable {
 
+    int previousId = -1;
     private boolean flowMode;
     private boolean flowDirection;
     int startDelay;
@@ -28,6 +29,10 @@ public class NegotiationMessage implements Serializable {
         this.resetTime = resetTime;
         this.sndBuf = sndBuf;
         this.rcvBuf = rcvBuf;
+    }
+
+    public void setPreviousId(int previousId) {
+        this.previousId = previousId;
     }
 
     public int getPort() {
@@ -72,5 +77,13 @@ public class NegotiationMessage implements Serializable {
 
     public int getResetTime() {
         return resetTime;
+    }
+
+    public boolean hasPreviousId() {
+        return previousId != -1;
+    }
+
+    public int getPreviousId() {
+        return previousId;
     }
 }

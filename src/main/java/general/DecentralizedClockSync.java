@@ -47,9 +47,9 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
     final InetAddress group;
     final MulticastSocket ms;
     final int myId;
-    final ReceiveThread rc = new ReceiveThread();
-    final Thread receiveThread = new Thread(rc);
-    final Timer broadcastTask = new Timer();
+    final ReceiveRunnable rc = new ReceiveRunnable();
+    Thread receiveThread;
+    Timer broadcastTask;
 
     private DecentralizedClockSync() throws IOException {
         this.ms = new MulticastSocket(null);
@@ -81,23 +81,25 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
     /**
      * Don't forget to run this!
      */
-    public void start() {
+    @Override
+    public void startSyncTime() {
+        this.receiveThread = new Thread(rc);
         this.receiveThread.start();
+        this.broadcastTask = new Timer();
         this.broadcastTask.schedule(new BroadcastTask(), 0, BROADCAST_INTERVAL);
     }
 
     /**
      * Don't bother stopping it if you are ok with the overhead, in case new clients join
      */
-    public void stop() {
+    @Override
+    public void stopSyncTime() {
         this.rc.running = false;
         this.broadcastTask.cancel();
     }
 
     @Override
     public void close() throws IOException {
-        stop();
-
         if (!this.ms.isClosed()) {
             if (this.ms.isBound() && !this.ms.isClosed()) {
                 this.ms.leaveGroup(this.group);
@@ -123,14 +125,14 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
             } catch (final IOException ex) {
                 ex.printStackTrace();
             }
-            ConsoleLogger.log("Sent ClockSync ping");
+            //ConsoleLogger.log("Sent ClockSync ping");
         }
     }
 
     /**
      * Blocking thread for getting timer packets
      */
-    final class ReceiveThread implements Runnable {
+    final class ReceiveRunnable implements Runnable {
 
         boolean running = false;
 

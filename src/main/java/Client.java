@@ -25,6 +25,7 @@ public class Client implements Callable<Integer> {
         @CommandLine.Option(names = "--distributedTime", description = "address of the ntp server")
         private boolean distributedTime;
     }
+
     @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
     private boolean mode;
     @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
@@ -37,49 +38,63 @@ public class Client implements Callable<Integer> {
     private int sndBuf = -1;
     @CommandLine.Option(names = {"-rb", "--rcvBuf"}, description = "size of the tcp receive buffer in bytes")
     private int rcvBuf = -1;
+    @CommandLine.Option(names = "--id", description = "The id of this node. If not set, id will be sequentially chosen by the server.", defaultValue = "-1")
+    int id = -1;
 
     TimeProvider timeClient;
 
     @Override
     public Integer call() throws Exception {
         if (exclusive.distributedTime) {
-            DecentralizedClockSync dcs = DecentralizedClockSync.getInstance();
-            dcs.start();
-            timeClient = dcs;
+            timeClient = DecentralizedClockSync.getInstance();
         } else {
             timeClient = NTPClient.create(exclusive.ntpAddress);
         }
 
-        InstructionMessage msg = initialHandshake();
+        boolean reconnectAfterPostHandshake;
+        do {
+            timeClient.startSyncTime();
+            InstructionMessage msg = initialHandshake();
 
-        int id = msg.getId();
-        int appPort = msg.getServerPort();
-        int resultPort = msg.getResultPort();
-        Date simulationBegin = msg.getSimulationBegin();
-        Date startTime = msg.getStartTime();
-        Date stopTime = msg.getStopTime();
-        ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
-        ConsoleLogger.log("Client startTime %s", startTime);
-        ConsoleLogger.log("Client stopTime %s", stopTime);
+            if (id == -1) {
+                id = msg.getId();
+            }
+            int appPort = msg.getServerPort();
+            int resultPort = msg.getResultPort();
+            Date simulationBegin = msg.getSimulationBegin();
+            Date startTime = msg.getStartTime();
+            Date stopTime = msg.getStopTime();
+            ConsoleLogger.simulationBegin = simulationBegin;
+            ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
+            ConsoleLogger.log("Client startTime %s", startTime);
+            ConsoleLogger.log("Client stopTime %s", stopTime);
 
-        ConsoleLogger.log("connection closed");
+            ConsoleLogger.log("connection closed");
+            timeClient.stopSyncTime();
+
+            ConsoleLogger.log("building application");
+            Application app = buildApplication(id, address, appPort);
+
+            scheduleApplicationStart(simulationBegin, startTime, app, stopTime);
+
+            String path = null;
+            if (!uplink) {
+                path = ((SinkApplication) app).getFilePath();
+            }
+            reconnectAfterPostHandshake = postHandshake(id, resultPort, path);
+
+            if (reconnectAfterPostHandshake) {
+                // sleep a short amount of time before reconnecting, to ensure that the socket is open
+                Thread.sleep(5000);
+            }
+        } while (reconnectAfterPostHandshake);
+
         timeClient.close();
-
-        ConsoleLogger.log("building application");
-        Application app = buildApplication(id, address, appPort);
-
-        scheduleApplicationStart(simulationBegin, startTime, app, stopTime);
-
-        if (!uplink) {
-            // only sinks need to do the post handshake
-            String path = ((SinkApplication) app).getFilePath();
-            postHandshake(id, resultPort, path);
-        }
         return 0;
     }
 
     public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
-        ConsoleLogger.log("connecting to: %s", address);
+        ConsoleLogger.log("InitialHandshake: connecting to: %s:%s", address, port);
         Socket socket = new Socket(address, port);
         ConsoleLogger.log("connection established");
 
@@ -125,8 +140,8 @@ public class Client implements Callable<Integer> {
         app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).start(timeClient);
     }
 
-    public void postHandshake(int id, int resultPort, String logFilePath) throws Exception {
-        ConsoleLogger.log("Finished! Submitting results...");
+    public boolean postHandshake(int id, int resultPort, String logFilePath) throws Exception {
+        ConsoleLogger.log("Finished! Submitting results to %s:%s", address, resultPort);
         //wait a short time, to ensure the receiving socket is open
         Thread.sleep(3000);
 
@@ -136,13 +151,28 @@ public class Client implements Callable<Integer> {
         ConsoleLogger.log("opening streams");
         ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream()));
         out.flush();
+        ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
-        byte[] fileContent = Files.readAllBytes(new File(logFilePath).toPath());
+        // only sinks need to submit their results
+        byte[] fileContent = new byte[0];
+        if (!uplink) {
+            fileContent = Files.readAllBytes(new File(logFilePath).toPath());
+        }
 
         sendResultMessage(out, id, fileContent);
-
         out.flush();
+
+        boolean reconnect = receiveReconnectAfterPostHandshake(in);
+
         socket.close();
+
+        return reconnect;
+    }
+
+    private boolean receiveReconnectAfterPostHandshake(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        Boolean reconnect = (Boolean) in.readUnshared();
+        ConsoleLogger.log("received reconnect after PostHandshake " + reconnect);
+        return reconnect;
     }
 
     public void sendResultMessage(ObjectOutputStream out, int id, byte[] fileContent) throws IOException {

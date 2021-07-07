@@ -1,7 +1,10 @@
 import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
-import general.*;
+import general.ConsoleLogger;
+import general.InstructionMessage;
+import general.NegotiationMessage;
+import general.TimeProvider;
 
 import java.io.*;
 import java.net.Socket;
@@ -31,10 +34,10 @@ public class InitialHandshakeThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int id, int simDuration, int resultPort) {
+    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort) {
         this.client = client;
         this.clientAddress = client.getInetAddress().getHostAddress();
-        this.id = id;
+        this.id = defaultId;
         this.timeProvider = timeProvider;
         this.simDuration = simDuration;
         this.resultPort = resultPort;
@@ -56,10 +59,13 @@ public class InitialHandshakeThread extends Thread {
             ConsoleLogger.log("%s | waiting for negotiation message", client.getInetAddress());
             NegotiationMessage negotiation = (NegotiationMessage) in.readUnshared();
             ConsoleLogger.log("%s | received negotiation message", client.getInetAddress());
+            if (negotiation.hasPreviousId()) {
+                this.id = negotiation.getPreviousId();
+            }
             this.uplink = negotiation.isUplink();
             this.mode = negotiation.isIoT();
             this.extraDelay = negotiation.getStartDelay();
-            this.clientPort = negotiation.getPort() + (5 * id);
+            this.clientPort = negotiation.getPort() + 10 + (5 * id); // id is 0-indexed
             this.resetTime = negotiation.getResetTime();
             int sndBuf = negotiation.getSndBuf();
             int rcvBuf = negotiation.getRcvBuf();
