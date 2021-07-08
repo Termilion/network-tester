@@ -56,9 +56,6 @@ public class Client implements Callable<Integer> {
             timeClient.startSyncTime();
             InstructionMessage msg = initialHandshake();
 
-            if (id == -1) {
-                id = msg.getId();
-            }
             int appPort = msg.getServerPort();
             int resultPort = msg.getResultPort();
             Date simulationBegin = msg.getSimulationBegin();
@@ -107,6 +104,12 @@ public class Client implements Callable<Integer> {
         sendNegotiationMessage(out);
 
         InstructionMessage msg = receiveInstructionMessage(in);
+
+        if (id == -1) {
+            id = msg.getId();
+            ConsoleLogger.log("Got ID from server: %d", id);
+        }
+
         out.flush();
         socket.close();
         return msg;
@@ -118,14 +121,14 @@ public class Client implements Callable<Integer> {
         if (this.uplink) {
             app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/sink_flow_%d_%s.csv", id, getModeString()), id, mode);
+            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode);
         }
         return app;
     }
 
     public void sendNegotiationMessage(ObjectOutputStream out) throws IOException {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.mode, this.uplink, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
+        out.writeObject(new NegotiationMessage(this.id, this.mode, this.uplink, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
         out.flush();
     }
 

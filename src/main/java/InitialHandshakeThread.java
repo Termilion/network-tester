@@ -58,10 +58,11 @@ public class InitialHandshakeThread extends Thread {
         try {
             ConsoleLogger.log("%s | waiting for negotiation message", client.getInetAddress());
             NegotiationMessage negotiation = (NegotiationMessage) in.readUnshared();
-            ConsoleLogger.log("%s | received negotiation message", client.getInetAddress());
             if (negotiation.hasPreviousId()) {
+                ConsoleLogger.log("Received ID from Client. Old: %d New: %d", this.id, negotiation.getPreviousId());
                 this.id = negotiation.getPreviousId();
             }
+            ConsoleLogger.log("%s | received negotiation message. ID: %d", client.getInetAddress(), this.id);
             this.uplink = negotiation.isUplink();
             this.mode = negotiation.isIoT();
             this.extraDelay = negotiation.getStartDelay();
@@ -76,7 +77,7 @@ public class InitialHandshakeThread extends Thread {
                         clientPort,
                         rcvBuf,
                         timeProvider,
-                        String.format("./out/sink_flow_%d_%s.csv", id, getModeString()),
+                        String.format("./out/server_sink_flow_%d_%s.csv", id, getModeString()),
                         id,
                         mode
                 );
@@ -97,7 +98,7 @@ public class InitialHandshakeThread extends Thread {
         }
     }
 
-    public Application getApplication(Date simulationBegin) {
+    public Application buildApplication(Date simulationBegin) {
         ConsoleLogger.log("%s | building local application", client.getInetAddress());
         // schedule application start
 
@@ -108,6 +109,10 @@ public class InitialHandshakeThread extends Thread {
         return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime);
     }
 
+    public Application getApplication() {
+        return app;
+    }
+
     public void sendInstructions(Date simulationBegin) {
         // negotiate start time
         long begin = simulationBegin.getTime();
@@ -116,6 +121,7 @@ public class InitialHandshakeThread extends Thread {
 
         ConsoleLogger.log("%s | sending instruction message. Begin: %s Start: %s Stop: %s", client.getInetAddress(), simulationBegin, startTime, stopTime);
         try {
+            ConsoleLogger.log("Sending ID to client: %d", id);
             InstructionMessage msg = new InstructionMessage(id, simulationBegin, startTime, stopTime, clientPort, resultPort);
             out.writeObject(msg);
         } catch (Exception e) {

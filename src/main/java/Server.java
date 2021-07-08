@@ -1,4 +1,5 @@
 import application.Application;
+import application.SinkApplication;
 import general.ConsoleLogger;
 import general.DecentralizedClockSync;
 import general.NTPClient;
@@ -13,8 +14,10 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "Server", description = "Starts an instruction server, which clients can connect to.")
 public class Server implements Callable<Integer> {
@@ -62,9 +65,11 @@ public class Server implements Callable<Integer> {
             timeClient.startSyncTime();
             List<InitialHandshakeThread> initialHandshakeThreads = initialHandshake();
             timeClient.stopSyncTime();
-            transmission(initialHandshakeThreads);
-            boolean reconnectAfterPostHandshake = (run < runs);
+            List<SinkApplication> serverSideSinks = transmission(initialHandshakeThreads);
+            moveServerSideLogs(serverSideSinks, run);
+            boolean reconnectAfterPostHandshake = (run < runs - 1);
             postHandshake(run, reconnectAfterPostHandshake);
+            mergeOutFiles(run);
         }
         timeClient.close();
         return 0;
@@ -91,6 +96,8 @@ public class Server implements Callable<Integer> {
 
         new Thread(() -> {
             ConsoleLogger.log("Waiting for connections...");
+            connectedPreTransmission = 0;
+            connectedPostTransmission = 0;
 
             while (!startedTransmission) {
                 try {
@@ -120,7 +127,7 @@ public class Server implements Callable<Integer> {
         return handshakeThreads;
     }
 
-    public void transmission(List<InitialHandshakeThread> handshakeThreads) throws InterruptedException {
+    public List<SinkApplication> transmission(List<InitialHandshakeThread> handshakeThreads) throws InterruptedException {
         ConsoleLogger.log("starting simulation ...");
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
@@ -136,7 +143,7 @@ public class Server implements Callable<Integer> {
                 try {
                     // send the initial instructions
                     thread.sendInstructions(simulationBegin);
-                    Application app = thread.getApplication(simulationBegin);
+                    Application app = thread.buildApplication(simulationBegin);
                     // use the same thread to start the transmitting/receiving application
                     app.start(timeClient);
                 } catch (Exception e) {
@@ -153,6 +160,9 @@ public class Server implements Callable<Integer> {
         }
 
         ConsoleLogger.log("simulation finished ...");
+
+        // return all Server-side sinks
+        return handshakeThreads.stream().filter(it -> it.getApplication() instanceof SinkApplication).map(it -> (SinkApplication) it.getApplication()).collect(Collectors.toList());
     }
 
     public void postHandshake(int run, boolean reconnectAfterPostHandshake) throws IOException, InterruptedException {
@@ -177,12 +187,18 @@ public class Server implements Callable<Integer> {
         for (Thread thread : threads) {
             thread.join();
         }
+    }
 
-        mergeOutFiles(run);
+    private void moveServerSideLogs(List<SinkApplication> serverSideSinks, int run) throws IOException {
+        for (SinkApplication sink : serverSideSinks) {
+            File csvInFile = new File(sink.getFilePath());
+            File csvOutFile = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, sink.getId(), sink.getModeString()));
+            Files.copy(csvInFile.toPath(), csvOutFile.toPath());
+        }
     }
 
     private void mergeOutFiles(int run) throws IOException {
-        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith(String.format("sink_run_%d", run)) && name.endsWith(".csv"));
+        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith(String.format("received_run_%d", run)) && name.endsWith(".csv"));
 
         if (csvFiles == null) {
             throw new FileNotFoundException("No csv files found!");

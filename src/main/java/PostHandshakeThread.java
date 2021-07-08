@@ -54,7 +54,7 @@ public class PostHandshakeThread extends Thread {
             out.flush();
 
             if (!uplink) {
-                Path path = new File(String.format("./out/sink_run_%d_flow_%d_%s.csv", run, id, getModeString())).toPath();
+                Path path = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, id, getModeString())).toPath();
                 Files.write(path, fileContent);
             }
         } catch (IOException | ClassNotFoundException | ClassCastException e) {

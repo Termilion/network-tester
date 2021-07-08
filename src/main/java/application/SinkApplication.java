@@ -55,4 +55,16 @@ public class SinkApplication extends Application {
     public String getFilePath() {
         return filePath;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getModeString() {
+        if (mode) {
+            return "iot";
+        } else {
+            return "bulk";
+        }
+    }
 }

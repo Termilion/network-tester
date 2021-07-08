@@ -14,6 +14,7 @@ public class NegotiationMessage implements Serializable {
     int rcvBuf;
 
     public NegotiationMessage(
+            int previousId,
             boolean flowMode,
             boolean flowDirection,
             int startDelay,
@@ -22,6 +23,7 @@ public class NegotiationMessage implements Serializable {
             int sndBuf,
             int rcvBuf
     ) {
+        this.previousId = previousId;
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
         this.startDelay = startDelay;
@@ -29,10 +31,6 @@ public class NegotiationMessage implements Serializable {
         this.resetTime = resetTime;
         this.sndBuf = sndBuf;
         this.rcvBuf = rcvBuf;
-    }
-
-    public void setPreviousId(int previousId) {
-        this.previousId = previousId;
     }
 
     public int getPort() {
