@@ -26,6 +26,8 @@ public class LogSink extends Sink {
     double lastGoodputMpbs = 0;
     double lastDelay = 0;
 
+    long lastTraceTime = -1;
+
     public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
         super(timeProvider, port, receiveBufferSize, stopTime);
         this.id = id;
@@ -71,8 +73,8 @@ public class LogSink extends Sink {
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
                 if (delayTime < -50) {
-                    // TODO check why delay is negative
                     // if delay is less than epsilon (-50) abort. Something went wrong during time sync
+                    ConsoleLogger.log("Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
                     throw new IllegalStateException("Negative delay");
                 }
                 if (delayTime < 0) {
@@ -95,15 +97,22 @@ public class LogSink extends Sink {
     public void scheduledWriteOutput() {
         // trace values
         List<Long> currentDelay = delay;
+        double traceIntervalInS;
+        if (lastTraceTime == -1) {
+            traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
+        } else {
+            long now = timeProvider.getAdjustedTime();
+            traceIntervalInS = (now - lastTraceTime) / 1000.0;
+            lastTraceTime = now;
+        }
+        double currentRcvMBits = (rcvBytes * 8) / 1e6;
 
         // reset values
-        double traceIntervalInS = (double) TRACE_INTERVAL_IN_MS / 1000;
-        double currentRcvMBits = (rcvBytes * 8) / 1e6;
         rcvBytes = 0;
         delay = Collections.synchronizedList(new ArrayList<>());
 
         // calculate metrics
-        double goodput =  currentRcvMBits / traceIntervalInS;
+        double goodput = currentRcvMBits / traceIntervalInS;
         lastGoodputMpbs = goodput;
 
         double delaySum = 0;
@@ -134,9 +143,7 @@ public class LogSink extends Sink {
 
     @Override
     public void scheduledLoggingOutput() {
-        long currentTime = this.timeProvider.getAdjustedTime();
-        double simTime = (currentTime-simulationBegin.getTime())/1000.0;
-        ConsoleLogger.log("%s | %.02fs | received %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, simTime, totalRcvPackets, lastGoodputMpbs, lastDelay);
+        ConsoleLogger.log("%s | %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, totalRcvPackets, lastGoodputMpbs, lastDelay);
     }
 
     @Override

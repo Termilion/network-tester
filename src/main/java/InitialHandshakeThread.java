@@ -103,6 +103,7 @@ public class InitialHandshakeThread extends Thread {
         // schedule application start
 
         long begin = simulationBegin.getTime();
+        // if client is uplink, then we need to wait the SINK_WAIT_TIME
         Date startTime = this.uplink ? new Date(begin + SINK_WAIT_TIME + extraDelay) : new Date(begin + SOURCE_WAIT_TIME + extraDelay);
         Date stopTime = new Date(begin + simDuration * 1000L);
 
@@ -116,6 +117,7 @@ public class InitialHandshakeThread extends Thread {
     public void sendInstructions(Date simulationBegin) {
         // negotiate start time
         long begin = simulationBegin.getTime();
+        // if client is uplink, then it needs to wait the SOURCE_WAIT_TIME
         Date startTime = this.uplink ? new Date(begin + SOURCE_WAIT_TIME + extraDelay) : new Date(begin + SINK_WAIT_TIME + extraDelay);
         Date stopTime = new Date(begin + simDuration * 1000L);
 
