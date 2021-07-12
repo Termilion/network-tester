@@ -53,9 +53,9 @@ public class Client implements Callable<Integer> {
 
         ConsoleLogger.init(timeClient);
 
+        timeClient.startSyncTime();
         boolean reconnectAfterPostHandshake;
         do {
-            timeClient.startSyncTime();
             InstructionMessage msg = initialHandshake();
 
             int appPort = msg.getServerPort();

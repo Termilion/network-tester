@@ -64,9 +64,10 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.init(timeClient);
 
         clearOutFolder();
+        timeClient.startSyncTime();
+
         for (int run = 0; run < runs; run++) {
             ConsoleLogger.log("Initializing run %d", run);
-            timeClient.startSyncTime();
             List<InitialHandshakeThread> initialHandshakeThreads = initialHandshake();
             timeClient.stopSyncTime();
             List<SinkApplication> serverSideSinks = transmission(initialHandshakeThreads);
