@@ -21,10 +21,12 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "Server", description = "Starts an instruction server, which clients can connect to.")
 public class Server implements Callable<Integer> {
-    @CommandLine.Option(names = {"-p", "--port"}, defaultValue = "5000", description = "port to start server on")
-    private int port = 5000;
+    @CommandLine.Option(names = {"-p", "--port"}, defaultValue = "10000", description = "port to start server on")
+    private int port = 10000;
 
-    private int resultPort() { return port + 1; }
+    private int resultPort() {
+        return port + 1;
+    }
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1")
     Exclusive exclusive;
