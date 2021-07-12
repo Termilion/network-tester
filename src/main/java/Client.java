@@ -51,6 +51,8 @@ public class Client implements Callable<Integer> {
             timeClient = NTPClient.create(exclusive.ntpAddress);
         }
 
+        ConsoleLogger.init(timeClient);
+
         boolean reconnectAfterPostHandshake;
         do {
             timeClient.startSyncTime();
@@ -61,7 +63,7 @@ public class Client implements Callable<Integer> {
             Date simulationBegin = msg.getSimulationBegin();
             Date startTime = msg.getStartTime();
             Date stopTime = msg.getStopTime();
-            ConsoleLogger.simulationBegin = simulationBegin;
+            ConsoleLogger.setSimulationBegin(simulationBegin);
             ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
             ConsoleLogger.log("Client startTime %s", startTime);
             ConsoleLogger.log("Client stopTime %s", stopTime);

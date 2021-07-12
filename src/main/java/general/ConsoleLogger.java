@@ -11,16 +11,46 @@ enum LOG_LEVEL {
 
 public class ConsoleLogger {
     static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-    public static Date simulationBegin;
+    private Date simulationBegin;
+    private final TimeProvider timeProvider;
 
-    public static void log(String message) {
-        log(message, LOG_LEVEL.INFO);
+    private static ConsoleLogger instance;
+
+    public synchronized static ConsoleLogger init(TimeProvider timeProvider) {
+        if (instance == null) {
+            instance = new ConsoleLogger(timeProvider);
+        }
+        return instance;
     }
 
-    public static void log(String message, LOG_LEVEL level) {
+    private ConsoleLogger(TimeProvider timeProvider) {
+        this.timeProvider = timeProvider;
+    }
+
+    public static void setSimulationBegin(Date simulationBegin) {
+        if (ConsoleLogger.instance != null) {
+            ConsoleLogger.instance.simulationBegin = simulationBegin;
+        } else {
+            throw new IllegalStateException("Not yet initialized");
+        }
+    }
+
+    public static void log(String message) {
+        if (ConsoleLogger.instance != null) {
+            ConsoleLogger.instance.log(message, LOG_LEVEL.INFO);
+        } else {
+            throw new IllegalStateException("Not yet initialized");
+        }
+    }
+
+    public static void log(String message, Object... args) {
+        log(String.format(message, args));
+    }
+
+    public void log(String message, LOG_LEVEL level) {
         long currentTime;
         try {
-            currentTime = NTPClient.getInstance().getAdjustedTime();
+            currentTime = timeProvider.getAdjustedTime();
         } catch (NullPointerException e) {
             currentTime = System.currentTimeMillis();
         }
@@ -46,9 +76,5 @@ public class ConsoleLogger {
             default:
                 System.out.printf("[%s] [%s] %s\n", time, simTime, message);
         }
-    }
-
-    public static void log(String message, Object... args) {
-        log(String.format(message, args));
     }
 }

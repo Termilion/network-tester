@@ -117,7 +117,8 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
         public void run() {
             DecentralizedClockSync.this.bout.putShort(PACKET_CLASS);
             DecentralizedClockSync.this.bout.putInt(DecentralizedClockSync.this.myId);
-            DecentralizedClockSync.this.bout.putLong(DecentralizedClockSync.this.getAdjustedTime());
+            //DecentralizedClockSync.this.bout.putLong(DecentralizedClockSync.this.getAdjustedTime());
+            DecentralizedClockSync.this.bout.putLong(System.currentTimeMillis());
             final DatagramPacket dp = new DatagramPacket(DecentralizedClockSync.this.bout.array(), DecentralizedClockSync.this.bout.position(), DecentralizedClockSync.this.group, UPNP_MULTI_PORT);
             try {
                 DecentralizedClockSync.this.ms.send(dp);
@@ -144,8 +145,8 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
                     DecentralizedClockSync.this.bin.clear();
                     final DatagramPacket dp = new DatagramPacket(DecentralizedClockSync.this.bin.array(), DecentralizedClockSync.this.bin.capacity());
                     DecentralizedClockSync.this.ms.receive(dp);  // BLOCK HERE
+                    final long now = DecentralizedClockSync.this.getAdjustedTime(); // Get time as fast as possible after receiving
                     DecentralizedClockSync.this.bin.rewind();
-                    final long now = DecentralizedClockSync.this.getAdjustedTime();
                     final short pclass = DecentralizedClockSync.this.bin.getShort();
                     if (PACKET_CLASS != pclass) {
                         // Random packet, skipping

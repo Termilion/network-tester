@@ -59,6 +59,8 @@ public class Server implements Callable<Integer> {
             timeClient = NTPClient.create(exclusive.ntpAddress);
         }
 
+        ConsoleLogger.init(timeClient);
+
         clearOutFolder();
         for (int run = 0; run < runs; run++) {
             ConsoleLogger.log("Initializing run %d", run);
@@ -135,7 +137,7 @@ public class Server implements Callable<Integer> {
         // simulation begin is now
         long current = timeClient.getAdjustedTime();
         Date simulationBegin = new Date(current);
-        ConsoleLogger.simulationBegin = simulationBegin;
+        ConsoleLogger.setSimulationBegin(simulationBegin);
 
         for (InitialHandshakeThread thread : handshakeThreads) {
             ConsoleLogger.log("send instructions to node %s", thread.id);
