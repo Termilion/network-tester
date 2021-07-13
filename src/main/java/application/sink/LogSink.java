@@ -17,6 +17,7 @@ public class LogSink extends Sink {
     File outFile;
     BufferedWriter writer;
 
+    int index = 0;
     int rcvBytes = 0;
     List<Long> delay;
 
@@ -47,7 +48,7 @@ public class LogSink extends Sink {
             }
         }
         writer = new BufferedWriter(new FileWriter(outFile, true));
-        writer.write("time,flow,type,address,sink_gp,delay_data_ms");
+        writer.write("index,time,flow,type,address,sink_gp,delay_data_ms");
         writer.newLine();
     }
 
@@ -134,8 +135,9 @@ public class LogSink extends Sink {
 
         // write to file
         try {
-            writer.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%.02f,%.02f", simTime, id, mode, connectedAddress, goodput, avgDelay));
+            writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
+            index++;
         } catch (IOException e) {
             e.printStackTrace();
         }
