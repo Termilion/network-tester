@@ -5,11 +5,10 @@ import application.sink.Sink;
 import general.TimeProvider;
 
 import java.io.IOException;
+import java.util.Date;
 
 public class SinkApplication extends Application {
     String filePath;
-    int port;
-    int rcvBufferSize;
     int id;
     boolean mode;
 
@@ -17,32 +16,41 @@ public class SinkApplication extends Application {
 
     Sink sink;
 
-    public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode) {
+    public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode) throws IOException {
         this.filePath = filePath;
-        this.port = port;
-        this.rcvBufferSize = rcvBufferSize;
         this.timeProvider = timeProvider;
         this.id = id;
         this.mode = mode;
+
+        sink = new LogSink(
+                timeProvider,
+                port,
+                rcvBufferSize,
+                filePath,
+                id,
+                mode
+        );
     }
 
     @Override
-    public void doOnStart() throws Exception {
-        try {
-            sink = new LogSink(
-                    this.timeProvider,
-                    this.port,
-                    this.rcvBufferSize,
-                    filePath,
-                    simulationBegin,
-                    stopTime,
-                    id,
-                    mode
-            );
-            sink.start();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void init(Date beginTime, Date stopTime) {
+        sink.init(beginTime, stopTime);
+    }
+
+    @Override
+    public void startLogging() {
+        if (beginTime == null || stopTime == null) {
+            throw new IllegalStateException("Not yet initialized");
         }
+        sink.startLogging();
+    }
+
+    @Override
+    public void startLogic() throws Exception {
+        if (beginTime == null || stopTime == null) {
+            throw new IllegalStateException("Not yet initialized");
+        }
+        sink.startLogic();
     }
 
     @Override

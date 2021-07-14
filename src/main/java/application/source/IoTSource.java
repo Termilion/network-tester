@@ -6,20 +6,17 @@ import general.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Date;
 
 public class IoTSource extends Source {
 
     public static final double IOT_DATA_SIZE = 1e6;
-    Date simulationBegin;
 
-    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
-        super(timeProvider, address, port, bufferSize, resetTime, stopTime);
-        this.simulationBegin = simulationBegin;
+    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize) {
+        super(timeProvider, address, port, bufferSize, resetTime);
     }
 
     @Override
-    public void execute() throws IOException {
+    protected void execute() throws IOException {
         OutputStream out = socket.getOutputStream();
         int numberSend = 0;
 
@@ -38,7 +35,7 @@ public class IoTSource extends Source {
                         ConsoleLogger.log("%s | send one MByte! [%s]", socket.getInetAddress().getHostAddress(), numberSend);
                     }
                 } catch (Exception e) {
-                    double simTime = (time-simulationBegin.getTime())/1000.0;
+                    double simTime = (time - beginTime.getTime()) / 1000.0;
                     ConsoleLogger.log("Source: Exception at simTime " + simTime);
                     e.printStackTrace();
                     break;

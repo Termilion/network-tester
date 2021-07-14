@@ -5,14 +5,16 @@ import general.TimeProvider;
 import general.Utility;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 public class LogSink extends Sink {
 
     String connectedAddress;
     int id;
     int mode;
-    Date simulationBegin;
 
     File outFile;
     BufferedWriter writer;
@@ -29,11 +31,10 @@ public class LogSink extends Sink {
 
     long lastTraceTime = -1;
 
-    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, Date simulationBegin, Date stopTime, int id, boolean mode) throws IOException {
-        super(timeProvider, port, receiveBufferSize, stopTime);
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode) throws IOException {
+        super(timeProvider, port, receiveBufferSize);
         this.id = id;
         this.mode = booleanToInt(mode);
-        this.simulationBegin = simulationBegin;
         this.delay = Collections.synchronizedList(new ArrayList<>());
         createLogFile(filePath);
     }
@@ -73,8 +74,8 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
-                if (delayTime < -50) {
-                    // if delay is less than epsilon (-50) abort. Something went wrong during time sync
+                if (delayTime < -30) {
+                    // if delay is less than epsilon (-30) abort. Something went wrong during time sync
                     ConsoleLogger.log("Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
                     throw new IllegalStateException("Negative delay");
                 }
@@ -96,21 +97,23 @@ public class LogSink extends Sink {
 
     @Override
     public void scheduledWriteOutput() {
+        long now = timeProvider.getAdjustedTime();
+
         // trace values
         List<Long> currentDelay = delay;
-        double traceIntervalInS;
-        if (lastTraceTime == -1) {
-            traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
-        } else {
-            long now = timeProvider.getAdjustedTime();
-            traceIntervalInS = (now - lastTraceTime) / 1000.0;
-            lastTraceTime = now;
-        }
         double currentRcvMBits = (rcvBytes * 8) / 1e6;
 
         // reset values
         rcvBytes = 0;
         delay = Collections.synchronizedList(new ArrayList<>());
+
+        double traceIntervalInS;
+        if (lastTraceTime == -1) {
+            traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
+        } else {
+            traceIntervalInS = (now - lastTraceTime) / 1000.0;
+            lastTraceTime = now;
+        }
 
         // calculate metrics
         double goodput = currentRcvMBits / traceIntervalInS;
@@ -130,8 +133,7 @@ public class LogSink extends Sink {
         }
         lastDelay = avgDelay;
 
-        long currentTime = this.timeProvider.getAdjustedTime();
-        double simTime = (currentTime-simulationBegin.getTime())/1000.0;
+        double simTime = (now - beginTime.getTime()) / 1000.0;
 
         // write to file
         try {

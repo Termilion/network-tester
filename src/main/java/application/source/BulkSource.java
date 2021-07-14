@@ -6,19 +6,15 @@ import general.Utility;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Date;
 
 public class BulkSource extends Source {
 
-    Date simulationBegin;
-
-    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, Date simulationBegin, Date stopTime, int bufferSize) throws IOException {
-        super(timeProvider, address, port, bufferSize, resetTime, stopTime);
-        this.simulationBegin = simulationBegin;
+    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize) {
+        super(timeProvider, address, port, bufferSize, resetTime);
     }
 
     @Override
-    public void execute() throws IOException {
+    protected void execute() throws IOException {
         OutputStream out = socket.getOutputStream();
         int numberSend = 0;
 
@@ -36,7 +32,7 @@ public class BulkSource extends Source {
             } catch (Exception e) {
                 // if source isn't running anymore and the socket fails, there is no need to print the stacktrace
                 if (isRunning) {
-                    double simTime = (time-simulationBegin.getTime())/1000.0;
+                    double simTime = (time - beginTime.getTime()) / 1000.0;
                     ConsoleLogger.log("Source: Exception at simTime " + simTime);
                     e.printStackTrace();
                 }

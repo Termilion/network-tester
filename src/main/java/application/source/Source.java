@@ -20,9 +20,10 @@ public abstract class Source implements Closeable {
     String address;
     int port;
     int resetTime;
-    Date stopTime;
 
     TimeProvider timeProvider;
+    Date beginTime;
+    Date stopTime;
 
     volatile boolean isRunning = true;
 
@@ -34,28 +35,25 @@ public abstract class Source implements Closeable {
             String address,
             int port,
             int sendBufferSize,
-            int resetTime,
-            Date stopTime
-    ) throws IOException {
+            int resetTime
+    ) {
         this.sendBufferSize = sendBufferSize;
         this.timeProvider = timeProvider;
         this.address = address;
         this.port = port;
         this.resetTime = resetTime;
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public void startLogic(Date beginTime, Date stopTime) throws InterruptedException {
+        this.beginTime = beginTime;
         this.stopTime = stopTime;
 
-        if(resetTime > 0) {
+        if (resetTime > 0) {
             reset(resetTime);
         }
         stopOn(stopTime);
 
-        if (this.sendBufferSize > 0) {
-            this.socket.setSendBufferSize(this.sendBufferSize);
-        }
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public void start() throws IOException, InterruptedException {
         try {
             ConsoleLogger.log("connecting to %s:%s", address, port);
             connect(address, port);
@@ -79,6 +77,9 @@ public abstract class Source implements Closeable {
     protected void connect(String address, int port) throws IOException {
         ConsoleLogger.log("Source: Connecting to %s:%s", address, port);
         socket = new Socket(address, port);
+        if (this.sendBufferSize > 0) {
+            this.socket.setSendBufferSize(this.sendBufferSize);
+        }
     }
 
     @Override
@@ -127,5 +128,5 @@ public abstract class Source implements Closeable {
         }, duration, TimeUnit.MILLISECONDS));
     }
 
-    public abstract void execute() throws IOException;
+    protected abstract void execute() throws IOException;
 }

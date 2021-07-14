@@ -137,9 +137,10 @@ public class Server implements Callable<Integer> {
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
 
-        // simulation begin is now
+        // simulation begin in 2s
         long current = timeClient.getAdjustedTime();
-        Date simulationBegin = new Date(current);
+        long beginDelay = 2000L;
+        Date simulationBegin = new Date(current + beginDelay);
         ConsoleLogger.setSimulationBegin(simulationBegin);
 
         for (InitialHandshakeThread thread : handshakeThreads) {

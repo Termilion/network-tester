@@ -117,7 +117,7 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public Application buildApplication(int id, String ipaddress, int appPort) {
+    public Application buildApplication(int id, String ipaddress, int appPort) throws IOException {
         Application app;
 
         if (this.uplink) {

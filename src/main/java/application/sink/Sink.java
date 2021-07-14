@@ -20,6 +20,11 @@ public abstract class Sink implements Closeable {
     Socket client;
 
     TimeProvider timeProvider;
+    int port;
+    int receiveBufferSize;
+
+    Date beginTime;
+    Date stopTime;
 
     static final int TRACE_INTERVAL_IN_MS = 50;
     static final int LOG_INTERVAL_IN_MS = 1000;
@@ -29,9 +34,23 @@ public abstract class Sink implements Closeable {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, Date stopTime) throws IOException {
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize) {
         this.timeProvider = timeProvider;
+        this.port = port;
+        this.receiveBufferSize = receiveBufferSize;
+    }
 
+    public void init(Date beginTime, Date stopTime) {
+        this.beginTime = beginTime;
+        this.stopTime = stopTime;
+    }
+
+    public void startLogging() {
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
+    }
+
+    public void startLogic() throws IOException {
         stopOn(stopTime);
 
         ConsoleLogger.log("Opening sink on port %s", port);
@@ -39,11 +58,6 @@ public abstract class Sink implements Closeable {
         if (receiveBufferSize > 0) {
             socket.setReceiveBufferSize(receiveBufferSize);
         }
-    }
-
-    public void start() throws IOException {
-        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
-        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
 
         while (isRunning) {
             try {
@@ -101,9 +115,9 @@ public abstract class Sink implements Closeable {
         }, duration, TimeUnit.MILLISECONDS));
     }
 
-    public abstract void scheduledWriteOutput();
+    protected abstract void scheduledWriteOutput();
 
-    public abstract void scheduledLoggingOutput();
+    protected abstract void scheduledLoggingOutput();
 
-    public abstract void executeLogic();
+    protected abstract void executeLogic();
 }
