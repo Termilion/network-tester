@@ -59,8 +59,6 @@ public class Server implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         if (exclusive.ntpServerPort != -1) {
-            timeServer = new NTPServer(exclusive.ntpServerPort);
-            timeServer.start();
             timeClient = NTPClient.create("localhost", exclusive.ntpServerPort);
         } else if (exclusive.distributedTime) {
             timeClient = DecentralizedClockSync.getInstance();
@@ -76,6 +74,11 @@ public class Server implements Callable<Integer> {
         }
 
         ConsoleLogger.init(timeClient);
+
+        if (exclusive.ntpServerPort != -1) {
+            timeServer = new NTPServer(exclusive.ntpServerPort);
+            timeServer.start();
+        }
 
         clearOutFolder();
         timeClient.startSyncTime();
