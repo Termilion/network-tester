@@ -101,52 +101,56 @@ public class LogSink extends Sink {
 
     @Override
     public void scheduledWriteOutput() {
-        long now = timeProvider.getAdjustedTime();
-
-        // trace values
-        List<Long> currentDelay = delay;
-        double currentRcvMBits = (rcvBytes * 8) / 1e6;
-
-        // reset values
-        rcvBytes = 0;
-        delay = Collections.synchronizedList(new ArrayList<>());
-
-        double traceIntervalInS;
-        if (lastTraceTime == -1) {
-            traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
-        } else {
-            traceIntervalInS = (now - lastTraceTime) / 1000.0;
-            lastTraceTime = now;
-        }
-
-        // calculate metrics
-        double goodput = currentRcvMBits / traceIntervalInS;
-        lastGoodputMpbs = goodput;
-
-        double delaySum = 0;
-        for (long t : currentDelay) {
-            delaySum += t;
-        }
-
-        double avgDelay;
-
-        if (currentDelay.size() == 0) {
-            avgDelay = 0;
-        } else {
-            avgDelay = delaySum / currentDelay.size();
-        }
-        lastDelay = avgDelay;
-
-        double simTime = (now - beginTime.getTime()) / 1000.0;
-
-        // write to file
         try {
+            long now = timeProvider.getAdjustedTime();
+
+            // trace values
+            List<Long> currentDelay = delay;
+            double currentRcvMBits = (rcvBytes * 8) / 1e6;
+
+            // reset values
+            rcvBytes = 0;
+            delay = Collections.synchronizedList(new ArrayList<>());
+
+            double traceIntervalInS;
+            if (lastTraceTime == -1) {
+                traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
+            } else {
+                traceIntervalInS = (now - lastTraceTime) / 1000.0;
+                lastTraceTime = now;
+            }
+
+            // calculate metrics
+            double goodput = currentRcvMBits / traceIntervalInS;
+            lastGoodputMpbs = goodput;
+
+            double delaySum = 0;
+            for (long t : currentDelay) {
+                delaySum += t;
+            }
+
+            double avgDelay;
+
+            if (currentDelay.size() == 0) {
+                avgDelay = 0;
+            } else {
+                avgDelay = delaySum / currentDelay.size();
+            }
+            lastDelay = avgDelay;
+
+            double simTime = (now - beginTime.getTime()) / 1000.0;
+
+            // write to file
+            //try {
             writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
             writer.flush();
             index++;
-        } catch (IOException e) {
+            //} catch (IOException e) {
+        } catch (Exception e) {
+            ConsoleLogger.log("ERROR in LogSink: " + e.getLocalizedMessage(), ConsoleLogger.LogLevel.ERROR);
             e.printStackTrace();
+            System.exit(1);
         }
     }
 
@@ -163,6 +167,7 @@ public class LogSink extends Sink {
         }
         closed = true;
         writer.flush();
+        ConsoleLogger.log("LogSink: Writer is closed");
         writer.close();
         super.close();
     }
