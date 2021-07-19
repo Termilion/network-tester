@@ -1,9 +1,6 @@
 import application.Application;
 import application.SinkApplication;
-import general.ConsoleLogger;
-import general.DecentralizedClockSync;
-import general.NTPClient;
-import general.TimeProvider;
+import general.*;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -34,6 +31,8 @@ public class Server implements Callable<Integer> {
     static class Exclusive {
         @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
         private String ntpAddress;
+        @CommandLine.Option(names = "--ntpHost", defaultValue = "-1", description = "Start a ntp server on this machine with the given number as ntp port. The local time will be used, to sync incoming client requests. The server additionally uses a ntpClient against its own ntpServer")
+        private int ntpServerPort = -1;
         @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
         private boolean distributedTime;
     }
@@ -55,13 +54,25 @@ public class Server implements Callable<Integer> {
     File outDir = new File("./out/");
 
     TimeProvider timeClient;
+    NTPServer timeServer;
 
     @Override
     public Integer call() throws Exception {
-        if (exclusive.distributedTime) {
+        if (exclusive.ntpServerPort != -1) {
+            timeServer = new NTPServer(exclusive.ntpServerPort);
+            timeServer.start();
+            timeClient = NTPClient.create("localhost", exclusive.ntpServerPort);
+        } else if (exclusive.distributedTime) {
             timeClient = DecentralizedClockSync.getInstance();
         } else {
-            timeClient = NTPClient.create(exclusive.ntpAddress);
+            if (exclusive.ntpAddress.contains(":")) {
+                String[] ntp = exclusive.ntpAddress.split(":");
+                String addr = ntp[0];
+                int port = Integer.parseInt(ntp[1]);
+                timeClient = NTPClient.create(addr, port);
+            } else {
+                timeClient = NTPClient.create(exclusive.ntpAddress);
+            }
         }
 
         ConsoleLogger.init(timeClient);
@@ -80,6 +91,9 @@ public class Server implements Callable<Integer> {
             mergeOutFiles(run);
         }
         timeClient.close();
+        if (timeServer != null) {
+            timeServer.stop();
+        }
         return 0;
     }
 

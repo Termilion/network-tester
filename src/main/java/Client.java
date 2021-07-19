@@ -50,7 +50,14 @@ public class Client implements Callable<Integer> {
         if (exclusive.distributedTime) {
             timeClient = DecentralizedClockSync.getInstance();
         } else {
-            timeClient = NTPClient.create(exclusive.ntpAddress);
+            if (exclusive.ntpAddress.contains(":")) {
+                String[] ntp = exclusive.ntpAddress.split(":");
+                String addr = ntp[0];
+                int port = Integer.parseInt(ntp[1]);
+                timeClient = NTPClient.create(addr, port);
+            } else {
+                timeClient = NTPClient.create(exclusive.ntpAddress);
+            }
         }
 
         ConsoleLogger.init(timeClient);
