@@ -51,6 +51,7 @@ public class LogSink extends Sink {
         writer = new BufferedWriter(new FileWriter(outFile, true));
         writer.write("index,time,flow,type,address,sink_gp,delay_data_ms");
         writer.newLine();
+        writer.flush();
     }
 
     @Override
@@ -139,6 +140,7 @@ public class LogSink extends Sink {
         try {
             writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
             writer.newLine();
+            writer.flush();
             index++;
         } catch (IOException e) {
             e.printStackTrace();
@@ -156,10 +158,10 @@ public class LogSink extends Sink {
             // already closed. Nothing to do
             return;
         }
-        super.close();
         closed = true;
         writer.flush();
         writer.close();
+        super.close();
     }
 
     private int booleanToInt(boolean mode) {
