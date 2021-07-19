@@ -49,8 +49,8 @@ public class Server implements Callable<Integer> {
 
     boolean startedTransmission = false;
 
-    int connectedPreTransmission = 0;
-    int connectedPostTransmission = 0;
+    int connectedPreTransmission = -1;
+    int connectedPostTransmission = -1;
 
     File outDir = new File("./out/");
 
@@ -95,17 +95,17 @@ public class Server implements Callable<Integer> {
         }
     }
 
-    public List<InitialHandshakeThread> initialHandshake() throws IOException {
+    public List<InitialHandshakeThread> initialHandshake() throws IOException, InterruptedException {
         ConsoleLogger.log("Opening InitialHandshake Socket on port %s", this.port);
         ServerSocket socket = new ServerSocket(this.port);
         startedTransmission = false;
 
         ArrayList<InitialHandshakeThread> handshakeThreads = new ArrayList<>();
 
+        connectedPreTransmission = 0;
+
         new Thread(() -> {
             ConsoleLogger.log("Waiting for connections...");
-            connectedPreTransmission = 0;
-            connectedPostTransmission = 0;
 
             while (!startedTransmission) {
                 try {
@@ -125,10 +125,18 @@ public class Server implements Callable<Integer> {
             }
         }).start();
 
-        Scanner input = new Scanner(System.in);
+        if (connectedPostTransmission == -1) {
+            // in the first run: block until user input #enter
+            Scanner input = new Scanner(System.in);
+            input.nextLine();
+        } else {
+            // in subsequent runs: block until all previously connected clients are again connected
+            while (connectedPreTransmission < connectedPostTransmission) {
+                Thread.sleep(2000);
+                ConsoleLogger.log("Waiting for clients: %d/%d", connectedPreTransmission, connectedPostTransmission);
+            }
+        }
 
-        // block until user input
-        input.nextLine();
         startedTransmission = true;
         socket.close();
 
@@ -180,6 +188,7 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.log("Waiting to receive results...");
 
         ArrayList<Thread> threads = new ArrayList<>();
+        connectedPostTransmission = 0;
 
         while (connectedPostTransmission < connectedPreTransmission) {
             Socket client = socket.accept();
