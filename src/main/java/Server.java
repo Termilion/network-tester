@@ -31,7 +31,7 @@ public class Server implements Callable<Integer> {
     static class Exclusive {
         @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
         private String ntpAddress;
-        @CommandLine.Option(names = "--ntpHost", defaultValue = "-1", description = "Start a ntp server on this machine with the given number as ntp port. The local time will be used, to sync incoming client requests. The server additionally uses a ntpClient against its own ntpServer")
+        @CommandLine.Option(names = "--ntpServerPort", defaultValue = "-1", description = "Start a ntp server on this machine with the given number as ntp port. The local time will be used, to sync incoming client requests. The server additionally uses a ntpClient against its own ntpServer")
         private int ntpServerPort = -1;
         @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
         private boolean distributedTime;

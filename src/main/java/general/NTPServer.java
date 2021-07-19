@@ -191,22 +191,4 @@ public class NTPServer implements Runnable {
         }
         started = false;
     }
-
-    public static void main(final String[] args) {
-        int port = NtpV3Packet.NTP_PORT;
-        if (args.length != 0) {
-            try {
-                port = Integer.parseInt(args[0]);
-            } catch (final NumberFormatException nfe) {
-                nfe.printStackTrace();
-            }
-        }
-        final NTPServer timeServer = new NTPServer(port);
-        try {
-            timeServer.start();
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 }
