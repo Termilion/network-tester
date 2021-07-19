@@ -31,8 +31,8 @@ public class LogSink extends Sink {
 
     long lastTraceTime = -1;
 
-    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode) throws IOException {
-        super(timeProvider, port, receiveBufferSize);
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
+        super(timeProvider, port, receiveBufferSize, traceIntervalMs);
         this.id = id;
         this.mode = booleanToInt(mode);
         this.delay = Collections.synchronizedList(new ArrayList<>());

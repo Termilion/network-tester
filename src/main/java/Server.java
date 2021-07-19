@@ -28,13 +28,13 @@ public class Server implements Callable<Integer> {
         return port + 1;
     }
 
-    @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1")
+    @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     Exclusive exclusive;
 
     static class Exclusive {
-        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
+        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
         private String ntpAddress;
-        @CommandLine.Option(names = "--distributedTime", description = "address of the ntp server")
+        @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
         private boolean distributedTime;
     }
 
@@ -43,6 +43,9 @@ public class Server implements Callable<Integer> {
 
     @CommandLine.Option(names = "--runs", defaultValue = "15", description = "Number of repetitions that are performed")
     private int runs = 15;
+
+    @CommandLine.Option(names = "--trace", defaultValue = "50", description = "Trace interval in ms.")
+    private int traceIntervalMs = 50;
 
     boolean startedTransmission = false;
 
@@ -110,7 +113,7 @@ public class Server implements Callable<Integer> {
                     connectedPreTransmission++;
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
                     int defaultId = connectedPreTransmission - 1;
-                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort());
+                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs);
                     clientThread.start();
                     handshakeThreads.add(clientThread);
                 } catch (IOException e) {

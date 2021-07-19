@@ -1,2 +1,2 @@
 git pull
-java -jar .\target\NetworkTester-1.0-SNAPSHOT-jar-with-dependencies.jar Server --distributedTime
+java -jar .\target\NetworkTester-1.0-SNAPSHOT-jar-with-dependencies.jar Server --distributedTime --trace 25

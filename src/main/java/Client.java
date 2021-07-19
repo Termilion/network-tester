@@ -16,13 +16,13 @@ public class Client implements Callable<Integer> {
     private String address;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
-    @CommandLine.ArgGroup(exclusive = true, multiplicity = "0..1")
+    @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     Exclusive exclusive;
 
     static class Exclusive {
-        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "address of the ntp server")
+        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
         private String ntpAddress;
-        @CommandLine.Option(names = "--distributedTime", description = "address of the ntp server")
+        @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
         private boolean distributedTime;
     }
 
@@ -40,6 +40,8 @@ public class Client implements Callable<Integer> {
     private int rcvBuf = -1;
     @CommandLine.Option(names = "--id", description = "The id of this node. If not set, id will be sequentially chosen by the server.", defaultValue = "-1")
     int id = -1;
+    @CommandLine.Option(names = "--trace", defaultValue = "50", description = "Trace interval in ms.")
+    private int traceIntervalMs = 50;
 
     TimeProvider timeClient;
 
@@ -123,7 +125,7 @@ public class Client implements Callable<Integer> {
         if (this.uplink) {
             app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode);
+            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs);
         }
         return app;
     }

@@ -24,6 +24,7 @@ public class InitialHandshakeThread extends Thread {
     String clientAddress;
     int clientPort;
     int resultPort;
+    int traceIntervalMs;
 
     Application app;
     TimeProvider timeProvider;
@@ -34,13 +35,14 @@ public class InitialHandshakeThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort) {
+    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs) {
         this.client = client;
         this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = defaultId;
         this.timeProvider = timeProvider;
         this.simDuration = simDuration;
         this.resultPort = resultPort;
+        this.traceIntervalMs = traceIntervalMs;
 
         try {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
@@ -79,7 +81,8 @@ public class InitialHandshakeThread extends Thread {
                         timeProvider,
                         String.format("./out/server_sink_flow_%d_%s.csv", id, getModeString()),
                         id,
-                        mode
+                        mode,
+                        traceIntervalMs
                 );
             } else {
                 app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf);

@@ -26,7 +26,7 @@ public abstract class Sink implements Closeable {
     Date beginTime;
     Date stopTime;
 
-    static final int TRACE_INTERVAL_IN_MS = 50;
+    static volatile int TRACE_INTERVAL_IN_MS = 50;
     static final int LOG_INTERVAL_IN_MS = 1000;
 
     volatile boolean isRunning = true;
@@ -34,10 +34,11 @@ public abstract class Sink implements Closeable {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize) {
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs) {
         this.timeProvider = timeProvider;
         this.port = port;
         this.receiveBufferSize = receiveBufferSize;
+        TRACE_INTERVAL_IN_MS = traceIntervalMs;
     }
 
     public void init(Date beginTime, Date stopTime) {
