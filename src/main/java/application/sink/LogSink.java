@@ -77,11 +77,12 @@ public class LogSink extends Sink {
                 long delayTime = currentTime - sendTime;
                 if (delayTime < -30) {
                     // if delay is less than epsilon (-30) abort. Something went wrong during time sync
-                    ConsoleLogger.log("Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
+                    ConsoleLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
                     throw new IllegalStateException("Negative delay");
                 }
                 if (delayTime < 0) {
                     // if delay is within epsilon [-50:0] set to 0. Precision error during time sync.
+                    ConsoleLogger.log("WARN: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
                     delayTime = 0;
                 }
                 delay.add(delayTime);
@@ -91,6 +92,8 @@ public class LogSink extends Sink {
                 this.totalRcvBytes += payload.length;
                 this.totalRcvPackets++;
             }
+        } catch (IllegalStateException e) {
+            System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
         }
