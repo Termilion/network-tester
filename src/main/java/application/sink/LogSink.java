@@ -1,8 +1,9 @@
 package application.sink;
 
-import general.ConsoleLogger;
 import general.TimeProvider;
 import general.Utility;
+import general.logger.ConsoleLogger;
+import general.logger.FileLogger;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -68,7 +69,7 @@ public class LogSink extends Sink {
                 try {
                     dataInputStream.readFully(payload);
                 } catch (EOFException e) {
-                    ConsoleLogger.log("reached end of file");
+                    ConsoleLogger.log("Transmission ended");
                     break;
                 }
                 // calc delay
@@ -78,6 +79,7 @@ public class LogSink extends Sink {
                 if (delayTime < -30) {
                     // if delay is less than epsilon (-30) abort. Something went wrong during time sync
                     ConsoleLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
+                    FileLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
                     throw new IllegalStateException("Negative delay");
                 }
                 if (delayTime < 0) {
@@ -103,6 +105,7 @@ public class LogSink extends Sink {
     public void scheduledWriteOutput() {
         try {
             long now = timeProvider.getAdjustedTime();
+            FileLogger.log("LogSink: TimeProvider is ok");
 
             // trace values
             List<Long> currentDelay = delay;
@@ -123,6 +126,7 @@ public class LogSink extends Sink {
             // calculate metrics
             double goodput = currentRcvMBits / traceIntervalInS;
             lastGoodputMpbs = goodput;
+            FileLogger.log("LogSink: goodput is ok");
 
             double delaySum = 0;
             for (long t : currentDelay) {
@@ -137,18 +141,23 @@ public class LogSink extends Sink {
                 avgDelay = delaySum / currentDelay.size();
             }
             lastDelay = avgDelay;
+            FileLogger.log("LogSink: delay is ok");
 
             double simTime = (now - beginTime.getTime()) / 1000.0;
+            FileLogger.log("LogSink: brginTime is ok");
 
             // write to file
-            //try {
-            writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
-            writer.newLine();
-            writer.flush();
-            index++;
-            //} catch (IOException e) {
+            try {
+                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
+                FileLogger.log("LogSink: Writer.write is ok");
+                writer.newLine();
+                index++;
+            } catch (IOException e) {
+                FileLogger.log("ERROR in LogSink Writer: " + e, ConsoleLogger.LogLevel.ERROR);
+                e.printStackTrace();
+            }
         } catch (Exception e) {
-            ConsoleLogger.log("ERROR in LogSink: " + e.getLocalizedMessage(), ConsoleLogger.LogLevel.ERROR);
+            FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
             e.printStackTrace();
             System.exit(1);
         }
@@ -157,6 +166,7 @@ public class LogSink extends Sink {
     @Override
     public void scheduledLoggingOutput() {
         ConsoleLogger.log("%s | %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, totalRcvPackets, lastGoodputMpbs, lastDelay);
+        FileLogger.log("%s | Last %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, totalRcvPackets, lastGoodputMpbs, lastDelay);
     }
 
     @Override
@@ -165,9 +175,10 @@ public class LogSink extends Sink {
             // already closed. Nothing to do
             return;
         }
+        //TODO why do some stations do not write their file???
         closed = true;
         writer.flush();
-        ConsoleLogger.log("LogSink: Writer is closed");
+        FileLogger.log("LogSink: Writer is closed");
         writer.close();
         super.close();
     }
