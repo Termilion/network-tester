@@ -1,22 +1,13 @@
-package general;
+package general.logger;
 
-import java.text.SimpleDateFormat;
+import general.TimeProvider;
+
 import java.util.Date;
 
-public class ConsoleLogger {
-    public enum LogLevel {
-        ERROR,
-        WARN,
-        INFO
-    }
-
-    static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-    private Date simulationBegin;
-    private final TimeProvider timeProvider;
-
+public class ConsoleLogger extends Logger {
     private static ConsoleLogger instance;
 
-    public synchronized static ConsoleLogger init(TimeProvider timeProvider) {
+    public synchronized static ConsoleLogger create(TimeProvider timeProvider) {
         if (instance == null) {
             instance = new ConsoleLogger(timeProvider);
         }
@@ -24,12 +15,12 @@ public class ConsoleLogger {
     }
 
     private ConsoleLogger(TimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
+        super(timeProvider);
     }
 
     public static void setSimulationBegin(Date simulationBegin) {
         if (ConsoleLogger.instance != null) {
-            ConsoleLogger.instance.simulationBegin = simulationBegin;
+            ConsoleLogger.instance.m_setSimulationBegin(simulationBegin);
         } else {
             throw new IllegalStateException("Not yet initialized");
         }
@@ -44,10 +35,14 @@ public class ConsoleLogger {
     }
 
     public static void log(String message, Object... args) {
-        log(String.format(message, args));
+        if (ConsoleLogger.instance != null) {
+            ConsoleLogger.instance.m_log(message, args);
+        } else {
+            throw new IllegalStateException("Not yet initialized");
+        }
     }
 
-    public static void log(String message, LogLevel level) {
+    public static void log(String message, ConsoleLogger.LogLevel level) {
         switch (level) {
             case WARN:
                 log("\u001b[33m%s\u001b[0m", message);
@@ -60,7 +55,8 @@ public class ConsoleLogger {
         }
     }
 
-    private void m_log(String message) {
+    @Override
+    protected void m_log(String message) {
         long currentTime;
         try {
             currentTime = timeProvider.getAdjustedTime();

@@ -1,5 +1,7 @@
 package general;
 
+import general.logger.ConsoleLogger;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.DatagramPacket;

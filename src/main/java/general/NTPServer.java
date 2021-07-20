@@ -17,6 +17,7 @@ package general;
  * limitations under the License.
  */
 
+import general.logger.ConsoleLogger;
 import org.apache.commons.net.ntp.NtpV3Impl;
 import org.apache.commons.net.ntp.NtpV3Packet;
 import org.apache.commons.net.ntp.TimeStamp;

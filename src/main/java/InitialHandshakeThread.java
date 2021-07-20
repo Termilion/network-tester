@@ -1,10 +1,10 @@
 import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
-import general.ConsoleLogger;
 import general.InstructionMessage;
 import general.NegotiationMessage;
 import general.TimeProvider;
+import general.logger.ConsoleLogger;
 
 import java.io.*;
 import java.net.Socket;

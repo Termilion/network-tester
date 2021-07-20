@@ -2,6 +2,8 @@ import application.Application;
 import application.SinkApplication;
 import application.SourceApplication;
 import general.*;
+import general.logger.ConsoleLogger;
+import general.logger.FileLogger;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -60,11 +62,14 @@ public class Client implements Callable<Integer> {
             }
         }
 
-        ConsoleLogger.init(timeClient);
+        ConsoleLogger.create(timeClient);
+        FileLogger.create(timeClient, "./log/client.log");
 
         timeClient.startSyncTime();
         boolean reconnectAfterPostHandshake;
+        int run = 0;
         do {
+            FileLogger.log("----------------- RUN %d -----------------", run);
             InstructionMessage msg = initialHandshake();
 
             int appPort = msg.getServerPort();
@@ -73,6 +78,7 @@ public class Client implements Callable<Integer> {
             Date startTime = msg.getStartTime();
             Date stopTime = msg.getStopTime();
             ConsoleLogger.setSimulationBegin(simulationBegin);
+            FileLogger.setSimulationBegin(simulationBegin);
             ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
             ConsoleLogger.log("Client startTime %s", startTime);
             ConsoleLogger.log("Client stopTime %s", stopTime);
@@ -95,6 +101,7 @@ public class Client implements Callable<Integer> {
                 // sleep a short amount of time before reconnecting, to ensure that the socket is open
                 Thread.sleep(5000);
             }
+            run++;
         } while (reconnectAfterPostHandshake);
 
         timeClient.close();

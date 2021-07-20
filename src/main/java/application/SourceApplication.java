@@ -3,8 +3,8 @@ package application;
 import application.source.BulkSource;
 import application.source.IoTSource;
 import application.source.Source;
-import general.ConsoleLogger;
 import general.TimeProvider;
+import general.logger.ConsoleLogger;
 
 import java.io.IOException;
 import java.util.Date;

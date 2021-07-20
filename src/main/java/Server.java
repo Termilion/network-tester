@@ -1,6 +1,11 @@
 import application.Application;
 import application.SinkApplication;
-import general.*;
+import general.DecentralizedClockSync;
+import general.NTPClient;
+import general.NTPServer;
+import general.TimeProvider;
+import general.logger.ConsoleLogger;
+import general.logger.FileLogger;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
@@ -73,7 +78,8 @@ public class Server implements Callable<Integer> {
             }
         }
 
-        ConsoleLogger.init(timeClient);
+        ConsoleLogger.create(timeClient);
+        FileLogger.create(timeClient, "./log/server.log");
 
         if (exclusive.ntpServerPort != -1) {
             timeServer = new NTPServer(exclusive.ntpServerPort);
@@ -85,6 +91,7 @@ public class Server implements Callable<Integer> {
 
         for (int run = 0; run < runs; run++) {
             ConsoleLogger.log("Initializing run %d", run);
+            FileLogger.log("----------------- RUN %d -----------------", run);
             List<InitialHandshakeThread> initialHandshakeThreads = initialHandshake();
             timeClient.stopSyncTime();
             List<SinkApplication> serverSideSinks = transmission(initialHandshakeThreads);
@@ -170,6 +177,7 @@ public class Server implements Callable<Integer> {
         long beginDelay = 2000L;
         Date simulationBegin = new Date(current + beginDelay);
         ConsoleLogger.setSimulationBegin(simulationBegin);
+        FileLogger.setSimulationBegin(simulationBegin);
 
         for (InitialHandshakeThread thread : handshakeThreads) {
             ConsoleLogger.log("send instructions to node %s", thread.id);

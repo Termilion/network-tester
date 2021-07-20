@@ -1,8 +1,8 @@
 package application.source;
 
-import general.ConsoleLogger;
 import general.TimeProvider;
 import general.Utility;
+import general.logger.ConsoleLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;

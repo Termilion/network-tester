@@ -1,7 +1,7 @@
 package application;
 
-import general.ConsoleLogger;
 import general.TimeProvider;
+import general.logger.ConsoleLogger;
 
 import java.io.Closeable;
 import java.io.IOException;

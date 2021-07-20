@@ -1,5 +1,5 @@
-import general.ConsoleLogger;
 import general.ResultMessage;
+import general.logger.ConsoleLogger;
 
 import java.io.*;
 import java.net.InetAddress;
