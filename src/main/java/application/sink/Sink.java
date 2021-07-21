@@ -30,6 +30,7 @@ public abstract class Sink implements Closeable {
     static final int LOG_INTERVAL_IN_MS = 1000;
 
     volatile boolean isRunning = true;
+    volatile boolean isConnected = false;
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
@@ -63,6 +64,7 @@ public abstract class Sink implements Closeable {
         while (isRunning) {
             try {
                 client = socket.accept();
+                isConnected = true;
                 executeLogic();
             } catch (Exception e) {
                 // fail silently if program is gracefully stopping
@@ -83,6 +85,7 @@ public abstract class Sink implements Closeable {
         if (client != null && !client.isClosed()) {
             client.close();
         }
+        isConnected = false;
     }
 
     @Override

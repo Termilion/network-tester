@@ -148,7 +148,13 @@ public class LogSink extends Sink {
 
             // write to file
             try {
-                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, connectedAddress, goodput, avgDelay));
+                String address;
+                if (isConnected || goodput > 0 || avgDelay > 0) {
+                    address = connectedAddress;
+                } else {
+                    address = null;
+                }
+                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, address, goodput, avgDelay));
                 FileLogger.log("LogSink: Writer.write is ok");
                 writer.newLine();
                 index++;
@@ -175,7 +181,6 @@ public class LogSink extends Sink {
             // already closed. Nothing to do
             return;
         }
-        //TODO why do some stations do not write their file???
         closed = true;
         writer.flush();
         FileLogger.log("LogSink: Writer is closed");

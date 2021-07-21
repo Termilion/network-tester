@@ -46,5 +46,6 @@ public class IoTSource extends Source {
         }
         ConsoleLogger.log("%s | stopped transmission. %s packets send", socket.getInetAddress().getHostAddress(), numberSend);
         out.close();
+        socket.close();
     }
 }
