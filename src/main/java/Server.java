@@ -51,6 +51,9 @@ public class Server implements Callable<Integer> {
     @CommandLine.Option(names = "--trace", defaultValue = "50", description = "Trace interval in ms.")
     private int traceIntervalMs = 50;
 
+    @CommandLine.Option(names = {"--no-gui"}, description = "do not plot metrics in a gui window")
+    private boolean noGui;
+
     boolean startedTransmission = false;
 
     int connectedPreTransmission = -1;
@@ -137,7 +140,7 @@ public class Server implements Callable<Integer> {
                     connectedPreTransmission++;
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
                     int defaultId = connectedPreTransmission - 1;
-                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs);
+                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs, noGui);
                     clientThread.start();
                     handshakeThreads.add(clientThread);
                 } catch (IOException e) {

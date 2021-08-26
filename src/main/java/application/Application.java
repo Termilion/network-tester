@@ -15,6 +15,7 @@ public abstract class Application implements Closeable {
     Date beginTime;
     Date startTime;
     Date stopTime;
+    int duration;
 
     public final Application simBeginOn(Date simulationBegin) {
         this.beginTime = simulationBegin;
@@ -31,12 +32,17 @@ public abstract class Application implements Closeable {
         return this;
     }
 
+    public final Application duration(int duration) {
+        this.duration = duration;
+        return this;
+    }
+
     public final void start(TimeProvider timeProvider) throws Exception {
         if (beginTime == null || startTime == null || stopTime == null) {
             throw new InstantiationException("simulationBegin, startTime or stopTime was not set");
         }
 
-        init(beginTime, stopTime);
+        init(beginTime, stopTime, duration);
 
         long current = timeProvider.getAdjustedTime();
         long waitTime = beginTime.getTime() - current;
@@ -53,7 +59,7 @@ public abstract class Application implements Closeable {
         startLogic();
     }
 
-    protected abstract void init(Date beginTime, Date stopTime);
+    protected abstract void init(Date beginTime, Date stopTime, int duration);
 
     protected void startLogging() {
     }

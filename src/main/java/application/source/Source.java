@@ -1,5 +1,6 @@
 package application.source;
 
+import application.Chartable;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
 
@@ -16,16 +17,18 @@ import java.util.concurrent.TimeUnit;
 
 import static application.Application.LOG_INTERVAL_IN_MS;
 
-public abstract class Source implements Closeable {
+public abstract class Source extends Chartable implements Closeable {
     Socket socket;
     int sendBufferSize;
     String address;
     int port;
     int resetTime;
+    int id;
 
     TimeProvider timeProvider;
     Date beginTime;
     Date stopTime;
+    int duration;
 
     volatile boolean isRunning = true;
     volatile boolean isConnected = false;
@@ -38,21 +41,29 @@ public abstract class Source implements Closeable {
             String address,
             int port,
             int sendBufferSize,
-            int resetTime
+            int resetTime,
+            int id
     ) {
         this.sendBufferSize = sendBufferSize;
         this.timeProvider = timeProvider;
         this.address = address;
         this.port = port;
         this.resetTime = resetTime;
+        this.id = id;
     }
 
-    public void init(Date beginTime, Date stopTime) {
+    public void init(Date beginTime, Date stopTime, int duration) {
         this.beginTime = beginTime;
         this.stopTime = stopTime;
+        this.duration = duration;
     }
 
     public void startLogging() {
+        initChart(
+                (int) Math.ceil(duration * 1000.0 / LOG_INTERVAL_IN_MS),
+                "Time",
+                id + " | Source ↑"
+        );
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
     }
 
@@ -93,6 +104,7 @@ public abstract class Source implements Closeable {
 
     @Override
     public synchronized void close() throws IOException {
+        super.close();
         isRunning = false;
         isConnected = false;
         scheduler.shutdown();
@@ -137,6 +149,11 @@ public abstract class Source implements Closeable {
                 e.printStackTrace();
             }
         }, duration, TimeUnit.MILLISECONDS));
+    }
+
+    protected double getSimTime() {
+        long now = timeProvider.getAdjustedTime();
+        return (now - beginTime.getTime()) / 1000.0;
     }
 
     protected abstract void scheduledLoggingOutput();

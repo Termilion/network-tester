@@ -20,6 +20,7 @@ public class InitialHandshakeThread extends Thread {
     int extraDelay;
     int id;
     int simDuration;
+    boolean noGui;
 
     String clientAddress;
     int clientPort;
@@ -35,7 +36,7 @@ public class InitialHandshakeThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs) {
+    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs, boolean noGui) {
         this.client = client;
         this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = defaultId;
@@ -43,6 +44,7 @@ public class InitialHandshakeThread extends Thread {
         this.simDuration = simDuration;
         this.resultPort = resultPort;
         this.traceIntervalMs = traceIntervalMs;
+        this.noGui = noGui;
 
         try {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
@@ -82,10 +84,11 @@ public class InitialHandshakeThread extends Thread {
                         String.format("./out/server_sink_flow_%d_%s.csv", id, getModeString()),
                         id,
                         mode,
-                        traceIntervalMs
+                        traceIntervalMs,
+                        noGui
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id, noGui);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
@@ -110,7 +113,7 @@ public class InitialHandshakeThread extends Thread {
         Date startTime = this.uplink ? new Date(begin + SINK_WAIT_TIME + extraDelay) : new Date(begin + SOURCE_WAIT_TIME + extraDelay);
         Date stopTime = new Date(begin + simDuration * 1000L);
 
-        return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime);
+        return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).duration(simDuration);
     }
 
     public Application getApplication() {
@@ -127,7 +130,7 @@ public class InitialHandshakeThread extends Thread {
         ConsoleLogger.log("%s | sending instruction message. Begin: %s Start: %s Stop: %s", client.getInetAddress(), simulationBegin, startTime, stopTime);
         try {
             ConsoleLogger.log("Sending ID to client: %d", id);
-            InstructionMessage msg = new InstructionMessage(id, simulationBegin, startTime, stopTime, clientPort, resultPort);
+            InstructionMessage msg = new InstructionMessage(id, simulationBegin, startTime, stopTime, simDuration, clientPort, resultPort);
             out.writeObject(msg);
         } catch (Exception e) {
             e.printStackTrace();

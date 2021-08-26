@@ -1,5 +1,6 @@
 package application.sink;
 
+import application.Chartable;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
 
@@ -17,16 +18,18 @@ import java.util.concurrent.TimeUnit;
 
 import static application.Application.LOG_INTERVAL_IN_MS;
 
-public abstract class Sink implements Closeable {
+public abstract class Sink extends Chartable implements Closeable {
     ServerSocket socket;
     Socket client;
 
     TimeProvider timeProvider;
     int port;
     int receiveBufferSize;
+    int id;
 
     Date beginTime;
     Date stopTime;
+    int duration;
 
     static volatile int TRACE_INTERVAL_IN_MS = 50;
 
@@ -36,20 +39,27 @@ public abstract class Sink implements Closeable {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs) {
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs, int id) {
         this.timeProvider = timeProvider;
         this.port = port;
         this.receiveBufferSize = receiveBufferSize;
         TRACE_INTERVAL_IN_MS = traceIntervalMs;
+        this.id = id;
     }
 
-    public void init(Date beginTime, Date stopTime) {
+    public void init(Date beginTime, Date stopTime, int duration) {
         this.beginTime = beginTime;
         this.stopTime = stopTime;
+        this.duration = duration;
     }
 
     public void startLogging() {
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
+        initChart(
+                (int) Math.ceil(duration * 1000.0 / LOG_INTERVAL_IN_MS),
+                "Time",
+                id + " | Sink ↓"
+        );
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
     }
 
@@ -91,6 +101,7 @@ public abstract class Sink implements Closeable {
 
     @Override
     public synchronized void close() throws IOException {
+        super.close();
         isRunning = false;
         scheduler.shutdown();
         for (ScheduledFuture<?> sf : scheduledTasks) {
@@ -118,6 +129,11 @@ public abstract class Sink implements Closeable {
                 e.printStackTrace();
             }
         }, duration, TimeUnit.MILLISECONDS));
+    }
+
+    protected double getSimTime() {
+        long now = timeProvider.getAdjustedTime();
+        return (now - beginTime.getTime()) / 1000.0;
     }
 
     protected abstract void scheduledWriteOutput();

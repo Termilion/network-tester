@@ -23,7 +23,7 @@ public class IoTSource extends Source {
     long lastLogTime = -1;
 
     public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime);
+        super(timeProvider, address, port, bufferSize, resetTime, id);
         this.id = id;
         this.sndBytes = new AtomicInteger(0);
     }
@@ -96,6 +96,7 @@ public class IoTSource extends Source {
             }
 
             ConsoleLogger.log("%d\t| %s\t| ↑ | %d packets\t[%.02f Mbps]", id, address, totalSndPackets, goodput);
+            plotData((int) getSimTime(), goodput);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

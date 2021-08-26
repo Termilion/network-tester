@@ -36,7 +36,7 @@ public class LogSink extends Sink {
     long lastLogTime = -1;
 
     public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
-        super(timeProvider, port, receiveBufferSize, traceIntervalMs);
+        super(timeProvider, port, receiveBufferSize, traceIntervalMs, id);
         this.id = id;
         this.mode = booleanToInt(mode);
         this.rcvBytesForCsv = new AtomicInteger(0);
@@ -210,6 +210,7 @@ public class LogSink extends Sink {
 
             ConsoleLogger.log("%d\t| %s\t| ↓ | %d packets\t[%.02f Mbps]\t[%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
             FileLogger.log("%d | %s | ↓ | Last %d packets [%.02f Mbps] [%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
+            plotData((int) getSimTime(), goodput, avgDelay);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

@@ -44,6 +44,8 @@ public class Client implements Callable<Integer> {
     int id = -1;
     @CommandLine.Option(names = "--trace", defaultValue = "50", description = "Trace interval in ms.")
     private int traceIntervalMs = 50;
+    @CommandLine.Option(names = {"--no-gui"}, description = "do not plot metrics in a gui window")
+    private boolean noGui;
 
     TimeProvider timeClient;
 
@@ -77,6 +79,7 @@ public class Client implements Callable<Integer> {
             Date simulationBegin = msg.getSimulationBegin();
             Date startTime = msg.getStartTime();
             Date stopTime = msg.getStopTime();
+            int simulationDuration = msg.getDuration();
             ConsoleLogger.setSimulationBegin(simulationBegin);
             FileLogger.setSimulationBegin(simulationBegin);
             ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
@@ -89,7 +92,7 @@ public class Client implements Callable<Integer> {
             ConsoleLogger.log("building application");
             Application app = buildApplication(id, address, appPort);
 
-            scheduleApplicationStart(simulationBegin, startTime, app, stopTime);
+            scheduleApplicationStart(app, simulationBegin, startTime, stopTime, simulationDuration);
 
             String path = null;
             if (!uplink) {
@@ -137,9 +140,9 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.uplink) {
-            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf, id);
+            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf, id, noGui);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs);
+            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs, noGui);
         }
         return app;
     }
@@ -157,8 +160,8 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public void scheduleApplicationStart(Date simulationBegin, Date startTime, Application app, Date stopTime) throws Exception {
-        app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).start(timeClient);
+    public void scheduleApplicationStart(Application app, Date simulationBegin, Date startTime, Date stopTime, int duration) throws Exception {
+        app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).duration(duration).start(timeClient);
     }
 
     public boolean postHandshake(int id, int resultPort, String logFilePath) throws Exception {
