@@ -75,6 +75,6 @@ public class ConsoleLogger extends Logger {
             }
         }
 
-        System.out.printf("[%s] [%s] %s\n", time, simTime, message);
+        System.out.printf("[%s] [%s]\t%s\n", time, simTime, message);
     }
 }

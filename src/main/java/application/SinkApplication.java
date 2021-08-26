@@ -9,7 +9,6 @@ import java.util.Date;
 
 public class SinkApplication extends Application {
     String filePath;
-    TimeProvider timeProvider;
     int id;
     boolean mode;
 
@@ -17,7 +16,6 @@ public class SinkApplication extends Application {
 
     public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
         this.filePath = filePath;
-        this.timeProvider = timeProvider;
         this.id = id;
         this.mode = mode;
 

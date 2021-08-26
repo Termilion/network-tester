@@ -15,6 +15,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static application.Application.LOG_INTERVAL_IN_MS;
+
 public abstract class Sink implements Closeable {
     ServerSocket socket;
     Socket client;
@@ -27,7 +29,6 @@ public abstract class Sink implements Closeable {
     Date stopTime;
 
     static volatile int TRACE_INTERVAL_IN_MS = 50;
-    static final int LOG_INTERVAL_IN_MS = 1000;
 
     volatile boolean isRunning = true;
     volatile boolean isConnected = false;

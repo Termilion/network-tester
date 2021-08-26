@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static application.Application.LOG_INTERVAL_IN_MS;
 
 public class LogSink extends Sink {
 
@@ -21,22 +24,25 @@ public class LogSink extends Sink {
     BufferedWriter writer;
 
     int index = 0;
-    int rcvBytes = 0;
-    List<Long> delay;
+    AtomicInteger rcvBytesForCsv;
+    List<Long> delayForCsv;
+    AtomicInteger rcvBytesForLog;
+    List<Long> delayForLog;
 
     boolean closed = false;
-    long totalRcvBytes = 0;
     long totalRcvPackets = 0;
-    double lastGoodputMpbs = 0;
-    double lastDelay = 0;
 
     long lastTraceTime = -1;
+    long lastLogTime = -1;
 
     public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
         super(timeProvider, port, receiveBufferSize, traceIntervalMs);
         this.id = id;
         this.mode = booleanToInt(mode);
-        this.delay = Collections.synchronizedList(new ArrayList<>());
+        this.rcvBytesForCsv = new AtomicInteger(0);
+        this.delayForCsv = Collections.synchronizedList(new ArrayList<>());
+        this.rcvBytesForLog = new AtomicInteger(0);
+        this.delayForLog = Collections.synchronizedList(new ArrayList<>());
         createLogFile(filePath);
     }
 
@@ -76,29 +82,40 @@ public class LogSink extends Sink {
                 long sendTime = Utility.decodeTime(payload);
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
-                if (delayTime < -30) {
-                    // if delay is less than epsilon (-30) abort. Something went wrong during time sync
-                    ConsoleLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
-                    FileLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
-                    throw new IllegalStateException("Negative delay");
-                }
-                if (delayTime < 0) {
-                    // if delay is within epsilon [-50:0] set to 0. Precision error during time sync.
-                    ConsoleLogger.log("WARN: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
-                    delayTime = 0;
-                }
-                delay.add(delayTime);
 
-                // log rcv bytes
-                this.rcvBytes += payload.length;
-                this.totalRcvBytes += payload.length;
-                this.totalRcvPackets++;
+                measureDelay(delayTime);
+                measureBytes(payload.length);
             }
         } catch (IllegalStateException e) {
             System.exit(1);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void measureDelay(long delayTime) {
+        if (delayTime < -30) {
+            // if delay is less than epsilon (-30) abort. Something went seriously wrong during time sync
+            ConsoleLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
+            FileLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
+            throw new IllegalStateException("Negative delay");
+        }
+        if (delayTime < 0) {
+            // TODO this is a dirty "hack". Use a better time sync algorithm OR
+            //  capture the greatest negative delay over the whole simulation and later add its absolute value to every measured delay
+            // if delay is within epsilon [-30:0] set to 0. Precision error during time sync.
+            ConsoleLogger.log("WARN: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
+            delayTime = 0;
+        }
+        delayForCsv.add(delayTime);
+        delayForLog.add(delayTime);
+    }
+
+    private void measureBytes(int payloadLength) {
+        // log rcv bytes
+        this.rcvBytesForCsv.addAndGet(payloadLength);
+        this.rcvBytesForLog.addAndGet(payloadLength);
+        this.totalRcvPackets++;
     }
 
     @Override
@@ -108,12 +125,12 @@ public class LogSink extends Sink {
             FileLogger.log("LogSink: TimeProvider is ok");
 
             // trace values
-            List<Long> currentDelay = delay;
-            double currentRcvMBits = (rcvBytes * 8) / 1e6;
+            List<Long> currentDelay = delayForCsv;
+            double currentRcvMBits = (rcvBytesForCsv.get() * 8) / 1e6;
 
             // reset values
-            rcvBytes = 0;
-            delay = Collections.synchronizedList(new ArrayList<>());
+            rcvBytesForCsv.set(0);
+            delayForCsv = Collections.synchronizedList(new ArrayList<>());
 
             double traceIntervalInS;
             if (lastTraceTime == -1) {
@@ -123,28 +140,16 @@ public class LogSink extends Sink {
                 lastTraceTime = now;
             }
 
-            // calculate metrics
-            double goodput = currentRcvMBits / traceIntervalInS;
-            lastGoodputMpbs = goodput;
+            // calculate goodput
+            double goodput = avgGoodput(currentRcvMBits, traceIntervalInS);
             FileLogger.log("LogSink: goodput is ok");
 
-            double delaySum = 0;
-            for (long t : currentDelay) {
-                delaySum += t;
-            }
-
-            double avgDelay;
-
-            if (currentDelay.size() == 0) {
-                avgDelay = 0;
-            } else {
-                avgDelay = delaySum / currentDelay.size();
-            }
-            lastDelay = avgDelay;
+            // calculate delay
+            double avgDelay = avgDelay(currentDelay);
             FileLogger.log("LogSink: delay is ok");
 
             double simTime = (now - beginTime.getTime()) / 1000.0;
-            FileLogger.log("LogSink: brginTime is ok");
+            FileLogger.log("LogSink: beginTime is ok");
 
             // write to file
             try {
@@ -171,8 +176,65 @@ public class LogSink extends Sink {
 
     @Override
     public void scheduledLoggingOutput() {
-        ConsoleLogger.log("%s | %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, totalRcvPackets, lastGoodputMpbs, lastDelay);
-        FileLogger.log("%s | Last %d packets [%.02f Mbps] [%.02f ms]", connectedAddress, totalRcvPackets, lastGoodputMpbs, lastDelay);
+        try {
+            long now = timeProvider.getAdjustedTime();
+
+            // trace values
+            List<Long> currentDelay = delayForLog;
+            double currentRcvMBits = (rcvBytesForLog.get() * 8) / 1e6;
+
+            // reset values
+            rcvBytesForLog.set(0);
+            delayForLog = Collections.synchronizedList(new ArrayList<>());
+
+            double logIntervalInS;
+            if (lastLogTime == -1) {
+                logIntervalInS = LOG_INTERVAL_IN_MS / 1000.0;
+            } else {
+                logIntervalInS = (now - lastLogTime) / 1000.0;
+                lastLogTime = now;
+            }
+
+            // calculate goodput
+            double goodput = avgGoodput(currentRcvMBits, logIntervalInS);
+
+            // calculate delay
+            double avgDelay = avgDelay(currentDelay);
+
+            String address;
+            if (isConnected || goodput > 0 || avgDelay > 0) {
+                address = connectedAddress;
+            } else {
+                address = null;
+            }
+
+            ConsoleLogger.log("%d\t| %s\t| ↓ | %d packets\t[%.02f Mbps]\t[%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
+            FileLogger.log("%d | %s | ↓ | Last %d packets [%.02f Mbps] [%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private double avgDelay(List<Long> delayList) {
+        // calculate avg delay
+        double delaySum = 0;
+        for (long t : delayList) {
+            delaySum += t;
+        }
+
+        double avgDelay;
+
+        if (delayList.size() == 0) {
+            avgDelay = 0;
+        } else {
+            avgDelay = delaySum / delayList.size();
+        }
+        return avgDelay;
+    }
+
+    private double avgGoodput(double rcvMBits, double traceIntervalInS) {
+        return rcvMBits / traceIntervalInS;
     }
 
     @Override

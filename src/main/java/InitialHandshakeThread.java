@@ -85,7 +85,7 @@ public class InitialHandshakeThread extends Thread {
                         traceIntervalMs
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {

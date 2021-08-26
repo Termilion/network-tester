@@ -10,28 +10,29 @@ import java.io.IOException;
 import java.util.Date;
 
 public class SourceApplication extends Application {
-    final private String ipaddress;
-    final private int port;
-
     Source source;
 
-    public SourceApplication(boolean mode, String ipaddress, int port, TimeProvider timeProvider, int resetTime, int sndBuf) throws IOException {
-        this.ipaddress = ipaddress;
-        this.port = port;
-
+    public SourceApplication(boolean mode, String ipaddress, int port, TimeProvider timeProvider, int resetTime, int sndBuf, int id) throws IOException {
         if (!mode) {
-            ConsoleLogger.log("starting bulk source application");
-            source = new BulkSource(timeProvider, ipaddress, port, resetTime, sndBuf);
+            ConsoleLogger.log("Starting Bulk source application: %s:%d", ipaddress, port);
+            source = new BulkSource(timeProvider, ipaddress, port, resetTime, sndBuf, id);
         } else {
-            ConsoleLogger.log("starting IoT source application");
-            source = new IoTSource(timeProvider, ipaddress, port, resetTime, sndBuf);
+            ConsoleLogger.log("Starting IoT source application: %s:%d", ipaddress, port);
+            source = new IoTSource(timeProvider, ipaddress, port, resetTime, sndBuf, id);
         }
     }
 
     @Override
     protected void init(Date beginTime, Date stopTime) {
-        this.beginTime = beginTime;
-        this.stopTime = stopTime;
+        source.init(beginTime, stopTime);
+    }
+
+    @Override
+    public void startLogging() {
+        if (beginTime == null || stopTime == null) {
+            throw new IllegalStateException("Not yet initialized");
+        }
+        source.startLogging();
     }
 
     @Override
@@ -39,14 +40,7 @@ public class SourceApplication extends Application {
         if (beginTime == null || stopTime == null) {
             throw new IllegalStateException("Not yet initialized");
         }
-        ConsoleLogger.log(
-                String.format(
-                        "Started Source: %s:%d",
-                        ipaddress,
-                        port
-                )
-        );
-        source.startLogic(beginTime, stopTime);
+        source.startLogic();
     }
 
     @Override

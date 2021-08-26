@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class Application implements Closeable {
+    public static final int LOG_INTERVAL_IN_MS = 1000;
     static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
 
     Date beginTime;

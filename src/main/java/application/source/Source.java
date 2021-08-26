@@ -14,6 +14,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static application.Application.LOG_INTERVAL_IN_MS;
+
 public abstract class Source implements Closeable {
     Socket socket;
     int sendBufferSize;
@@ -26,6 +28,7 @@ public abstract class Source implements Closeable {
     Date stopTime;
 
     volatile boolean isRunning = true;
+    volatile boolean isConnected = false;
 
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
@@ -44,20 +47,26 @@ public abstract class Source implements Closeable {
         this.resetTime = resetTime;
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    public void startLogic(Date beginTime, Date stopTime) throws InterruptedException {
+    public void init(Date beginTime, Date stopTime) {
         this.beginTime = beginTime;
         this.stopTime = stopTime;
+    }
 
+    public void startLogging() {
+        scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    public void startLogic() throws InterruptedException {
         if (resetTime > 0) {
             reset(resetTime);
         }
         stopOn(stopTime);
 
         try {
-            ConsoleLogger.log("connecting to %s:%s", address, port);
+            ConsoleLogger.log("Opening source to %s:%s", address, port);
             connect(address, port);
-            execute();
+            executeLogic();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -75,8 +84,8 @@ public abstract class Source implements Closeable {
     }
 
     protected void connect(String address, int port) throws IOException {
-        ConsoleLogger.log("Source: Connecting to %s:%s", address, port);
         socket = new Socket(address, port);
+        isConnected = true;
         if (this.sendBufferSize > 0) {
             this.socket.setSendBufferSize(this.sendBufferSize);
         }
@@ -85,6 +94,7 @@ public abstract class Source implements Closeable {
     @Override
     public synchronized void close() throws IOException {
         isRunning = false;
+        isConnected = false;
         scheduler.shutdown();
         for (ScheduledFuture<?> sf : scheduledTasks) {
             sf.cancel(true);
@@ -102,8 +112,9 @@ public abstract class Source implements Closeable {
                 if (socket != null && !socket.isClosed()) {
                     socket.close();
                 }
+                isConnected = false;
                 connect(address, port);
-                execute();
+                executeLogic();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -116,7 +127,7 @@ public abstract class Source implements Closeable {
         if (duration < 0) {
             throw new IllegalArgumentException("stopTime lies in the past: " + stopTime.getTime() + " Now is " + now);
         }
-        ConsoleLogger.log("Stopping source in "+ duration +"ms");
+        ConsoleLogger.log("Stopping source in %d ms", duration);
         scheduledTasks.add(scheduler.schedule(() -> {
             try {
                 isRunning = false;
@@ -128,5 +139,7 @@ public abstract class Source implements Closeable {
         }, duration, TimeUnit.MILLISECONDS));
     }
 
-    protected abstract void execute() throws IOException;
+    protected abstract void scheduledLoggingOutput();
+
+    protected abstract void executeLogic() throws IOException;
 }
