@@ -149,7 +149,6 @@ public class Client implements Callable<Integer> {
         } else {
             app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs);
         }
-        Chartable.disablePlotting();
         return app;
     }
 
