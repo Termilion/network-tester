@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static application.Application.LOG_INTERVAL_IN_MS;
 
@@ -24,10 +24,10 @@ public class LogSink extends Sink {
     BufferedWriter writer;
 
     int index = 0;
-    AtomicInteger rcvBytesForCsv;
-    List<Long> delayForCsv;
-    AtomicInteger rcvBytesForLog;
-    List<Long> delayForLog;
+    final AtomicLong rcvBytesForCsv;
+    final List<Long> delayForCsv;
+    final AtomicLong rcvBytesForLog;
+    final List<Long> delayForLog;
 
     boolean closed = false;
     long totalRcvPackets = 0;
@@ -39,9 +39,9 @@ public class LogSink extends Sink {
         super(timeProvider, port, receiveBufferSize, traceIntervalMs, id);
         this.id = id;
         this.mode = booleanToInt(mode);
-        this.rcvBytesForCsv = new AtomicInteger(0);
+        this.rcvBytesForCsv = new AtomicLong(0);
         this.delayForCsv = Collections.synchronizedList(new ArrayList<>());
-        this.rcvBytesForLog = new AtomicInteger(0);
+        this.rcvBytesForLog = new AtomicLong(0);
         this.delayForLog = Collections.synchronizedList(new ArrayList<>());
         createLogFile(filePath);
     }
@@ -125,12 +125,17 @@ public class LogSink extends Sink {
             FileLogger.log("LogSink: TimeProvider is ok");
 
             // trace values
-            List<Long> currentDelay = delayForCsv;
-            double currentRcvMBits = (rcvBytesForCsv.get() * 8) / 1e6;
+            List<Long> currentDelay;
+            synchronized (delayForCsv) {
+                currentDelay = new ArrayList<>(delayForCsv);
+                delayForCsv.clear();
+            }
 
-            // reset values
-            rcvBytesForCsv.set(0);
-            delayForCsv = Collections.synchronizedList(new ArrayList<>());
+            double currentRcvMBits;
+            synchronized (rcvBytesForCsv) {
+                currentRcvMBits = (rcvBytesForCsv.get() * 8) / 1e6;
+                rcvBytesForCsv.set(0);
+            }
 
             double traceIntervalInS;
             if (lastTraceTime == -1) {
@@ -180,12 +185,17 @@ public class LogSink extends Sink {
             long now = timeProvider.getAdjustedTime();
 
             // trace values
-            List<Long> currentDelay = delayForLog;
-            double currentRcvMBits = (rcvBytesForLog.get() * 8) / 1e6;
+            List<Long> currentDelay;
+            synchronized (delayForLog) {
+                currentDelay = new ArrayList<>(delayForLog);
+                delayForLog.clear();
+            }
 
-            // reset values
-            rcvBytesForLog.set(0);
-            delayForLog = Collections.synchronizedList(new ArrayList<>());
+            double currentRcvMBits;
+            synchronized (rcvBytesForLog) {
+                currentRcvMBits = (rcvBytesForLog.get() * 8) / 1e6;
+                rcvBytesForLog.set(0);
+            }
 
             double logIntervalInS;
             if (lastLogTime == -1) {

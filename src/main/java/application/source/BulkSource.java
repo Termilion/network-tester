@@ -6,7 +6,7 @@ import general.logger.ConsoleLogger;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static application.Application.LOG_INTERVAL_IN_MS;
 
@@ -15,7 +15,7 @@ public class BulkSource extends Source {
     String connectedAddress;
     int id;
 
-    AtomicInteger sndBytes;
+    final AtomicLong sndBytes;
     long totalSndPackets = 0;
 
     long lastLogTime = -1;
@@ -23,7 +23,7 @@ public class BulkSource extends Source {
     public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize, int id) {
         super(timeProvider, address, port, bufferSize, resetTime, id);
         this.id = id;
-        this.sndBytes = new AtomicInteger(0);
+        this.sndBytes = new AtomicLong(0);
     }
 
     @Override
@@ -66,10 +66,11 @@ public class BulkSource extends Source {
             long now = timeProvider.getAdjustedTime();
 
             // trace values
-            double currentSndMBits = (sndBytes.get() * 8) / 1e6;
-
-            // reset values
-            sndBytes.set(0);
+            double currentSndMBits;
+            synchronized (sndBytes) {
+                currentSndMBits = (sndBytes.get() * 8) / 1e6;
+                sndBytes.set(0);
+            }
 
             double logIntervalInS;
             if (lastLogTime == -1) {
