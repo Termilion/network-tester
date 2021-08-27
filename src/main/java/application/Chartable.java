@@ -19,9 +19,11 @@ import java.util.List;
  * Class providing access to a real-time chart of measured data
  */
 public class Chartable implements Closeable {
+    public static final int WIDTH = 600;
+    public static final int HEIGHT = 400;
+
     private static boolean disablePlotting = false;
     private static final List<JFrame> activeWindows = Collections.synchronizedList(new ArrayList<>());
-
 
     private boolean doNotPlotDelay = false;
 
@@ -79,7 +81,7 @@ public class Chartable implements Closeable {
         }
 
         // Create Chart
-        chart = new XYChartBuilder().xAxisTitle(xAxisName).title(title).build();
+        chart = new XYChartBuilder().width(WIDTH).height(HEIGHT).xAxisTitle(xAxisName).title(title).build();
         chart.getStyler().setLegendVisible(true);
         chart.getStyler().setXAxisTicksVisible(true);
 
