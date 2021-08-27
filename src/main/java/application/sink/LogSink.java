@@ -220,7 +220,7 @@ public class LogSink extends Sink {
 
             ConsoleLogger.log("%d\t| %s\t| ↓ | %d packets\t[%.02f Mbps]\t[%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
             FileLogger.log("%d | %s | ↓ | Last %d packets [%.02f Mbps] [%.02f ms]", id, address, totalRcvPackets, goodput, avgDelay);
-            plotData((int) getSimTime(), goodput, avgDelay);
+            this.chart.plotData((int) getSimTime(), goodput, avgDelay);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

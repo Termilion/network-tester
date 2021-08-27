@@ -1,4 +1,5 @@
 import application.Application;
+import application.Chartable;
 import application.SinkApplication;
 import general.DecentralizedClockSync;
 import general.NTPClient;
@@ -66,6 +67,10 @@ public class Server implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (noGui) {
+            Chartable.disablePlotting();
+        }
+
         if (exclusive.ntpServerPort != -1) {
             timeClient = NTPClient.create("localhost", exclusive.ntpServerPort);
         } else if (exclusive.distributedTime) {
@@ -140,7 +145,7 @@ public class Server implements Callable<Integer> {
                     connectedPreTransmission++;
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
                     int defaultId = connectedPreTransmission - 1;
-                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs, noGui);
+                    InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs);
                     clientThread.start();
                     handshakeThreads.add(clientThread);
                 } catch (IOException e) {

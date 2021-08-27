@@ -91,7 +91,7 @@ public class BulkSource extends Source {
             }
 
             ConsoleLogger.log("%d\t| %s\t| ↑ | %d packets\t[%.02f Mbps]", id, address, totalSndPackets, goodput);
-            plotData((int) getSimTime(), goodput);
+            this.chart.plotData((int) getSimTime(), goodput);
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);

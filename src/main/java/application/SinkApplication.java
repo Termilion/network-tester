@@ -14,7 +14,7 @@ public class SinkApplication extends Application {
 
     Sink sink;
 
-    public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode, int traceIntervalMs, boolean noGui) throws IOException {
+    public SinkApplication(int port, int rcvBufferSize, TimeProvider timeProvider, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
         this.filePath = filePath;
         this.id = id;
         this.mode = mode;
@@ -28,10 +28,6 @@ public class SinkApplication extends Application {
                 mode,
                 traceIntervalMs
         );
-
-        if (noGui) {
-            sink.disablePlotting();
-        }
     }
 
     @Override

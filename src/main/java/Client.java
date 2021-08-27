@@ -1,4 +1,5 @@
 import application.Application;
+import application.Chartable;
 import application.SinkApplication;
 import application.SourceApplication;
 import general.*;
@@ -51,6 +52,10 @@ public class Client implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (noGui) {
+            Chartable.disablePlotting();
+        }
+
         if (exclusive.distributedTime) {
             timeClient = DecentralizedClockSync.getInstance();
         } else {
@@ -140,10 +145,11 @@ public class Client implements Callable<Integer> {
         Application app;
 
         if (this.uplink) {
-            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf, id, noGui);
+            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf, id);
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs, noGui);
+            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs);
         }
+        Chartable.disablePlotting();
         return app;
     }
 

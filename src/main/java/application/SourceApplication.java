@@ -12,17 +12,13 @@ import java.util.Date;
 public class SourceApplication extends Application {
     Source source;
 
-    public SourceApplication(boolean mode, String ipaddress, int port, TimeProvider timeProvider, int resetTime, int sndBuf, int id, boolean noGui) throws IOException {
+    public SourceApplication(boolean mode, String ipaddress, int port, TimeProvider timeProvider, int resetTime, int sndBuf, int id) throws IOException {
         if (!mode) {
             ConsoleLogger.log("Starting Bulk source application: %s:%d", ipaddress, port);
             source = new BulkSource(timeProvider, ipaddress, port, resetTime, sndBuf, id);
         } else {
             ConsoleLogger.log("Starting IoT source application: %s:%d", ipaddress, port);
             source = new IoTSource(timeProvider, ipaddress, port, resetTime, sndBuf, id);
-        }
-
-        if (noGui) {
-            source.disablePlotting();
         }
     }
 

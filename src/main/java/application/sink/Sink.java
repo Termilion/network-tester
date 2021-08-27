@@ -18,7 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 import static application.Application.LOG_INTERVAL_IN_MS;
 
-public abstract class Sink extends Chartable implements Closeable {
+public abstract class Sink implements Closeable {
+    Chartable chart;
+
     ServerSocket socket;
     Socket client;
 
@@ -55,7 +57,7 @@ public abstract class Sink extends Chartable implements Closeable {
 
     public void startLogging() {
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
-        initChart(
+        this.chart = new Chartable(
                 (int) Math.ceil(duration * 1000.0 / LOG_INTERVAL_IN_MS),
                 "Time",
                 id + " | Sink ↓"
@@ -101,7 +103,9 @@ public abstract class Sink extends Chartable implements Closeable {
 
     @Override
     public synchronized void close() throws IOException {
-        super.close();
+        if (this.chart != null) {
+            this.chart.close();
+        }
         isRunning = false;
         scheduler.shutdown();
         for (ScheduledFuture<?> sf : scheduledTasks) {

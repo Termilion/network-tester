@@ -20,7 +20,6 @@ public class InitialHandshakeThread extends Thread {
     int extraDelay;
     int id;
     int simDuration;
-    boolean noGui;
 
     String clientAddress;
     int clientPort;
@@ -36,7 +35,7 @@ public class InitialHandshakeThread extends Thread {
     static final long SINK_WAIT_TIME = 1000;
     static final long SOURCE_WAIT_TIME = 2000;
 
-    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs, boolean noGui) {
+    public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs) {
         this.client = client;
         this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = defaultId;
@@ -44,7 +43,6 @@ public class InitialHandshakeThread extends Thread {
         this.simDuration = simDuration;
         this.resultPort = resultPort;
         this.traceIntervalMs = traceIntervalMs;
-        this.noGui = noGui;
 
         try {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
@@ -84,11 +82,10 @@ public class InitialHandshakeThread extends Thread {
                         String.format("./out/server_sink_flow_%d_%s.csv", id, getModeString()),
                         id,
                         mode,
-                        traceIntervalMs,
-                        noGui
+                        traceIntervalMs
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id, noGui);
+                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id);
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
