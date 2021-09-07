@@ -4,10 +4,7 @@ import general.logger.ConsoleLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.Timer;
@@ -18,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Distributed UDP/Multicast class for figuring out the clock differences on a LAN
  * Replace System.currentTimeMillis() with ClockSync.getAdjustedTime() which will gradually adapt once startSync() is called
  * Should work with any number of LAN clients joining/leaving.
- *
+ * <p>
  * No server, totally distributed.
  */
 public class DecentralizedClockSync extends TimeProvider implements Closeable {
@@ -26,12 +23,24 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
     private static DecentralizedClockSync instance;
 
     public static DecentralizedClockSync getInstance() throws IOException {
+        synchronized (DecentralizedClockSync.class) {
+            if (instance == null) {
+                throw new NullPointerException("Not yet initialized!");
+            } else {
+                return instance;
+            }
+        }
+    }
+
+    public static DecentralizedClockSync create(String networkInterface) throws IOException {
         if (instance == null) {
             synchronized (DecentralizedClockSync.class) {
                 if (instance == null) {
-                    instance = new DecentralizedClockSync();
+                    instance = new DecentralizedClockSync(networkInterface);
                 }
             }
+        } else {
+            throw new IllegalStateException("Already initialized");
         }
         return instance;
     }
@@ -53,7 +62,7 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
     Thread receiveThread;
     Timer broadcastTask;
 
-    private DecentralizedClockSync() throws IOException {
+    private DecentralizedClockSync(String networkInterface) throws IOException {
         this.ms = new MulticastSocket(null);
         this.group = InetAddress.getByName(UPNP_ADDRESS);
         this.ms.setTimeToLive(4);
@@ -63,7 +72,17 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
         if (!this.ms.getReuseAddress()) {
             ConsoleLogger.log("MS Socket can't reuse address");
         }
-        this.ms.bind(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), UPNP_MULTI_PORT));
+        InetAddress localAddress;
+        if (networkInterface != null) {
+            NetworkInterface ni = NetworkInterface.getByName(networkInterface);
+            if (ni == null) {
+                throw new IOException("Specified time sync network interface not found!");
+            }
+            localAddress = ni.getInetAddresses().nextElement();
+        } else {
+            localAddress = InetAddress.getByName("0.0.0.0");
+        }
+        this.ms.bind(new InetSocketAddress(localAddress, UPNP_MULTI_PORT));
         this.ms.joinGroup(this.group);
 
         this.bin = ByteBuffer.allocate(this.BUFF_SIZE);

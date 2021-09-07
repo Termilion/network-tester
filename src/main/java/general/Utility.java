@@ -1,9 +1,16 @@
 package general;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class Utility {
+    public static class InterfaceNotFoundException extends IOException {
+        public InterfaceNotFoundException(String interfaceName) {
+            super("Specified network interface not found! " + interfaceName);
+        }
+    }
+
     public static byte[] generateBytes(int number) {
         byte[] bytes = new byte[number];
         new Random().nextBytes(bytes);

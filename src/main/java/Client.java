@@ -8,6 +8,8 @@ import general.logger.FileLogger;
 import picocli.CommandLine;
 
 import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.Date;
@@ -47,6 +49,10 @@ public class Client implements Callable<Integer> {
     private int traceIntervalMs = 50;
     @CommandLine.Option(names = {"--no-gui"}, description = "do not plot metrics in a gui window")
     private boolean noGui;
+    @CommandLine.Option(names = {"--ctrl-interface"}, description = "specifies a network interface (eth0, wifi0, ...) which will be explicitly used for the transfer of control messages, like time sync requests or application setup (initial and post handshake between clients and server).")
+    private String controlNetworkInterface;
+    @CommandLine.Option(names = {"--data-interface"}, description = "specifies a network interface (eth0, wifi0, ...) which will be explicitly used for the transfer of the \"simulation\" data.")
+    private String dataNetworkInterface;
 
     TimeProvider timeClient;
 
@@ -57,15 +63,15 @@ public class Client implements Callable<Integer> {
         }
 
         if (exclusive.distributedTime) {
-            timeClient = DecentralizedClockSync.getInstance();
+            timeClient = DecentralizedClockSync.create(controlNetworkInterface);
         } else {
             if (exclusive.ntpAddress.contains(":")) {
                 String[] ntp = exclusive.ntpAddress.split(":");
                 String addr = ntp[0];
                 int port = Integer.parseInt(ntp[1]);
-                timeClient = NTPClient.create(addr, port);
+                timeClient = NTPClient.create(addr, port, controlNetworkInterface);
             } else {
-                timeClient = NTPClient.create(exclusive.ntpAddress);
+                timeClient = NTPClient.create(exclusive.ntpAddress, controlNetworkInterface);
             }
         }
 
@@ -119,6 +125,13 @@ public class Client implements Callable<Integer> {
     public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
         ConsoleLogger.log("InitialHandshake: connecting to: %s:%s", address, port);
         Socket socket = new Socket(address, port);
+        if (controlNetworkInterface != null) {
+            NetworkInterface ni = NetworkInterface.getByName(controlNetworkInterface);
+            if (ni == null) {
+                throw new Utility.InterfaceNotFoundException(controlNetworkInterface);
+            }
+            socket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
+        }
         ConsoleLogger.log("connection established");
 
         ConsoleLogger.log("opening streams");
@@ -175,6 +188,13 @@ public class Client implements Callable<Integer> {
         Thread.sleep(3000);
 
         Socket socket = new Socket(address, resultPort);
+        if (controlNetworkInterface != null) {
+            NetworkInterface ni = NetworkInterface.getByName(controlNetworkInterface);
+            if (ni == null) {
+                throw new Utility.InterfaceNotFoundException(controlNetworkInterface);
+            }
+            socket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
+        }
         ConsoleLogger.log("connection established");
 
         ConsoleLogger.log("opening streams");
