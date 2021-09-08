@@ -1,5 +1,6 @@
 package application.source;
 
+import application.Application;
 import application.Chartable;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
@@ -15,9 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static application.Application.LOG_INTERVAL_IN_MS;
-
-public abstract class Source implements Closeable {
+public abstract class Source extends Application implements Closeable {
     Chartable chart;
 
     Socket socket;
@@ -25,7 +24,6 @@ public abstract class Source implements Closeable {
     String address;
     int port;
     int resetTime;
-    int id;
 
     TimeProvider timeProvider;
     Date beginTime;
@@ -44,14 +42,15 @@ public abstract class Source implements Closeable {
             int port,
             int sendBufferSize,
             int resetTime,
-            int id
+            int id,
+            Mode mode
     ) {
+        super(id, mode);
         this.sendBufferSize = sendBufferSize;
         this.timeProvider = timeProvider;
         this.address = address;
         this.port = port;
         this.resetTime = resetTime;
-        this.id = id;
     }
 
     public void init(Date beginTime, Date stopTime, int duration) {
@@ -73,9 +72,9 @@ public abstract class Source implements Closeable {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public void startLogic() throws InterruptedException {
         if (resetTime > 0) {
-            reset(resetTime);
+            createResetTask(resetTime);
         }
-        stopOn(stopTime);
+        createStopOnTask(stopTime);
 
         try {
             ConsoleLogger.log("Opening source to %s:%s", address, port);
@@ -122,7 +121,7 @@ public abstract class Source implements Closeable {
         }
     }
 
-    protected void reset(int resetTime) {
+    protected void createResetTask(int resetTime) {
         scheduledTasks.add(scheduler.scheduleAtFixedRate(() -> {
             try {
                 ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
@@ -138,7 +137,7 @@ public abstract class Source implements Closeable {
         }, resetTime, resetTime, TimeUnit.MILLISECONDS));
     }
 
-    protected void stopOn(Date stopTime) {
+    protected void createStopOnTask(Date stopTime) {
         long now = timeProvider.getAdjustedTime();
         long duration = stopTime.getTime() - now;
         if (duration < 0) {

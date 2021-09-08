@@ -1,10 +1,12 @@
 import application.Application;
-import application.SinkApplication;
-import application.SourceApplication;
+import application.sink.LogSink;
+import application.source.BulkSource;
+import application.source.IoTSource;
 import general.InstructionMessage;
 import general.NegotiationMessage;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -14,8 +16,8 @@ public class InitialHandshakeThread extends Thread {
 
     private final Socket client;
 
-    boolean uplink;
-    boolean mode;
+    Application.Direction direction;
+    Application.Mode mode;
     int resetTime;
     int extraDelay;
     int id;
@@ -65,8 +67,8 @@ public class InitialHandshakeThread extends Thread {
                 this.id = negotiation.getPreviousId();
             }
             ConsoleLogger.log("%s | received negotiation message. ID: %d", client.getInetAddress(), this.id);
-            this.uplink = negotiation.isUplink();
-            this.mode = negotiation.isIoT();
+            this.direction = negotiation.getDirection();
+            this.mode = negotiation.getMode();
             this.extraDelay = negotiation.getStartDelay();
             this.clientPort = negotiation.getPort() + 10 + (5 * id); // id is 0-indexed
             this.resetTime = negotiation.getResetTime();
@@ -74,30 +76,32 @@ public class InitialHandshakeThread extends Thread {
             int rcvBuf = negotiation.getRcvBuf();
 
             // Build Corresponding Applications
-            if (negotiation.isUplink()) {
-                app = new SinkApplication(
+            if (this.direction == Application.Direction.UP) {
+                // if client is uplink, build a sink
+                app = new LogSink(
+                        timeProvider,
                         clientPort,
                         rcvBuf,
-                        timeProvider,
-                        String.format("./out/server_sink_flow_%d_%s.csv", id, getModeString()),
+                        String.format("./out/server_sink_flow_%d_%s.csv", id, mode.getName()),
                         id,
                         mode,
                         traceIntervalMs
                 );
             } else {
-                app = new SourceApplication(this.mode, clientAddress, clientPort, timeProvider, resetTime, sndBuf, id);
+                // else build a source
+                if (this.mode == Application.Mode.IOT) {
+                    ConsoleLogger.log("Creating IoT source application: %s:%d", clientAddress, clientPort);
+                    app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, sndBuf, id);
+                } else if (this.mode == Application.Mode.BULK) {
+                    ConsoleLogger.log("Creating Bulk source application: %s:%d", clientAddress, clientPort);
+                    app = new BulkSource(timeProvider, clientAddress, clientPort, resetTime, sndBuf, id);
+                } else {
+                    throw new NotImplementedException();
+                }
             }
             ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();
-        }
-    }
-
-    private String getModeString() {
-        if (mode) {
-            return "iot";
-        } else {
-            return "bulk";
         }
     }
 
@@ -107,7 +111,7 @@ public class InitialHandshakeThread extends Thread {
 
         long begin = simulationBegin.getTime();
         // if client is uplink, then we need to wait the SINK_WAIT_TIME
-        Date startTime = this.uplink ? new Date(begin + SINK_WAIT_TIME + extraDelay) : new Date(begin + SOURCE_WAIT_TIME + extraDelay);
+        Date startTime = (this.direction == Application.Direction.UP) ? new Date(begin + SINK_WAIT_TIME + extraDelay) : new Date(begin + SOURCE_WAIT_TIME + extraDelay);
         Date stopTime = new Date(begin + simDuration * 1000L);
 
         return app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).duration(simDuration);
@@ -121,7 +125,7 @@ public class InitialHandshakeThread extends Thread {
         // negotiate start time
         long begin = simulationBegin.getTime();
         // if client is uplink, then it needs to wait the SOURCE_WAIT_TIME
-        Date startTime = this.uplink ? new Date(begin + SOURCE_WAIT_TIME + extraDelay) : new Date(begin + SINK_WAIT_TIME + extraDelay);
+        Date startTime = (this.direction == Application.Direction.UP) ? new Date(begin + SOURCE_WAIT_TIME + extraDelay) : new Date(begin + SINK_WAIT_TIME + extraDelay);
         Date stopTime = new Date(begin + simDuration * 1000L);
 
         ConsoleLogger.log("%s | sending instruction message. Begin: %s Start: %s Stop: %s", client.getInetAddress(), simulationBegin, startTime, stopTime);

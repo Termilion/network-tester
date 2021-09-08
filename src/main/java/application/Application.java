@@ -5,17 +5,49 @@ import general.logger.ConsoleLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class Application implements Closeable {
     public static final int LOG_INTERVAL_IN_MS = 1000;
-    static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+
+    public enum Mode {
+        IOT("iot", 1),
+        BULK("bulk", 0);
+
+        String name;
+        int logInt;
+
+        Mode(String name, int logInt) {
+            this.name = name;
+            this.logInt = logInt;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public int getLogInt() {
+            return logInt;
+        }
+    }
+
+    public enum Direction {
+        UP,
+        DOWN
+    }
+
+    protected int id;
+    protected Mode mode;
 
     Date beginTime;
     Date startTime;
     Date stopTime;
     int duration;
+
+    protected Application(int id, Mode mode) {
+        this.id = id;
+        this.mode = mode;
+    }
 
     public final Application simBeginOn(Date simulationBegin) {
         this.beginTime = simulationBegin;
@@ -57,6 +89,14 @@ public abstract class Application implements Closeable {
         Thread.sleep(waitTime);
 
         startLogic();
+    }
+
+    public final int getId() {
+        return id;
+    }
+
+    public Mode getMode() {
+        return mode;
     }
 
     protected abstract void init(Date beginTime, Date stopTime, int duration);

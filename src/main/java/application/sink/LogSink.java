@@ -12,14 +12,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static application.Application.LOG_INTERVAL_IN_MS;
-
 public class LogSink extends Sink {
 
     String connectedAddress;
-    int id;
-    int mode;
+    int modeInt;
 
+    String filePath;
     File outFile;
     BufferedWriter writer;
 
@@ -35,14 +33,14 @@ public class LogSink extends Sink {
     long lastTraceTime = -1;
     long lastLogTime = -1;
 
-    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, boolean mode, int traceIntervalMs) throws IOException {
-        super(timeProvider, port, receiveBufferSize, traceIntervalMs, id);
-        this.id = id;
-        this.mode = booleanToInt(mode);
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, Mode mode, int traceIntervalMs) throws IOException {
+        super(timeProvider, port, receiveBufferSize, traceIntervalMs, id, mode);
+        this.modeInt = mode.getLogInt();
         this.rcvBytesForCsv = new AtomicLong(0);
         this.delayForCsv = Collections.synchronizedList(new ArrayList<>());
         this.rcvBytesForLog = new AtomicLong(0);
         this.delayForLog = Collections.synchronizedList(new ArrayList<>());
+        this.filePath = filePath;
         createLogFile(filePath);
     }
 
@@ -164,7 +162,7 @@ public class LogSink extends Sink {
                 } else {
                     address = null;
                 }
-                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, mode, address, goodput, avgDelay));
+                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, modeInt, address, goodput, avgDelay));
                 FileLogger.log("LogSink: Writer.write is ok");
                 writer.newLine();
                 index++;
@@ -261,11 +259,7 @@ public class LogSink extends Sink {
         super.close();
     }
 
-    private int booleanToInt(boolean mode) {
-        if (mode) {
-            return 1;
-        } else {
-            return 0;
-        }
+    public String getFilePath() {
+        return filePath;
     }
 }

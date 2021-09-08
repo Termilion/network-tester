@@ -1,15 +1,17 @@
 package general;
 
+import application.Application.Direction;
+import application.Application.Mode;
+
 import java.io.Serializable;
-import java.util.Date;
 
 public class ResultMessage implements Serializable {
     private final int id;
-    private final boolean flowMode;
-    private final boolean flowDirection;
+    private final Mode flowMode;
+    private final Direction flowDirection;
     private final byte[] fileContent;
 
-    public ResultMessage(int id, boolean flowMode, boolean flowDirection, byte[] fileContent) {
+    public ResultMessage(int id, Mode flowMode, Direction flowDirection, byte[] fileContent) {
         this.id = id;
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
@@ -20,11 +22,11 @@ public class ResultMessage implements Serializable {
         return id;
     }
 
-    public boolean isIoT() {
+    public Mode getMode() {
         return flowMode;
     }
 
-    public boolean isUplink() {
+    public Direction getDirection() {
         return flowDirection;
     }
 

@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static application.Application.LOG_INTERVAL_IN_MS;
-
 public class BulkSource extends Source {
 
     String connectedAddress;
@@ -21,7 +19,7 @@ public class BulkSource extends Source {
     long lastLogTime = -1;
 
     public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime, id);
+        super(timeProvider, address, port, bufferSize, resetTime, id, Mode.BULK);
         this.id = id;
         this.sndBytes = new AtomicLong(0);
     }

@@ -1,11 +1,13 @@
 import application.Application;
 import application.Chartable;
-import application.SinkApplication;
-import application.SourceApplication;
+import application.sink.LogSink;
+import application.source.BulkSource;
+import application.source.IoTSource;
 import general.*;
 import general.logger.ConsoleLogger;
 import general.logger.FileLogger;
 import picocli.CommandLine;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -21,6 +23,11 @@ public class Client implements Callable<Integer> {
     private String address;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
+    @CommandLine.Parameters(index = "2", description = "the application mode: ${COMPLETION-CANDIDATES}")
+    private Application.Mode mode;
+    @CommandLine.Parameters(index = "3", description = "the direction in which the data will flow (respective from the Client point of view): ${COMPLETION-CANDIDATES}")
+    private Application.Direction direction;
+
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     Exclusive exclusive;
 
@@ -31,10 +38,6 @@ public class Client implements Callable<Integer> {
         private boolean distributedTime;
     }
 
-    @CommandLine.Option(names = {"-iot"}, description = "start an iot application")
-    private boolean mode;
-    @CommandLine.Option(names = {"-u"}, description = "start an up-link data flow")
-    private boolean uplink;
     @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset in milliseconds")
     private int resetTime = -1;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
@@ -106,8 +109,8 @@ public class Client implements Callable<Integer> {
             scheduleApplicationStart(app, simulationBegin, startTime, stopTime, simulationDuration);
 
             String path = null;
-            if (!uplink) {
-                path = ((SinkApplication) app).getFilePath();
+            if (direction == Application.Direction.DOWN) {
+                path = ((LogSink) app).getFilePath();
             }
             reconnectAfterPostHandshake = postHandshake(id, resultPort, path);
 
@@ -157,17 +160,26 @@ public class Client implements Callable<Integer> {
     public Application buildApplication(int id, String ipaddress, int appPort) throws IOException {
         Application app;
 
-        if (this.uplink) {
-            app = new SourceApplication(this.mode, ipaddress, appPort, timeClient, resetTime, this.sndBuf, id);
+        if (this.direction == Application.Direction.UP) {
+            if (this.mode == Application.Mode.IOT) {
+                ConsoleLogger.log("Creating IoT source application: %s:%d", ipaddress, appPort);
+                app = new IoTSource(timeClient, ipaddress, appPort, resetTime, this.sndBuf, id);
+            } else if (this.mode == Application.Mode.BULK) {
+                ConsoleLogger.log("Creating Bulk source application: %s:%d", ipaddress, appPort);
+                app = new BulkSource(timeClient, ipaddress, appPort, resetTime, this.sndBuf, id);
+            } else {
+                throw new NotImplementedException();
+            }
         } else {
-            app = new SinkApplication(appPort, this.rcvBuf, timeClient, String.format("./out/client_sink_flow_%d_%s.csv", id, getModeString()), id, mode, traceIntervalMs);
+            ConsoleLogger.log("Creating Log sink application: port %d", appPort);
+            app = new LogSink(timeClient, appPort, this.rcvBuf, String.format("./out/client_sink_flow_%d_%s.csv", id, this.mode.getName()), id, this.mode, this.traceIntervalMs);
         }
         return app;
     }
 
     public void sendNegotiationMessage(ObjectOutputStream out) throws IOException {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.id, this.mode, this.uplink, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
+        out.writeObject(new NegotiationMessage(this.id, this.mode, this.direction, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
         out.flush();
     }
 
@@ -204,7 +216,7 @@ public class Client implements Callable<Integer> {
 
         // only sinks need to submit their results
         byte[] fileContent = new byte[0];
-        if (!uplink) {
+        if (direction == Application.Direction.DOWN) {
             fileContent = Files.readAllBytes(new File(logFilePath).toPath());
         }
 
@@ -226,16 +238,8 @@ public class Client implements Callable<Integer> {
 
     public void sendResultMessage(ObjectOutputStream out, int id, byte[] fileContent) throws IOException {
         ConsoleLogger.log("sending result message");
-        out.writeObject(new ResultMessage(id, this.mode, this.uplink, fileContent));
+        out.writeObject(new ResultMessage(id, this.mode, this.direction, fileContent));
         out.flush();
-    }
-
-    private String getModeString() {
-        if (mode) {
-            return "iot";
-        } else {
-            return "bulk";
-        }
     }
 
     public static void main(String[] args) {

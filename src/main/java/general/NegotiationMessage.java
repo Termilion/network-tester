@@ -1,12 +1,15 @@
 package general;
 
+import application.Application.Direction;
+import application.Application.Mode;
+
 import java.io.Serializable;
 
 public class NegotiationMessage implements Serializable {
 
-    int previousId = -1;
-    private boolean flowMode;
-    private boolean flowDirection;
+    int previousId;
+    private Mode flowMode;
+    private Direction flowDirection;
     int startDelay;
     int port;
     int resetTime;
@@ -15,8 +18,8 @@ public class NegotiationMessage implements Serializable {
 
     public NegotiationMessage(
             int previousId,
-            boolean flowMode,
-            boolean flowDirection,
+            Mode flowMode,
+            Direction flowDirection,
             int startDelay,
             int port,
             int resetTime,
@@ -41,19 +44,19 @@ public class NegotiationMessage implements Serializable {
         this.port = port;
     }
 
-    public boolean isIoT() {
+    public Mode getMode() {
         return flowMode;
     }
 
-    public void setFlowMode(boolean flowMode) {
+    public void setFlowMode(Mode flowMode) {
         this.flowMode = flowMode;
     }
 
-    public boolean isUplink() {
+    public Direction getDirection() {
         return flowDirection;
     }
 
-    public void setFlowDirection(boolean flowDirection) {
+    public void setDirection(Direction flowDirection) {
         this.flowDirection = flowDirection;
     }
 

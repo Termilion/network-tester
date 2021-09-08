@@ -1,6 +1,7 @@
 import application.Application;
 import application.Chartable;
-import application.SinkApplication;
+import application.sink.LogSink;
+import application.sink.Sink;
 import general.DecentralizedClockSync;
 import general.NTPClient;
 import general.NTPServer;
@@ -102,7 +103,7 @@ public class Server implements Callable<Integer> {
             FileLogger.log("----------------- RUN %d -----------------", run);
             List<InitialHandshakeThread> initialHandshakeThreads = initialHandshake();
             timeClient.stopSyncTime();
-            List<SinkApplication> serverSideSinks = transmission(initialHandshakeThreads);
+            List<Sink> serverSideSinks = transmission(initialHandshakeThreads);
             moveServerSideLogs(serverSideSinks, run);
             boolean reconnectAfterPostHandshake = (run < runs - 1);
             postHandshake(run, reconnectAfterPostHandshake);
@@ -175,7 +176,7 @@ public class Server implements Callable<Integer> {
         return handshakeThreads;
     }
 
-    public List<SinkApplication> transmission(List<InitialHandshakeThread> handshakeThreads) throws InterruptedException {
+    public List<Sink> transmission(List<InitialHandshakeThread> handshakeThreads) throws InterruptedException {
         ConsoleLogger.log("starting simulation ...");
 
         ArrayList<Thread> transmissionThreads = new ArrayList<>();
@@ -212,7 +213,7 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.log("simulation finished ...");
 
         // return all Server-side sinks
-        return handshakeThreads.stream().filter(it -> it.getApplication() instanceof SinkApplication).map(it -> (SinkApplication) it.getApplication()).collect(Collectors.toList());
+        return handshakeThreads.stream().filter(it -> it.getApplication() instanceof Sink).map(it -> (Sink) it.getApplication()).collect(Collectors.toList());
     }
 
     public void postHandshake(int run, boolean reconnectAfterPostHandshake) throws IOException, InterruptedException {
@@ -240,10 +241,11 @@ public class Server implements Callable<Integer> {
         }
     }
 
-    private void moveServerSideLogs(List<SinkApplication> serverSideSinks, int run) throws IOException {
-        for (SinkApplication sink : serverSideSinks) {
+    private void moveServerSideLogs(List<Sink> serverSideSinks, int run) throws IOException {
+        List<LogSink> logSinks = serverSideSinks.stream().filter(it -> it instanceof LogSink).map(it -> (LogSink) it).collect(Collectors.toList());
+        for (LogSink sink : logSinks) {
             File csvInFile = new File(sink.getFilePath());
-            File csvOutFile = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, sink.getId(), sink.getModeString()));
+            File csvOutFile = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, sink.getId(), sink.getMode().getName()));
             Files.copy(csvInFile.toPath(), csvOutFile.toPath());
         }
     }

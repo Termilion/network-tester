@@ -1,3 +1,4 @@
+import application.Application;
 import general.ResultMessage;
 import general.logger.ConsoleLogger;
 
@@ -12,8 +13,8 @@ public class PostHandshakeThread extends Thread {
     int run;
     boolean reconnectAfterPostHandshake;
 
-    boolean uplink;
-    boolean mode;
+    Application.Direction direction;
+    Application.Mode mode;
     int id;
     byte[] fileContent;
 
@@ -44,8 +45,8 @@ public class PostHandshakeThread extends Thread {
             ConsoleLogger.log("%s | waiting for result message", client.getInetAddress());
             ResultMessage result = (ResultMessage) in.readUnshared();
             ConsoleLogger.log("%s | received result message", client.getInetAddress());
-            this.uplink = result.isUplink();
-            this.mode = result.isIoT();
+            this.direction = result.getDirection();
+            this.mode = result.getMode();
             this.id = result.getId();
             this.fileContent = result.getFileContent();
 
@@ -53,20 +54,13 @@ public class PostHandshakeThread extends Thread {
             out.writeObject(reconnectAfterPostHandshake);
             out.flush();
 
-            if (!uplink) {
-                Path path = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, id, getModeString())).toPath();
+            // if the client is down-link, he needs to upload his results and we need to save them
+            if (direction == Application.Direction.DOWN) {
+                Path path = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, id, mode.getName())).toPath();
                 Files.write(path, fileContent);
             }
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();
-        }
-    }
-
-    private String getModeString() {
-        if (mode) {
-            return "iot";
-        } else {
-            return "bulk";
         }
     }
 }

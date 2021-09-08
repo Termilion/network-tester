@@ -1,5 +1,6 @@
 package application.sink;
 
+import application.Application;
 import application.Chartable;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
@@ -16,9 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import static application.Application.LOG_INTERVAL_IN_MS;
-
-public abstract class Sink implements Closeable {
+public abstract class Sink extends Application implements Closeable {
     Chartable chart;
 
     ServerSocket socket;
@@ -27,7 +26,6 @@ public abstract class Sink implements Closeable {
     TimeProvider timeProvider;
     int port;
     int receiveBufferSize;
-    int id;
 
     Date beginTime;
     Date stopTime;
@@ -41,32 +39,32 @@ public abstract class Sink implements Closeable {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs, int id) {
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs, int id, Mode mode) {
+        super(id, mode);
         this.timeProvider = timeProvider;
         this.port = port;
         this.receiveBufferSize = receiveBufferSize;
         TRACE_INTERVAL_IN_MS = traceIntervalMs;
-        this.id = id;
     }
 
-    public void init(Date beginTime, Date stopTime, int duration) {
+    public final void init(Date beginTime, Date stopTime, int duration) {
         this.beginTime = beginTime;
         this.stopTime = stopTime;
         this.duration = duration;
     }
 
-    public void startLogging() {
+    public final void startLogging() {
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledWriteOutput, 0, TRACE_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
         this.chart = new Chartable(
                 (int) Math.ceil(duration * 1000.0 / LOG_INTERVAL_IN_MS),
                 "Time",
-                id + " | Sink ↓"
+                this.id + " | Sink ↓"
         );
         scheduledTasks.add(scheduler.scheduleAtFixedRate(this::scheduledLoggingOutput, 0, LOG_INTERVAL_IN_MS, TimeUnit.MILLISECONDS));
     }
 
-    public void startLogic() throws IOException {
-        stopOn(stopTime);
+    public final void startLogic() throws IOException {
+        createStopOnTask(stopTime);
 
         ConsoleLogger.log("Opening sink on port %s", port);
         socket = new ServerSocket(port);
@@ -118,7 +116,7 @@ public abstract class Sink implements Closeable {
         closeClient();
     }
 
-    protected void stopOn(Date stopTime) {
+    protected void createStopOnTask(Date stopTime) {
         long now = timeProvider.getAdjustedTime();
         long duration = stopTime.getTime() - now;
         if (duration < 0) {
