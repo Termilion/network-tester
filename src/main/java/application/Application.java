@@ -1,10 +1,15 @@
 package application;
 
 import general.TimeProvider;
+import general.Utility;
 import general.logger.ConsoleLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.Date;
 
 public abstract class Application implements Closeable {
@@ -39,6 +44,8 @@ public abstract class Application implements Closeable {
     protected int id;
     protected Mode mode;
 
+    private String dataNetworkInterface = null;
+
     Date beginTime;
     Date startTime;
     Date stopTime;
@@ -49,6 +56,7 @@ public abstract class Application implements Closeable {
         this.mode = mode;
     }
 
+    //TODO builder pattern mixed with normal methods in the same class. Push builder pattern methods in own class
     public final Application simBeginOn(Date simulationBegin) {
         this.beginTime = simulationBegin;
         return this;
@@ -99,13 +107,64 @@ public abstract class Application implements Closeable {
         return mode;
     }
 
+    @Override
+    public abstract void close() throws IOException;
+
+    public final void setDataNetworkInterface(String networkInterface) {
+        this.dataNetworkInterface = networkInterface;
+    }
+
+    /**
+     * Provides a Socket.
+     * Child classes must use this method to obtain a socket, to ensure that the socket respects the user specified
+     * network interface.
+     *
+     * @param address address
+     * @param port    port
+     * @return a Socket (bound to an interface)
+     * @throws IOException e
+     */
+    protected final Socket getSocket(String address, int port) throws IOException {
+        Socket socket = new Socket(address, port);
+        if (dataNetworkInterface != null) {
+            NetworkInterface ni = NetworkInterface.getByName(dataNetworkInterface);
+            if (ni == null) {
+                throw new Utility.InterfaceNotFoundException(dataNetworkInterface);
+            }
+            socket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
+        }
+        return socket;
+    }
+
+    /**
+     * Provides a ServerSocket.
+     * Child classes must use this method to obtain a ServerSocket, to ensure that the ServerSocket respects the user
+     * specified network interface.
+     *
+     * @param port port
+     * @return a ServerSocket (bound to an interface)
+     * @throws IOException e
+     */
+    protected final ServerSocket getServerSocket(int port) throws IOException {
+        ServerSocket serverSocket;
+        if (dataNetworkInterface != null) {
+            NetworkInterface ni = NetworkInterface.getByName(dataNetworkInterface);
+            if (ni == null) {
+                throw new Utility.InterfaceNotFoundException(dataNetworkInterface);
+            }
+            // in order to bind a ServerSocket to an address, we has to be initialized with a parameterless constructor
+            serverSocket = new ServerSocket();
+            serverSocket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
+        } else {
+            serverSocket = new ServerSocket(port);
+        }
+        return serverSocket;
+    }
+
     protected abstract void init(Date beginTime, Date stopTime, int duration);
 
     protected void startLogging() {
     }
 
     protected abstract void startLogic() throws Exception;
-
-    @Override
-    public abstract void close() throws IOException;
 }

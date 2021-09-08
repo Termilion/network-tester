@@ -104,7 +104,7 @@ public class Client implements Callable<Integer> {
             timeClient.stopSyncTime();
 
             ConsoleLogger.log("building application");
-            Application app = buildApplication(id, address, appPort);
+            Application app = buildApplication(id, address, appPort, dataNetworkInterface);
 
             scheduleApplicationStart(app, simulationBegin, startTime, stopTime, simulationDuration);
 
@@ -126,7 +126,7 @@ public class Client implements Callable<Integer> {
     }
 
     public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
-        ConsoleLogger.log("InitialHandshake: connecting to: %s:%s", address, port);
+        ConsoleLogger.log("InitialHandshake: connecting to: %s:%s via %s", address, port, controlNetworkInterface);
         Socket socket = new Socket(address, port);
         if (controlNetworkInterface != null) {
             NetworkInterface ni = NetworkInterface.getByName(controlNetworkInterface);
@@ -157,7 +157,7 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public Application buildApplication(int id, String ipaddress, int appPort) throws IOException {
+    public Application buildApplication(int id, String ipaddress, int appPort, String networkInterface) throws IOException {
         Application app;
 
         if (this.direction == Application.Direction.UP) {
@@ -174,6 +174,8 @@ public class Client implements Callable<Integer> {
             ConsoleLogger.log("Creating Log sink application: port %d", appPort);
             app = new LogSink(timeClient, appPort, this.rcvBuf, String.format("./out/client_sink_flow_%d_%s.csv", id, this.mode.getName()), id, this.mode, this.traceIntervalMs);
         }
+
+        app.setDataNetworkInterface(dataNetworkInterface);
         return app;
     }
 
@@ -195,7 +197,7 @@ public class Client implements Callable<Integer> {
     }
 
     public boolean postHandshake(int id, int resultPort, String logFilePath) throws Exception {
-        ConsoleLogger.log("Finished! Submitting results to %s:%s", address, resultPort);
+        ConsoleLogger.log("Finished! Submitting results to %s:%s via %s", address, resultPort, controlNetworkInterface);
         //wait a short time, to ensure the receiving socket is open
         Thread.sleep(3000);
 

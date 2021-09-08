@@ -67,7 +67,7 @@ public abstract class Sink extends Application implements Closeable {
         createStopOnTask(stopTime);
 
         ConsoleLogger.log("Opening sink on port %s", port);
-        socket = new ServerSocket(port);
+        socket = getServerSocket(port);
         if (receiveBufferSize > 0) {
             socket.setReceiveBufferSize(receiveBufferSize);
         }

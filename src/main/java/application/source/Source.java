@@ -97,7 +97,7 @@ public abstract class Source extends Application implements Closeable {
     }
 
     protected void connect(String address, int port) throws IOException {
-        socket = new Socket(address, port);
+        socket = getSocket(address, port);
         isConnected = true;
         if (this.sendBufferSize > 0) {
             this.socket.setSendBufferSize(this.sendBufferSize);
