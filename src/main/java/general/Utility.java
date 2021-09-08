@@ -1,13 +1,36 @@
 package general;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.Random;
 
 public class Utility {
     public static class InterfaceNotFoundException extends IOException {
         public InterfaceNotFoundException(String interfaceName) {
             super("Specified network interface not found! " + interfaceName);
+            printAvailableInterfaces();
+        }
+
+        private void printAvailableInterfaces() {
+            try {
+                System.err.print("Available Interfaces:\n\n");
+                for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    System.err.printf("Display name: %s\n", ni.getDisplayName());
+                    System.err.printf("Name: %s\n", ni.getName());
+                    Enumeration<InetAddress> inetAddresses = ni.getInetAddresses();
+                    for (InetAddress inetAddress : Collections.list(inetAddresses)) {
+                        System.err.printf("InetAddress: %s\n", inetAddress);
+                    }
+                    System.err.print("\n");
+                }
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
         }
     }
 

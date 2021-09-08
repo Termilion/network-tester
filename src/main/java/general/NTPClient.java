@@ -72,7 +72,7 @@ public class NTPClient extends TimeProvider {
         if (networkInterface != null) {
             NetworkInterface ni = NetworkInterface.getByName(networkInterface);
             if (ni == null) {
-                throw new IOException("Specified time sync network interface not found!");
+                throw new Utility.InterfaceNotFoundException(networkInterface);
             }
             timeClient.open(0, ni.getInetAddresses().nextElement());
         }
