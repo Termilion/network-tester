@@ -19,18 +19,25 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(name = "Server", description = "Starts an instruction server, which clients can connect to.")
 public class Server implements Callable<Integer> {
-    @CommandLine.Option(names = {"-p", "--port"}, defaultValue = "10000", description = "port to start server on")
-    private int port = 10000;
+    @CommandLine.Parameters(index = "0", defaultValue = "10000", description = "port to start server on")
+    private int port;
 
     private int resultPort() {
         return port + 1;
     }
+
+    @CommandLine.Parameters(index = "1", description = "The expected number of clients. Once all clients are connected the simulation will start")
+    private int expectedNumberOfClients;
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     Exclusive exclusive;
@@ -57,9 +64,6 @@ public class Server implements Callable<Integer> {
     private boolean noGui;
 
     boolean startedTransmission = false;
-
-    int connectedPreTransmission = -1;
-    int connectedPostTransmission = -1;
 
     File outDir = new File("./out/");
 
@@ -135,7 +139,7 @@ public class Server implements Callable<Integer> {
 
         ArrayList<InitialHandshakeThread> handshakeThreads = new ArrayList<>();
 
-        connectedPreTransmission = 0;
+        AtomicInteger currentlyConnected = new AtomicInteger();
 
         new Thread(() -> {
             ConsoleLogger.log("Waiting for connections...");
@@ -143,9 +147,8 @@ public class Server implements Callable<Integer> {
             while (!startedTransmission) {
                 try {
                     Socket client = socket.accept();
-                    connectedPreTransmission++;
+                    int defaultId = currentlyConnected.getAndIncrement();
                     ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
-                    int defaultId = connectedPreTransmission - 1;
                     InitialHandshakeThread clientThread = new InitialHandshakeThread(client, timeClient, defaultId, simDuration, resultPort(), traceIntervalMs);
                     clientThread.start();
                     handshakeThreads.add(clientThread);
@@ -158,16 +161,10 @@ public class Server implements Callable<Integer> {
             }
         }).start();
 
-        if (connectedPostTransmission == -1) {
-            // in the first run: block until user input #enter
-            Scanner input = new Scanner(System.in);
-            input.nextLine();
-        } else {
-            // in subsequent runs: block until all previously connected clients are again connected
-            while (connectedPreTransmission < connectedPostTransmission) {
-                Thread.sleep(2000);
-                ConsoleLogger.log("Waiting for clients: %d/%d", connectedPreTransmission, connectedPostTransmission);
-            }
+        // block until the expected number of clients are connected
+        while (currentlyConnected.get() < expectedNumberOfClients) {
+            Thread.sleep(5000);
+            ConsoleLogger.log("Waiting for clients: %d/%d", currentlyConnected.get(), expectedNumberOfClients);
         }
 
         startedTransmission = true;
@@ -222,11 +219,11 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.log("Waiting to receive results...");
 
         ArrayList<Thread> threads = new ArrayList<>();
-        connectedPostTransmission = 0;
+        int currentlyConnected = 0;
 
-        while (connectedPostTransmission < connectedPreTransmission) {
+        while (currentlyConnected < expectedNumberOfClients) {
             Socket client = socket.accept();
-            connectedPostTransmission++;
+            currentlyConnected++;
             ConsoleLogger.log("connection accepted from: %s", client.getInetAddress().getHostAddress());
             PostHandshakeThread clientThread = new PostHandshakeThread(client, run, reconnectAfterPostHandshake);
             clientThread.start();

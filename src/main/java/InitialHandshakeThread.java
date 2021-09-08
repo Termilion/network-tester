@@ -99,7 +99,6 @@ public class InitialHandshakeThread extends Thread {
                     throw new NotImplementedException();
                 }
             }
-            ConsoleLogger.log("... PRESS ENTER TO CONTINUE ...");
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();
         }
