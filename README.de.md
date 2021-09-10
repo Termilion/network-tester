@@ -1,46 +1,56 @@
-# Network Tester
+# Netzwerk Tester
 
-Java CLI program for testing a network connection.
+Java CLI Programm zum Testen einer Netzwerkverbindung.
 
-This program is used in a LAN consisting of multiple nodes and emulates different types of network Traffic, such as IoT & FTP type traffic. An instance can adopt one of the roles: server or client. The server in addition to acting as a central endpoint for the data streams, also acts as a management node, which orchestrates the client nodes. All remaining nodes are started as clients and connect to the server. Each client determines whether it acts as a data source or a data sink. Source nodes send data in a specific traffic pattern. Sink nodes collect metrics about their associated data flow and log them aggregated (average over a time interval) to a CSV file. Subsequently, the data of all nodes are transferred to a master node (server) and merged into a final CSV file.
+Dieses Programm wird in einem LAN, bestehend aus mehreren Knoten, verwendet und emuliert verschiedene Arten von Netzwerk
+Traffic, wie IoT- & FTP-artigen Traffic. Eine Instanz kann eine der Rollen Server oder Client annehmen. Der Server
+agiert neben der Rolle als zentraler Endpunkt für die Datenströme auch als Verwaltungs Knoten, welcher die Client Knoten
+orchestriert. Alle restlichen Knoten werden als Client gestartet und verbinden sich zum Server. Jeder Client legt dabei
+fest, ob er als Datenquelle (source) oder Datensenke agiert. Source-Knoten verschicken in einem bestimmten
+Traffic-Pattern Daten. Sink-Knoten sammeln Metriken zu ihrem zugehörigen Datenfluss und loggen diese aggregiert (
+Durchschnitt über einen Zeitintervall) in eine CSV Datei. Anchließend werden die Daten aller Knoten zu einem
+Master-Knoten (Server) übertragen und in eine final CSV Datei gemerged.
 
-# Metrics
+# Metriken
 
-All metrics are collected over a time interval (by default 50ms) and then averaged over this interval. averaged over this interval. Metrics collected at the sinks are:
+Sämtliche Metriken werden über einen Zeitintervall erhoben (standardmäßig 50ms) und anschließend über diesen Intervall
+gemittelt. An den Sinks erhobene Metriken sind:
 
-1. goodput (Mbps)
-2. delay of packets (ms)
+1. Goodput (Mbps)
+2. Delay der Pakete (ms)
 
-# Procedure
+# Ablauf
 
-1. time synchronization
-   - Clients connect to the server
-   - Server hosts NTP server
-   - Clients sync an internal timer
-2. initial handshake
-   - Clients send traffic pattern and flow direction to server
-   - Server and clients create their respective data sources and data sinks
-   - Server sends simulation start timestamp to all nodes
-3. data flow
-   - Server and all clients open their sinks and their sources
-   - Data will flow
-   - Source nodes flow data in specified pattern
-   - Sink nodes log metrics
-4. post handshake
-   - All sink clients send their CSV file to server
-   - Server sends to all clients if they should reconnect for another run afterwards
+1. Zeitsynchronisierung
+   - Clients verbinden sich mit dem Server
+   - Server hostet NTP Server
+   - Clients syncen einen internen Zeitgeber
+2. Initialer Handshake
+   - Clients senden Traffic-Patern und Flussrichtung an den Server
+   - Server und Clients erstellen ihre respektiven Datenquellen und Datensenken
+   - Server sendet Zeitstempel für den Simulationsbeginn an alle Knoten
+3. Datenfluss
+   - Server und alle Clients öffnen ihre Sinks und ihre Sources
+   - Daten fließen
+   - Source Knoten lassen Daten in bestimmen Pattern fließen
+   - Sink Knoten loggen Metriken
+4. Post Handshake
+   - Alle Sink-Clients senden ihre CSV Datei an den Server
+   - Server sendet an alle Clients ob sie sich anschließend für einen weiteren Run erneut verbinden sollen
 
-# Output
+# Ausgabe
 
-The final CSV files are located in the `./out/` folder named `hardware-%d-goodput.csv` (and, contrary to what their name would imply, contain than their name would imply, they also contain the delay).
+Die final gemergten CSV Dateien liegen im `./out/` Ordner mit den Namen `hardware-%d-goodput.csv` (und enthalten anders
+als ihr Name implizieren würde, auch den Delay).
 
 # Logging
 
-The program logs status information to `stdout` and outputs a realtime graph of current transfer rates and delays for each source and sink.
+Das Programm loggt Statusinformationen auf `stdout` und gibt für jede Source und Sink eine realtime Grafik über die
+aktuellen Übertragungsraten und Delays aus.
 
-# Commands
+# Befehle
 
-CLI has --help attribute
+CLI besitzt --help Attribut
 
 ``` bash
 $ java -jar NetworkTester-1.0-SNAPSHOT-jar-with-dependencies.jar 
