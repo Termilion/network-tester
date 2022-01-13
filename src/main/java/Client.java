@@ -175,7 +175,7 @@ public class Client implements Callable<Integer> {
             app = new LogSink(timeClient, appPort, this.rcvBuf, String.format("./out/client_sink_flow_%d_%s.csv", id, this.mode.getName()), id, this.mode, this.traceIntervalMs);
         }
 
-        app.setDataNetworkInterface(dataNetworkInterface);
+        app.setDataNetworkInterface(networkInterface);
         return app;
     }
 

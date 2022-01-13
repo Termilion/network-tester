@@ -76,7 +76,7 @@ public class DecentralizedClockSync extends TimeProvider implements Closeable {
         if (networkInterface != null) {
             NetworkInterface ni = NetworkInterface.getByName(networkInterface);
             if (ni == null) {
-                throw new IOException("Specified time sync network interface not found!");
+                throw new Utility.InterfaceNotFoundException(networkInterface);
             }
             localAddress = ni.getInetAddresses().nextElement();
         } else {
