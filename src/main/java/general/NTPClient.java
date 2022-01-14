@@ -52,7 +52,7 @@ public class NTPClient extends TimeProvider {
 
     @Override
     public void startSyncTime() throws IOException {
-        ConsoleLogger.log(String.format("started ntp process to address: %s", timeServer));
+        ConsoleLogger.log(String.format("started ntp process to address: %s:%d", timeServer, ntpPort));
         this.offset = getServerTime();
         ConsoleLogger.log("finished ntp process");
     }

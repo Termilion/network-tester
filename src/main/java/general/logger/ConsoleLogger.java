@@ -26,6 +26,14 @@ public class ConsoleLogger extends Logger {
         }
     }
 
+    public static void setSimulationEnd(Date simulationEnd) {
+        if (ConsoleLogger.instance != null) {
+            ConsoleLogger.instance.m_setSimulationEnd(simulationEnd);
+        } else {
+            throw new IllegalStateException("Not yet initialized");
+        }
+    }
+
     public static void log(String message) {
         if (ConsoleLogger.instance != null) {
             ConsoleLogger.instance.m_log(message);
@@ -67,12 +75,12 @@ public class ConsoleLogger extends Logger {
         String simTime;
         if (simulationBegin == null) {
             simTime = "-";
+        } else if (currentTime < simulationBegin.getTime()) {
+            simTime = "<";
+        } else if (simulationEnd != null && currentTime > simulationEnd.getTime()) {
+            simTime = ">";
         } else {
-            if (currentTime < simulationBegin.getTime()) {
-                simTime = "<";
-            } else {
-                simTime = String.format("%.02fs", (currentTime - simulationBegin.getTime()) / 1000.0);
-            }
+            simTime = String.format("%.02fs", (currentTime - simulationBegin.getTime()) / 1000.0);
         }
 
         System.out.printf("[%s] [%s]\t%s\n", time, simTime, message);

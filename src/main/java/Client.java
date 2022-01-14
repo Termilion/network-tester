@@ -98,7 +98,9 @@ public class Client implements Callable<Integer> {
             Date stopTime = msg.getStopTime();
             int simulationDuration = msg.getDuration();
             ConsoleLogger.setSimulationBegin(simulationBegin);
+            ConsoleLogger.setSimulationEnd(stopTime);
             FileLogger.setSimulationBegin(simulationBegin);
+            FileLogger.setSimulationEnd(stopTime);
             ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
             ConsoleLogger.log("Client startTime %s", startTime);
             ConsoleLogger.log("Client stopTime %s", stopTime);
@@ -212,7 +214,7 @@ public class Client implements Callable<Integer> {
     }
 
     public boolean postHandshake(int id, String controlAddress, int resultPort, String logFilePath) throws Exception {
-        ConsoleLogger.log("Finished! Submitting results to %s:%s via %s", controlAddress, resultPort);
+        ConsoleLogger.log("Finished! Submitting results to %s:%s", controlAddress, resultPort);
         //wait a short time, to ensure the receiving socket is open
         Thread.sleep(3000);
 

@@ -14,6 +14,7 @@ public abstract class Logger {
 
     protected static SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
     protected Date simulationBegin;
+    protected Date simulationEnd;
     protected final TimeProvider timeProvider;
 
     protected Logger(TimeProvider timeProvider) {
@@ -22,6 +23,9 @@ public abstract class Logger {
 
     protected void m_setSimulationBegin(Date simulationBegin) {
         this.simulationBegin = simulationBegin;
+    }
+    protected void m_setSimulationEnd(Date simulationEnd) {
+        this.simulationEnd = simulationEnd;
     }
 
     protected void m_log(String message, Object... args) {

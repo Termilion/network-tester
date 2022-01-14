@@ -185,6 +185,9 @@ public class Server implements Callable<Integer> {
         Date simulationBegin = new Date(current + beginDelay);
         ConsoleLogger.setSimulationBegin(simulationBegin);
         FileLogger.setSimulationBegin(simulationBegin);
+        Date simulationEnd = new Date(simulationBegin.getTime() + simDuration * 1000L);
+        ConsoleLogger.setSimulationEnd(simulationEnd);
+        FileLogger.setSimulationEnd(simulationEnd);
 
         for (InitialHandshakeThread thread : handshakeThreads) {
             ConsoleLogger.log("send instructions to node %s", thread.id);

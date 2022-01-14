@@ -35,6 +35,14 @@ public class FileLogger extends Logger {
         }
     }
 
+    public static void setSimulationEnd(Date simulationEnd) {
+        if (FileLogger.instance != null) {
+            FileLogger.instance.m_setSimulationEnd(simulationEnd);
+        } else {
+            throw new IllegalStateException("Not yet initialized");
+        }
+    }
+
     public static void log(String message) {
         if (FileLogger.instance != null) {
             FileLogger.instance.m_log(message);
@@ -80,12 +88,12 @@ public class FileLogger extends Logger {
         String simTime;
         if (simulationBegin == null) {
             simTime = "-";
+        } else if (currentTime < simulationBegin.getTime()) {
+            simTime = "<";
+        } else if (simulationEnd != null && currentTime > simulationEnd.getTime()) {
+            simTime = ">";
         } else {
-            if (currentTime < simulationBegin.getTime()) {
-                simTime = "<";
-            } else {
-                simTime = String.format("%.02fs", (currentTime - simulationBegin.getTime()) / 1000.0);
-            }
+            simTime = String.format("%.02fs", (currentTime - simulationBegin.getTime()) / 1000.0);
         }
         try {
             out.write(String.format("[%s] [%s] %s\n", time, simTime, message));

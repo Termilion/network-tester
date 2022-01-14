@@ -120,7 +120,6 @@ public class LogSink extends Sink {
     public void scheduledWriteOutput() {
         try {
             long now = timeProvider.getAdjustedTime();
-            FileLogger.log("LogSink: TimeProvider is ok");
 
             // trace values
             List<Long> currentDelay;
@@ -145,14 +144,11 @@ public class LogSink extends Sink {
 
             // calculate goodput
             double goodput = avgGoodput(currentRcvMBits, traceIntervalInS);
-            FileLogger.log("LogSink: goodput is ok");
 
             // calculate delay
             double avgDelay = avgDelay(currentDelay);
-            FileLogger.log("LogSink: delay is ok");
 
             double simTime = (now - beginTime.getTime()) / 1000.0;
-            FileLogger.log("LogSink: beginTime is ok");
 
             // write to file
             try {
@@ -163,7 +159,6 @@ public class LogSink extends Sink {
                     address = null;
                 }
                 writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, modeInt, address, goodput, avgDelay));
-                FileLogger.log("LogSink: Writer.write is ok");
                 writer.newLine();
                 index++;
             } catch (IOException e) {
