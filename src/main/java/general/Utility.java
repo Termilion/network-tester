@@ -10,6 +10,10 @@ import java.util.Enumeration;
 import java.util.Random;
 
 public class Utility {
+    public static class NotImplementedException extends IOException {
+        public NotImplementedException() {}
+    }
+
     public static class InterfaceNotFoundException extends IOException {
         public InterfaceNotFoundException(String interfaceName) {
             super("Specified network interface not found! " + interfaceName);

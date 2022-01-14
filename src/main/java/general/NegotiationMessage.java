@@ -10,8 +10,9 @@ public class NegotiationMessage implements Serializable {
     int previousId;
     private Mode flowMode;
     private Direction flowDirection;
-    int startDelay;
+    String clientDataIp;
     int port;
+    int startDelay;
     int resetTime;
     int sndBuf;
     int rcvBuf;
@@ -20,8 +21,9 @@ public class NegotiationMessage implements Serializable {
             int previousId,
             Mode flowMode,
             Direction flowDirection,
-            int startDelay,
+            String clientDataIp,
             int port,
+            int startDelay,
             int resetTime,
             int sndBuf,
             int rcvBuf
@@ -29,11 +31,20 @@ public class NegotiationMessage implements Serializable {
         this.previousId = previousId;
         this.flowMode = flowMode;
         this.flowDirection = flowDirection;
-        this.startDelay = startDelay;
+        this.clientDataIp = clientDataIp;
         this.port = port;
+        this.startDelay = startDelay;
         this.resetTime = resetTime;
         this.sndBuf = sndBuf;
         this.rcvBuf = rcvBuf;
+    }
+
+    public String getClientDataIp() {
+        return clientDataIp;
+    }
+
+    public void setClientDataIp(String clientDataIp) {
+        this.clientDataIp = clientDataIp;
     }
 
     public int getPort() {

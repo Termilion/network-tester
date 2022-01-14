@@ -6,7 +6,7 @@ import general.InstructionMessage;
 import general.NegotiationMessage;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import general.Utility.NotImplementedException;
 
 import java.io.*;
 import java.net.Socket;
@@ -39,7 +39,6 @@ public class InitialHandshakeThread extends Thread {
 
     public InitialHandshakeThread(Socket client, TimeProvider timeProvider, int defaultId, int simDuration, int resultPort, int traceIntervalMs) {
         this.client = client;
-        this.clientAddress = client.getInetAddress().getHostAddress();
         this.id = defaultId;
         this.timeProvider = timeProvider;
         this.simDuration = simDuration;
@@ -50,7 +49,7 @@ public class InitialHandshakeThread extends Thread {
             this.out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
             this.out.flush();
             this.in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
-            ConsoleLogger.log("connection to client: %s successful", client.getInetAddress());
+            ConsoleLogger.log("connection from client: %s successful", client.getInetAddress());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -70,6 +69,7 @@ public class InitialHandshakeThread extends Thread {
             this.direction = negotiation.getDirection();
             this.mode = negotiation.getMode();
             this.extraDelay = negotiation.getStartDelay();
+            this.clientAddress = negotiation.getClientDataIp();
             this.clientPort = negotiation.getPort() + 10 + (5 * id); // id is 0-indexed
             this.resetTime = negotiation.getResetTime();
             int sndBuf = negotiation.getSndBuf();
@@ -88,7 +88,7 @@ public class InitialHandshakeThread extends Thread {
                         traceIntervalMs
                 );
             } else {
-                // else build a source
+                // else build a source with the clients dataAddress
                 if (this.mode == Application.Mode.IOT) {
                     ConsoleLogger.log("Creating IoT source application: %s:%d", clientAddress, clientPort);
                     app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, sndBuf, id);

@@ -7,10 +7,11 @@ import general.*;
 import general.logger.ConsoleLogger;
 import general.logger.FileLogger;
 import picocli.CommandLine;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import general.Utility.NotImplementedException;
 
 import java.io.*;
-import java.net.InetSocketAddress;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -19,8 +20,8 @@ import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "Client", description = "Starts a client which connects to the instruction server.")
 public class Client implements Callable<Integer> {
-    @CommandLine.Parameters(index = "0", description = "ipv4 address to connect to")
-    private String address;
+    @CommandLine.Parameters(index = "0", description = "Ip address (of the 1st NIC) of the server. If additionally '--data-ip' is supplied this address will only be used to communicate control messages. Useful if both client and server have 2 NICs and the real stress-test shall only be performed on one of the two.")
+    private String controlAddress;
     @CommandLine.Parameters(index = "1", description = "port to connect to")
     private int port;
     @CommandLine.Parameters(index = "2", description = "the application mode: ${COMPLETION-CANDIDATES}")
@@ -28,11 +29,14 @@ public class Client implements Callable<Integer> {
     @CommandLine.Parameters(index = "3", description = "the direction in which the data will flow (respective from the Client point of view): ${COMPLETION-CANDIDATES}")
     private Application.Direction direction;
 
+    @CommandLine.Option(names = {"--data-ip"}, description = "Ip address (of the 2nd NIC) of the server. When specified this ip will be used to route the data packages which will test the network link. the 'controlAddress' is used to communicate control messages over the more reliable / not-to-test link.")
+    private String dataAddress;
+
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
     Exclusive exclusive;
 
     static class Exclusive {
-        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
+        @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time. Caution: When using different 'controlAddress' and 'dataAddress' the ntp packets will use the default routing no matter the specified 'controlAddress'")
         private String ntpAddress;
         @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
         private boolean distributedTime;
@@ -52,10 +56,6 @@ public class Client implements Callable<Integer> {
     private int traceIntervalMs = 50;
     @CommandLine.Option(names = {"--no-gui"}, description = "do not plot metrics in a gui window")
     private boolean noGui;
-    @CommandLine.Option(names = {"--ctrl-interface"}, description = "specifies a network interface (eth0, wifi0, ...) which will be explicitly used for the transfer of control messages, like time sync requests or application setup (initial and post handshake between clients and server).")
-    private String controlNetworkInterface;
-    @CommandLine.Option(names = {"--data-interface"}, description = "specifies a network interface (eth0, wifi0, ...) which will be explicitly used for the transfer of the \"simulation\" data.")
-    private String dataNetworkInterface;
 
     TimeProvider timeClient;
 
@@ -64,17 +64,20 @@ public class Client implements Callable<Integer> {
         if (noGui) {
             Chartable.disablePlotting();
         }
+        if (dataAddress == null) {
+            dataAddress = controlAddress;
+        }
 
         if (exclusive.distributedTime) {
-            timeClient = DecentralizedClockSync.create(controlNetworkInterface);
+            timeClient = DecentralizedClockSync.create(controlAddress);
         } else {
             if (exclusive.ntpAddress.contains(":")) {
                 String[] ntp = exclusive.ntpAddress.split(":");
                 String addr = ntp[0];
                 int port = Integer.parseInt(ntp[1]);
-                timeClient = NTPClient.create(addr, port, controlNetworkInterface);
+                timeClient = NTPClient.create(addr, port);
             } else {
-                timeClient = NTPClient.create(exclusive.ntpAddress, controlNetworkInterface);
+                timeClient = NTPClient.create(exclusive.ntpAddress);
             }
         }
 
@@ -86,7 +89,7 @@ public class Client implements Callable<Integer> {
         int run = 0;
         do {
             FileLogger.log("----------------- RUN %d -----------------", run);
-            InstructionMessage msg = initialHandshake();
+            InstructionMessage msg = initialHandshake(controlAddress);
 
             int appPort = msg.getServerPort();
             int resultPort = msg.getResultPort();
@@ -104,7 +107,7 @@ public class Client implements Callable<Integer> {
             timeClient.stopSyncTime();
 
             ConsoleLogger.log("building application");
-            Application app = buildApplication(id, address, appPort, dataNetworkInterface);
+            Application app = buildApplication(id, dataAddress, appPort);
 
             scheduleApplicationStart(app, simulationBegin, startTime, stopTime, simulationDuration);
 
@@ -112,7 +115,7 @@ public class Client implements Callable<Integer> {
             if (direction == Application.Direction.DOWN) {
                 path = ((LogSink) app).getFilePath();
             }
-            reconnectAfterPostHandshake = postHandshake(id, resultPort, path);
+            reconnectAfterPostHandshake = postHandshake(id, controlAddress, resultPort, path);
 
             if (reconnectAfterPostHandshake) {
                 // sleep a short amount of time before reconnecting, to ensure that the socket is open
@@ -125,16 +128,9 @@ public class Client implements Callable<Integer> {
         return 0;
     }
 
-    public InstructionMessage initialHandshake() throws IOException, ClassNotFoundException {
-        ConsoleLogger.log("InitialHandshake: connecting to: %s:%s via %s", address, port, controlNetworkInterface);
-        Socket socket = new Socket(address, port);
-        if (controlNetworkInterface != null) {
-            NetworkInterface ni = NetworkInterface.getByName(controlNetworkInterface);
-            if (ni == null) {
-                throw new Utility.InterfaceNotFoundException(controlNetworkInterface);
-            }
-            socket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
-        }
+    public InstructionMessage initialHandshake(String controlAddress) throws IOException, ClassNotFoundException {
+        ConsoleLogger.log("InitialHandshake: connecting to: %s:%s", controlAddress, port);
+        Socket socket = new Socket(controlAddress, port);
         ConsoleLogger.log("connection established");
 
         ConsoleLogger.log("opening streams");
@@ -157,16 +153,16 @@ public class Client implements Callable<Integer> {
         return msg;
     }
 
-    public Application buildApplication(int id, String ipaddress, int appPort, String networkInterface) throws IOException {
+    public Application buildApplication(int id, String dataAddress, int appPort) throws IOException {
         Application app;
 
         if (this.direction == Application.Direction.UP) {
             if (this.mode == Application.Mode.IOT) {
-                ConsoleLogger.log("Creating IoT source application: %s:%d", ipaddress, appPort);
-                app = new IoTSource(timeClient, ipaddress, appPort, resetTime, this.sndBuf, id);
+                ConsoleLogger.log("Creating IoT source application: %s:%d", dataAddress, appPort);
+                app = new IoTSource(timeClient, dataAddress, appPort, resetTime, this.sndBuf, id);
             } else if (this.mode == Application.Mode.BULK) {
-                ConsoleLogger.log("Creating Bulk source application: %s:%d", ipaddress, appPort);
-                app = new BulkSource(timeClient, ipaddress, appPort, resetTime, this.sndBuf, id);
+                ConsoleLogger.log("Creating Bulk source application: %s:%d", dataAddress, appPort);
+                app = new BulkSource(timeClient, dataAddress, appPort, resetTime, this.sndBuf, id);
             } else {
                 throw new NotImplementedException();
             }
@@ -175,14 +171,33 @@ public class Client implements Callable<Integer> {
             app = new LogSink(timeClient, appPort, this.rcvBuf, String.format("./out/client_sink_flow_%d_%s.csv", id, this.mode.getName()), id, this.mode, this.traceIntervalMs);
         }
 
-        app.setDataNetworkInterface(networkInterface);
         return app;
     }
 
     public void sendNegotiationMessage(ObjectOutputStream out) throws IOException {
         ConsoleLogger.log("sending negotiation message");
-        out.writeObject(new NegotiationMessage(this.id, this.mode, this.direction, this.startDelay, this.port, this.resetTime, this.sndBuf, this.rcvBuf));
+        String myDataIp = findMyDataIp(this.dataAddress);
+        out.writeObject(new NegotiationMessage(this.id, this.mode, this.direction, myDataIp, this.port, this.startDelay, this.resetTime, this.sndBuf, this.rcvBuf));
         out.flush();
+    }
+
+    /**
+     * This method searches for the local ip of the local interface which would route the packet to the {@link Client#dataAddress}
+     * in order to tell the server where to send data packets, if the Client is the sink.
+     * @param serverDataIp the data ip of the server
+     * @return clients data ip
+     */
+    private String findMyDataIp(String serverDataIp) throws IOException {
+        /*
+         * Setting up a UDP datagram socket doesn't send anything.
+         * It simply checks permissions and routing between the two end points.
+         * The IP we specify doesn't need to be reachable either for this to work.
+         */
+        DatagramSocket s = new DatagramSocket();
+        s.connect(InetAddress.getByName(serverDataIp), 0);
+        NetworkInterface n = NetworkInterface.getByInetAddress(s.getLocalAddress());
+        InetAddress myInterfaceIP = n.getInetAddresses().nextElement();
+        return myInterfaceIP.getHostAddress();
     }
 
     public InstructionMessage receiveInstructionMessage(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -196,19 +211,12 @@ public class Client implements Callable<Integer> {
         app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).duration(duration).start(timeClient);
     }
 
-    public boolean postHandshake(int id, int resultPort, String logFilePath) throws Exception {
-        ConsoleLogger.log("Finished! Submitting results to %s:%s via %s", address, resultPort, controlNetworkInterface);
+    public boolean postHandshake(int id, String controlAddress, int resultPort, String logFilePath) throws Exception {
+        ConsoleLogger.log("Finished! Submitting results to %s:%s via %s", controlAddress, resultPort);
         //wait a short time, to ensure the receiving socket is open
         Thread.sleep(3000);
 
-        Socket socket = new Socket(address, resultPort);
-        if (controlNetworkInterface != null) {
-            NetworkInterface ni = NetworkInterface.getByName(controlNetworkInterface);
-            if (ni == null) {
-                throw new Utility.InterfaceNotFoundException(controlNetworkInterface);
-            }
-            socket.bind(new InetSocketAddress(ni.getInetAddresses().nextElement(), 0));
-        }
+        Socket socket = new Socket(controlAddress, resultPort);
         ConsoleLogger.log("connection established");
 
         ConsoleLogger.log("opening streams");

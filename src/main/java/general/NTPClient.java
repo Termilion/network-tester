@@ -12,7 +12,6 @@ import java.net.NetworkInterface;
 public class NTPClient extends TimeProvider {
     String timeServer;
     int ntpPort;
-    String networkInterface;
     volatile long offset;
 
     private static NTPClient instance;
@@ -34,18 +33,10 @@ public class NTPClient extends TimeProvider {
     }
 
     public static NTPClient create(String timeServer, int port) {
-        return create(timeServer, port, null);
-    }
-
-    public static NTPClient create(String timeServer, String networkInterface) {
-        return create(timeServer, NtpV3Packet.NTP_PORT, networkInterface);
-    }
-
-    public static NTPClient create(String timeServer, int port, String networkInterface) {
         if (instance == null) {
             synchronized (NTPClient.class) {
                 if (instance == null) {
-                    instance = new NTPClient(timeServer, port, networkInterface);
+                    instance = new NTPClient(timeServer, port);
                 }
             }
         } else {
@@ -54,10 +45,9 @@ public class NTPClient extends TimeProvider {
         return instance;
     }
 
-    private NTPClient(String timeServer, int port, String networkInterface) {
+    private NTPClient(String timeServer, int port) {
         this.timeServer = timeServer;
         this.ntpPort = port;
-        this.networkInterface = networkInterface;
     }
 
     @Override
@@ -69,13 +59,6 @@ public class NTPClient extends TimeProvider {
 
     private long getServerTime() throws IOException {
         timeClient = new NTPUDPClient();
-        if (networkInterface != null) {
-            NetworkInterface ni = NetworkInterface.getByName(networkInterface);
-            if (ni == null) {
-                throw new Utility.InterfaceNotFoundException(networkInterface);
-            }
-            timeClient.open(0, ni.getInetAddresses().nextElement());
-        }
         InetAddress address = InetAddress.getByName(timeServer);
         TimeInfo timeInfo = timeClient.getTime(address, ntpPort);
         timeInfo.computeDetails();
