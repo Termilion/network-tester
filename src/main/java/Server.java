@@ -94,6 +94,7 @@ public class Server implements Callable<Integer> {
         ConsoleLogger.create(timeClient);
         FileLogger.create(timeClient, "./log/server.log");
 
+        // NTP server needs to be created AFTER the ConsoleLogger (which has a dependency on the TimeClient)
         if (exclusive.ntpServerPort != -1) {
             timeServer = new NTPServer(exclusive.ntpServerPort);
             timeServer.start();
@@ -161,8 +162,8 @@ public class Server implements Callable<Integer> {
             }
         }).start();
 
-        // block until the expected number of clients are connected
-        while (currentlyConnected.get() < expectedNumberOfClients) {
+        // block until the expected number of clients are connected and until all Clients are negotiated
+        while (currentlyConnected.get() < expectedNumberOfClients || handshakeThreads.stream().anyMatch(Thread::isAlive)) {
             Thread.sleep(5000);
             ConsoleLogger.log("Waiting for clients: %d/%d", currentlyConnected.get(), expectedNumberOfClients);
         }
