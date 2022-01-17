@@ -104,6 +104,9 @@ public class Client implements Callable<Integer> {
             ConsoleLogger.log("Client simulationBegin %s", simulationBegin);
             ConsoleLogger.log("Client startTime %s", startTime);
             ConsoleLogger.log("Client stopTime %s", stopTime);
+            FileLogger.log("Client simulationBegin %s in %d ms", simulationBegin, simulationBegin.getTime()-timeClient.getAdjustedTime());
+            FileLogger.log("Client startTime %s in %d ms", startTime, startTime.getTime()-timeClient.getAdjustedTime());
+            FileLogger.log("Client stopTime %s in %d ms", stopTime, stopTime.getTime()-timeClient.getAdjustedTime());
 
             ConsoleLogger.log("connection closed");
             timeClient.stopSyncTime();

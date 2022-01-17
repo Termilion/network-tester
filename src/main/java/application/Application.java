@@ -3,6 +3,7 @@ package application;
 import general.TimeProvider;
 import general.Utility;
 import general.logger.ConsoleLogger;
+import general.logger.FileLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -87,6 +88,7 @@ public abstract class Application implements Closeable {
         long current = timeProvider.getAdjustedTime();
         long waitTime = beginTime.getTime() - current;
         ConsoleLogger.log("simulation begin in %s ms", waitTime);
+        FileLogger.log("simulation begin in %s ms", waitTime);
         Thread.sleep(waitTime);
 
         startLogging();
@@ -94,6 +96,7 @@ public abstract class Application implements Closeable {
         current = timeProvider.getAdjustedTime();
         waitTime = startTime.getTime() - current;
         ConsoleLogger.log("scheduled App start in %s ms", waitTime);
+        FileLogger.log("scheduled App start in %s ms", waitTime);
         Thread.sleep(waitTime);
 
         startLogic();

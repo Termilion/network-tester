@@ -4,6 +4,7 @@ import application.Application;
 import application.Chartable;
 import general.TimeProvider;
 import general.logger.ConsoleLogger;
+import general.logger.FileLogger;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public abstract class Sink extends Application implements Closeable {
         this.beginTime = beginTime;
         this.stopTime = stopTime;
         this.duration = duration;
+        FileLogger.log("%s beginTime: %s, stopTime: %s, duration: %d", this.getClass().getSimpleName(), beginTime, stopTime, duration);
     }
 
     public final void startLogging() {
