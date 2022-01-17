@@ -87,16 +87,19 @@ public abstract class Application implements Closeable {
 
         long current = timeProvider.getAdjustedTime();
         long waitTime = beginTime.getTime() - current;
-        ConsoleLogger.log("simulation begin in %s ms", waitTime);
-        FileLogger.log("simulation begin in %s ms", waitTime);
+        ConsoleLogger.log("Sleeping %s ms until simulation begin", waitTime);
+        FileLogger.log("Sleeping %s ms until simulation begin", waitTime);
         Thread.sleep(waitTime);
 
+        long preLogTime = System.currentTimeMillis();
         startLogging();
+        long postLogTime = System.currentTimeMillis();
+        FileLogger.log("startLogging took %d ms", (postLogTime-preLogTime));
 
         current = timeProvider.getAdjustedTime();
         waitTime = startTime.getTime() - current;
-        ConsoleLogger.log("scheduled App start in %s ms", waitTime);
-        FileLogger.log("scheduled App start in %s ms", waitTime);
+        ConsoleLogger.log("Sleeping %s ms until app start", waitTime);
+        FileLogger.log("Sleeping %s ms until app start", waitTime);
         Thread.sleep(waitTime);
 
         startLogic();
