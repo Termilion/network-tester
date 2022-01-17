@@ -4,10 +4,10 @@ import application.sink.LogSink;
 import application.source.BulkSource;
 import application.source.IoTSource;
 import general.*;
+import general.Utility.NotImplementedException;
 import general.logger.ConsoleLogger;
 import general.logger.FileLogger;
 import picocli.CommandLine;
-import general.Utility.NotImplementedException;
 
 import java.io.*;
 import java.net.DatagramSocket;
@@ -196,7 +196,8 @@ public class Client implements Callable<Integer> {
          * The IP we specify doesn't need to be reachable either for this to work.
          */
         DatagramSocket s = new DatagramSocket();
-        s.connect(InetAddress.getByName(serverDataIp), 0);
+        // here we have to use any port other than 0
+        s.connect(InetAddress.getByName(serverDataIp), port);
         NetworkInterface n = NetworkInterface.getByInetAddress(s.getLocalAddress());
         InetAddress myInterfaceIP = n.getInetAddresses().nextElement();
         return myInterfaceIP.getHostAddress();
