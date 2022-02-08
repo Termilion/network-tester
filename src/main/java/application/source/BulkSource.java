@@ -18,8 +18,8 @@ public class BulkSource extends Source {
 
     long lastLogTime = -1;
 
-    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime, id, Mode.BULK);
+    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id) {
+        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.BULK);
         this.id = id;
         this.sndBytes = new AtomicLong(0);
     }
@@ -49,8 +49,7 @@ public class BulkSource extends Source {
                 break;
             }
         }
-        ConsoleLogger.log("%s | stopped transmission. %s packets send", socket.getInetAddress().getHostAddress(), totalSndPackets);
-        out.close();
+        ConsoleLogger.log("%s | finished transmission. %s packets send", socket.getInetAddress().getHostAddress(), totalSndPackets);
     }
 
     private void measureBytes(int payloadLength) {

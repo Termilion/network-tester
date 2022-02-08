@@ -5,8 +5,8 @@ import application.source.IoTSource;
 import general.InstructionMessage;
 import general.NegotiationMessage;
 import general.TimeProvider;
-import general.logger.ConsoleLogger;
 import general.Utility.NotImplementedException;
+import general.logger.ConsoleLogger;
 
 import java.io.*;
 import java.net.Socket;
@@ -74,6 +74,7 @@ public class InitialHandshakeThread extends Thread {
             this.resetTime = negotiation.getResetTime();
             int sndBuf = negotiation.getSndBuf();
             int rcvBuf = negotiation.getRcvBuf();
+            boolean closeSocketOnReset = negotiation.getCloseSocketOnReset();
 
             // Build Corresponding Applications
             if (this.direction == Application.Direction.UP) {
@@ -91,10 +92,10 @@ public class InitialHandshakeThread extends Thread {
                 // else build a source with the clients dataAddress
                 if (this.mode == Application.Mode.IOT) {
                     ConsoleLogger.log("Creating IoT source application: %s:%d", clientAddress, clientPort);
-                    app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, sndBuf, id);
+                    app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id);
                 } else if (this.mode == Application.Mode.BULK) {
                     ConsoleLogger.log("Creating Bulk source application: %s:%d", clientAddress, clientPort);
-                    app = new BulkSource(timeProvider, clientAddress, clientPort, resetTime, sndBuf, id);
+                    app = new BulkSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id);
                 } else {
                     throw new NotImplementedException();
                 }

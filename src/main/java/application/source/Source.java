@@ -24,6 +24,7 @@ public abstract class Source extends Application implements Closeable {
     String address;
     int port;
     int resetTime;
+    boolean closeSocketOnReset = false;
 
     TimeProvider timeProvider;
     Date beginTime;
@@ -42,6 +43,7 @@ public abstract class Source extends Application implements Closeable {
             int port,
             int sendBufferSize,
             int resetTime,
+            boolean closeSocketOnReset,
             int id,
             Mode mode
     ) {
@@ -51,6 +53,7 @@ public abstract class Source extends Application implements Closeable {
         this.address = address;
         this.port = port;
         this.resetTime = resetTime;
+        this.closeSocketOnReset = closeSocketOnReset;
     }
 
     public void init(Date beginTime, Date stopTime, int duration) {
@@ -97,7 +100,7 @@ public abstract class Source extends Application implements Closeable {
     }
 
     protected void connect(String address, int port) throws IOException {
-        socket = getSocket(address, port);
+        socket = createSocket(address, port);
         isConnected = true;
         if (this.sendBufferSize > 0) {
             this.socket.setSendBufferSize(this.sendBufferSize);
@@ -125,11 +128,13 @@ public abstract class Source extends Application implements Closeable {
         scheduledTasks.add(scheduler.scheduleAtFixedRate(() -> {
             try {
                 ConsoleLogger.log("%s | calling reset", socket.getInetAddress().getHostAddress());
-                if (socket != null && !socket.isClosed()) {
-                    socket.close();
+                if (closeSocketOnReset) {
+                    if (socket != null && !socket.isClosed()) {
+                        socket.close();
+                    }
+                    isConnected = false;
+                    connect(address, port);
                 }
-                isConnected = false;
-                connect(address, port);
                 executeLogic();
             } catch (Exception e) {
                 e.printStackTrace();

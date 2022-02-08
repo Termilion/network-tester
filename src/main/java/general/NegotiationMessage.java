@@ -16,6 +16,7 @@ public class NegotiationMessage implements Serializable {
     int resetTime;
     int sndBuf;
     int rcvBuf;
+    boolean closeSocketOnReset;
 
     public NegotiationMessage(
             int previousId,
@@ -25,6 +26,7 @@ public class NegotiationMessage implements Serializable {
             int port,
             int startDelay,
             int resetTime,
+            boolean closeSocketOnReset,
             int sndBuf,
             int rcvBuf
     ) {
@@ -35,6 +37,7 @@ public class NegotiationMessage implements Serializable {
         this.port = port;
         this.startDelay = startDelay;
         this.resetTime = resetTime;
+        this.closeSocketOnReset = closeSocketOnReset;
         this.sndBuf = sndBuf;
         this.rcvBuf = rcvBuf;
     }
@@ -97,5 +100,9 @@ public class NegotiationMessage implements Serializable {
 
     public int getPreviousId() {
         return previousId;
+    }
+
+    public boolean getCloseSocketOnReset() {
+        return closeSocketOnReset;
     }
 }

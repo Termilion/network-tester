@@ -33,9 +33,9 @@ public class Client implements Callable<Integer> {
     private String dataAddress;
 
     @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
-    Exclusive exclusive;
+    TimeSyncArg timeSyncArgs;
 
-    static class Exclusive {
+    static class TimeSyncArg {
         @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time. Caution: When using different 'controlAddress' and 'dataAddress' the ntp packets will use the default routing no matter the specified 'controlAddress'")
         private String ntpAddress;
         @CommandLine.Option(names = "--distributedTime", defaultValue = "false", description = "Sync time in a local distributed manner")
@@ -44,6 +44,8 @@ public class Client implements Callable<Integer> {
 
     @CommandLine.Option(names = {"-r", "--resetTime"}, description = "time after the app gets forcefully reset in milliseconds")
     private int resetTime = -1;
+    @CommandLine.Option(names = "--close-socket-on-reset", description = "Whether the Source shall close its socket on a 'reset' event or keep it open", defaultValue = "false")
+    boolean closeSocketOnReset = false;
     @CommandLine.Option(names = {"-d", "--delay"}, description = "additional time to wait before transmission")
     private int startDelay = 0;
     @CommandLine.Option(names = {"-sb", "--sndBuf"}, description = "size of the tcp send buffer in bytes")
@@ -68,16 +70,16 @@ public class Client implements Callable<Integer> {
             dataAddress = controlAddress;
         }
 
-        if (exclusive.distributedTime) {
+        if (timeSyncArgs.distributedTime) {
             timeClient = DecentralizedClockSync.create(controlAddress);
         } else {
-            if (exclusive.ntpAddress.contains(":")) {
-                String[] ntp = exclusive.ntpAddress.split(":");
+            if (timeSyncArgs.ntpAddress.contains(":")) {
+                String[] ntp = timeSyncArgs.ntpAddress.split(":");
                 String addr = ntp[0];
                 int port = Integer.parseInt(ntp[1]);
                 timeClient = NTPClient.create(addr, port);
             } else {
-                timeClient = NTPClient.create(exclusive.ntpAddress);
+                timeClient = NTPClient.create(timeSyncArgs.ntpAddress);
             }
         }
 
@@ -164,10 +166,10 @@ public class Client implements Callable<Integer> {
         if (this.direction == Application.Direction.UP) {
             if (this.mode == Application.Mode.IOT) {
                 ConsoleLogger.log("Creating IoT source application: %s:%d", dataAddress, appPort);
-                app = new IoTSource(timeClient, dataAddress, appPort, resetTime, this.sndBuf, id);
+                app = new IoTSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id);
             } else if (this.mode == Application.Mode.BULK) {
                 ConsoleLogger.log("Creating Bulk source application: %s:%d", dataAddress, appPort);
-                app = new BulkSource(timeClient, dataAddress, appPort, resetTime, this.sndBuf, id);
+                app = new BulkSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id);
             } else {
                 throw new NotImplementedException();
             }
@@ -182,7 +184,7 @@ public class Client implements Callable<Integer> {
     public void sendNegotiationMessage(ObjectOutputStream out) throws IOException {
         ConsoleLogger.log("sending negotiation message");
         String myDataIp = findMyDataIp(this.dataAddress);
-        out.writeObject(new NegotiationMessage(this.id, this.mode, this.direction, myDataIp, this.port, this.startDelay, this.resetTime, this.sndBuf, this.rcvBuf));
+        out.writeObject(new NegotiationMessage(this.id, this.mode, this.direction, myDataIp, this.port, this.startDelay, this.resetTime, this.closeSocketOnReset, this.sndBuf, this.rcvBuf));
         out.flush();
     }
 

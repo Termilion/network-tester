@@ -130,7 +130,7 @@ public abstract class Application implements Closeable {
      * @return a Socket (bound to an interface)
      * @throws IOException e
      */
-    protected final Socket getSocket(String address, int port) throws IOException {
+    protected final Socket createSocket(String address, int port) throws IOException {
         Socket socket = new Socket(address, port);
         if (dataNetworkInterface != null) {
             NetworkInterface ni = NetworkInterface.getByName(dataNetworkInterface);
@@ -151,7 +151,7 @@ public abstract class Application implements Closeable {
      * @return a ServerSocket (bound to an interface)
      * @throws IOException e
      */
-    protected final ServerSocket getServerSocket(int port) throws IOException {
+    protected final ServerSocket createServerSocket(int port) throws IOException {
         ServerSocket serverSocket;
         if (dataNetworkInterface != null) {
             NetworkInterface ni = NetworkInterface.getByName(dataNetworkInterface);

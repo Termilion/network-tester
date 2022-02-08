@@ -20,8 +20,8 @@ public class IoTSource extends Source {
 
     long lastLogTime = -1;
 
-    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime, id, Mode.IOT);
+    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id) {
+        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.IOT);
         this.id = id;
         this.sndBytes = new AtomicLong(0);
     }
@@ -39,6 +39,7 @@ public class IoTSource extends Source {
 
             if (isRunning) {
                 try {
+                    // TODO encode Round?
                     byte[] bytes = Utility.encodeTime(payload, time);
                     out.write(bytes);
                     out.flush();
@@ -54,9 +55,7 @@ public class IoTSource extends Source {
                 break;
             }
         }
-        ConsoleLogger.log("%s | stopped transmission. %s packets send", socket.getInetAddress().getHostAddress(), totalSndPackets);
-        out.close();
-        socket.close();
+        ConsoleLogger.log("%s | finished transmission. %s packets send", socket.getInetAddress().getHostAddress(), totalSndPackets);
     }
 
     private void measureBytes(int payloadLength) {
