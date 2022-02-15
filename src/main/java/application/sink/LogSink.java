@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class LogSink extends Sink {
 
     public static final String IDENTIFIER_GOODPUT = "goodput";
-    public static final String IDENTIFIER_ABSOLUTE_DELAY = "absolute-delay";
+    public static final String IDENTIFIER_ABSOLUTE_DELAY = "absolute_delay";
     public static final String IDENTIFIER_DURATION = "duration";
 
     public static final String[] IDENTIFIERS = new String[] {
