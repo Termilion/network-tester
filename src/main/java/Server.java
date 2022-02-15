@@ -39,10 +39,10 @@ public class Server implements Callable<Integer> {
     @CommandLine.Parameters(index = "1", description = "The expected number of clients. Once all clients are connected the simulation will start")
     private int expectedNumberOfClients;
 
-    @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
-    Exclusive exclusive;
+    @CommandLine.ArgGroup(multiplicity = "1")
+    TimeSyncArg timeSyncArg;
 
-    static class Exclusive {
+    static class TimeSyncArg {
         @CommandLine.Option(names = "--ntp", defaultValue = "ptbtime1.ptb.de", description = "Address of a ntp server to sync time")
         private String ntpAddress;
         @CommandLine.Option(names = "--ntpServerPort", defaultValue = "-1", description = "Start a ntp server on this machine with the given number as ntp port. The local time will be used, to sync incoming client requests. The server additionally uses a ntpClient against its own ntpServer")
@@ -76,18 +76,18 @@ public class Server implements Callable<Integer> {
             Chartable.disablePlotting();
         }
 
-        if (exclusive.ntpServerPort != -1) {
-            timeClient = NTPClient.create("localhost", exclusive.ntpServerPort);
-        } else if (exclusive.distributedTime) {
+        if (timeSyncArg.ntpServerPort != -1) {
+            timeClient = NTPClient.create("localhost", timeSyncArg.ntpServerPort);
+        } else if (timeSyncArg.distributedTime) {
             timeClient = DecentralizedClockSync.getInstance();
         } else {
-            if (exclusive.ntpAddress.contains(":")) {
-                String[] ntp = exclusive.ntpAddress.split(":");
+            if (timeSyncArg.ntpAddress.contains(":")) {
+                String[] ntp = timeSyncArg.ntpAddress.split(":");
                 String addr = ntp[0];
                 int port = Integer.parseInt(ntp[1]);
                 timeClient = NTPClient.create(addr, port);
             } else {
-                timeClient = NTPClient.create(exclusive.ntpAddress);
+                timeClient = NTPClient.create(timeSyncArg.ntpAddress);
             }
         }
 
@@ -95,8 +95,8 @@ public class Server implements Callable<Integer> {
         FileLogger.create(timeClient, "./log/server.log");
 
         // NTP server needs to be created AFTER the ConsoleLogger (which has a dependency on the TimeClient)
-        if (exclusive.ntpServerPort != -1) {
-            timeServer = new NTPServer(exclusive.ntpServerPort);
+        if (timeSyncArg.ntpServerPort != -1) {
+            timeServer = new NTPServer(timeSyncArg.ntpServerPort);
             timeServer.start();
         }
 

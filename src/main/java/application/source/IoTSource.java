@@ -39,7 +39,13 @@ public class IoTSource extends Source {
 
             if (isRunning) {
                 try {
-                    TransmissionPayload transmissionPayload = new TransmissionPayload(j, time, round);
+                    TransmissionPayload transmissionPayload = new TransmissionPayload(
+                            j,
+                            time,
+                            round,
+                            j==0,
+                            j==maxNumberOfPackets-1
+                    );
                     byte[] bytes = transmissionPayload.encode(payload);
                     out.write(bytes);
                     out.flush();

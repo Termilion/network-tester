@@ -35,11 +35,15 @@ public class LogSink extends Sink {
     String absoluteDelayCsvPath;
     File absoluteDelayCsvFile;
     BufferedWriter absoluteDelayCsv;
+    String durationCsvPath;
+    File durationCsvFile;
+    BufferedWriter durationCsv;
 
     int index = 0;
     final AtomicLong rcvBytesForGoodputCsv;
     final List<Long> delayForGoodputCsv;
     final Queue<AbsoluteDelayItem> absoluteDelayItemQueue;
+    final Map<Integer, Long> roundStartTimes;
     final AtomicLong rcvBytesForLog;
     final List<Long> delayForLog;
 
@@ -55,10 +59,13 @@ public class LogSink extends Sink {
         this.rcvBytesForGoodputCsv = new AtomicLong(0);
         this.delayForGoodputCsv = Collections.synchronizedList(new ArrayList<>());
         this.absoluteDelayItemQueue = new ConcurrentLinkedQueue<>();
+        this.roundStartTimes = new HashMap<>();
         this.rcvBytesForLog = new AtomicLong(0);
         this.delayForLog = Collections.synchronizedList(new ArrayList<>());
+
         this.goodputCsvPath = String.format("%s_flow_%d_%s_goodput.csv", parentPath, id, mode.getName());
         this.absoluteDelayCsvPath = String.format("%s_flow_%d_%s_absolute-delay.csv", parentPath, id, mode.getName());
+        this.durationCsvPath = String.format("%s_flow_%d_%s_duration.csv", parentPath, id, mode.getName());
         createLogFiles();
     }
 
@@ -76,7 +83,15 @@ public class LogSink extends Sink {
         if (absoluteDelayCsvFile.exists()) {
             boolean deleted = absoluteDelayCsvFile.delete();
             if (!deleted) {
-                throw new IOException("Can not delete " + goodputCsvPath);
+                throw new IOException("Can not delete " + absoluteDelayCsvPath);
+            }
+        }
+        durationCsvFile = new File(durationCsvPath);
+        durationCsvFile.getParentFile().mkdirs();
+        if (durationCsvFile.exists()) {
+            boolean deleted = durationCsvFile.delete();
+            if (!deleted) {
+                throw new IOException("Can not delete " + durationCsvPath);
             }
         }
         goodputCsv = new BufferedWriter(new FileWriter(goodputCsvFile, true));
@@ -87,6 +102,10 @@ public class LogSink extends Sink {
         absoluteDelayCsv.write("time,flow,type,address,round,packet_id,delay_data_ms");
         absoluteDelayCsv.newLine();
         absoluteDelayCsv.flush();
+        durationCsv = new BufferedWriter(new FileWriter(durationCsvFile, true));
+        durationCsv.write("time,flow,type,address,round,duration_ms");
+        durationCsv.newLine();
+        durationCsv.flush();
     }
 
     @Override
@@ -117,12 +136,15 @@ public class LogSink extends Sink {
                 int packetId = transmissionPayload.getId();
                 long sendTime = transmissionPayload.getTime();
                 int round = transmissionPayload.getRound();
+                boolean firstPacketOfRound = transmissionPayload.isFirstPacketOfRound();
+                boolean lastPacketOfRound = transmissionPayload.isLastPacketOfRound();
 
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
 
                 measureDelay(delayTime, packetId, currentTime, round);
                 measureBytes(payload.length);
+                measureDuration(sendTime, currentTime, round, firstPacketOfRound, lastPacketOfRound);
             }
         } catch (IllegalStateException e) {
             System.exit(1);
@@ -158,6 +180,31 @@ public class LogSink extends Sink {
         this.rcvBytesForGoodputCsv.addAndGet(payloadLength);
         this.rcvBytesForLog.addAndGet(payloadLength);
         this.totalRcvPackets++;
+    }
+
+    private void measureDuration(long sendTime, long receiveTime, int round, boolean firstPacketOfRound, boolean lastPacketOfRound) {
+        if (firstPacketOfRound) {
+            roundStartTimes.put(round, sendTime);
+        }
+        if (lastPacketOfRound) {
+            Long firstPacketSendTime = roundStartTimes.get(round);
+            if (firstPacketSendTime == null) {
+                throw new IllegalStateException("This is the last packet of round " + round + " but there is no start time available");
+            }
+            long duration = receiveTime - firstPacketSendTime;
+
+            //time,flow,type,address,round,duration_ms
+            try {
+                String address = isConnected ? connectedAddress : null;
+                double receiveSimTime = (receiveTime-beginTime.getTime()) / 1000.0;
+
+                durationCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%d,%d", receiveSimTime, id, modeInt, address, round, duration));
+                durationCsv.newLine();
+            } catch (IOException e) {
+                FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -316,8 +363,10 @@ public class LogSink extends Sink {
         closed = true;
         goodputCsv.flush();
         absoluteDelayCsv.flush();
+        durationCsv.flush();
         goodputCsv.close();
         absoluteDelayCsv.close();
+        durationCsv.close();
         super.close();
     }
 

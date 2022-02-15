@@ -36,7 +36,7 @@ public class BulkSource extends Source {
             long time = this.timeProvider.getAdjustedTime();
 
             try {
-                TransmissionPayload transmissionPayload = new TransmissionPayload(packetId, time, 0);
+                TransmissionPayload transmissionPayload = new TransmissionPayload(packetId, time, 0, packetId==0, false);
                 byte[] bytes = transmissionPayload.encode(payload);
                 out.write(bytes);
                 out.flush();

@@ -71,31 +71,42 @@ public class Utility {
     }
 
     public static class TransmissionPayload {
+        /**
+         * Number of Bytes to encode/decode into/from the payload
+         * Boolean = 1 Byte
+         */
+        public static final int PAYLOAD_BYTES = Integer.BYTES + Long.BYTES + Integer.BYTES + 1 + 1;
+
         int id;
         long time;
         int round;
+        boolean firstPacketOfRound;
+        boolean lastPacketOfRound;
 
         public static TransmissionPayload decode(byte[] payload) throws Exception {
-            int bytesToDecode = Integer.BYTES + Long.BYTES + Integer.BYTES;
-            if (payload.length < bytesToDecode) {
+            if (payload.length < PAYLOAD_BYTES) {
                 throw new Exception("payload too small");
             }
             // convert from bytes
-            ByteBuffer buffer = ByteBuffer.allocate(bytesToDecode);
-            buffer.put(payload, 0, bytesToDecode);
+            ByteBuffer buffer = ByteBuffer.allocate(PAYLOAD_BYTES);
+            buffer.put(payload, 0, PAYLOAD_BYTES);
             buffer.flip();
 
             int id = buffer.getInt();
             long time = buffer.getLong();
             int round = buffer.getInt();
+            boolean firstPacketOfRound = buffer.get() == 1;
+            boolean lastPacketOfRound = buffer.get() == 1;
 
-            return new TransmissionPayload(id, time, round);
+            return new TransmissionPayload(id, time, round, firstPacketOfRound, lastPacketOfRound);
         }
 
-        public TransmissionPayload(int id, long time, int round) {
+        public TransmissionPayload(int id, long time, int round, boolean firstPacketOfRound, boolean lastPacketOfRound) {
             this.id = id;
             this.time = time;
             this.round = round;
+            this.firstPacketOfRound = firstPacketOfRound;
+            this.lastPacketOfRound = lastPacketOfRound;
         }
 
         public int getId() {
@@ -110,20 +121,29 @@ public class Utility {
             return round;
         }
 
+        public boolean isFirstPacketOfRound() {
+            return firstPacketOfRound;
+        }
+
+        public boolean isLastPacketOfRound() {
+            return lastPacketOfRound;
+        }
+
         public byte[] encode(byte[] payload) throws Exception {
-            int bytesToEncode = Integer.BYTES + Long.BYTES + Integer.BYTES;
-            if (payload.length < bytesToEncode) {
+            if (payload.length < PAYLOAD_BYTES) {
                 throw new Exception("payload too small");
             }
             // convert to bytes
-            ByteBuffer buffer = ByteBuffer.allocate(bytesToEncode);
+            ByteBuffer buffer = ByteBuffer.allocate(PAYLOAD_BYTES);
             buffer.putInt(id);
             buffer.putLong(time);
             buffer.putInt(round);
+            buffer.put((byte) (firstPacketOfRound ? 1 : 0));
+            buffer.put((byte) (lastPacketOfRound ? 1 : 0));
             buffer.rewind();
 
             // stash bytes in payload
-            buffer.get(payload, 0, bytesToEncode);
+            buffer.get(payload, 0, PAYLOAD_BYTES);
             return payload;
         }
     }
