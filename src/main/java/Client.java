@@ -16,6 +16,7 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(name = "Client", description = "Starts a client which connects to the instruction server.")
@@ -118,11 +119,11 @@ public class Client implements Callable<Integer> {
 
             scheduleApplicationStart(app, simulationBegin, startTime, stopTime, simulationDuration);
 
-            String path = null;
+            Map<String, String> paths = null;
             if (direction == Application.Direction.DOWN) {
-                path = ((LogSink) app).getFilePath();
+                paths = ((LogSink) app).getFilePaths();
             }
-            reconnectAfterPostHandshake = postHandshake(id, controlAddress, resultPort, path);
+            reconnectAfterPostHandshake = postHandshake(id, controlAddress, resultPort, paths);
 
             if (reconnectAfterPostHandshake) {
                 // sleep a short amount of time before reconnecting, to ensure that the socket is open
@@ -166,16 +167,16 @@ public class Client implements Callable<Integer> {
         if (this.direction == Application.Direction.UP) {
             if (this.mode == Application.Mode.IOT) {
                 ConsoleLogger.log("Creating IoT source application: %s:%d", dataAddress, appPort);
-                app = new IoTSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id);
+                app = new IoTSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id, this.direction);
             } else if (this.mode == Application.Mode.BULK) {
                 ConsoleLogger.log("Creating Bulk source application: %s:%d", dataAddress, appPort);
-                app = new BulkSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id);
+                app = new BulkSource(timeClient, dataAddress, appPort, resetTime, closeSocketOnReset, sndBuf, id, this.direction);
             } else {
                 throw new NotImplementedException();
             }
         } else {
             ConsoleLogger.log("Creating Log sink application: port %d", appPort);
-            app = new LogSink(timeClient, appPort, this.rcvBuf, "./out/client", id, this.mode, this.traceIntervalMs);
+            app = new LogSink(timeClient, appPort, this.rcvBuf, "./out/client", this.traceIntervalMs, id, this.mode, this.direction);
         }
 
         return app;
@@ -219,7 +220,7 @@ public class Client implements Callable<Integer> {
         app.simBeginOn(simulationBegin).stopOn(stopTime).startOn(startTime).duration(duration).start(timeClient);
     }
 
-    public boolean postHandshake(int id, String controlAddress, int resultPort, String logFilePath) throws Exception {
+    public boolean postHandshake(int id, String controlAddress, int resultPort, Map<String, String> logFilePaths) throws Exception {
         ConsoleLogger.log("Finished! Submitting results to %s:%s", controlAddress, resultPort);
         //wait a short time, to ensure the receiving socket is open
         Thread.sleep(3000);
@@ -232,14 +233,16 @@ public class Client implements Callable<Integer> {
         out.flush();
         ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 
+        ResultMessage result = new ResultMessage(id, this.mode, this.direction);
         // only sinks need to submit their results
-        byte[] fileContent = new byte[0];
         if (direction == Application.Direction.DOWN) {
-            fileContent = Files.readAllBytes(new File(logFilePath).toPath());
+            for (Map.Entry<String, String> entry : logFilePaths.entrySet()) {
+                // Key=Identifier, Value=Path
+                byte[] fileContent = Files.readAllBytes(new File(entry.getValue()).toPath());
+                result.addFile(entry.getKey(), fileContent);
+            }
         }
-
-        sendResultMessage(out, id, fileContent);
-        out.flush();
+        sendResultMessage(out, result);
 
         boolean reconnect = receiveReconnectAfterPostHandshake(in);
 
@@ -254,9 +257,9 @@ public class Client implements Callable<Integer> {
         return reconnect;
     }
 
-    public void sendResultMessage(ObjectOutputStream out, int id, byte[] fileContent) throws IOException {
+    public void sendResultMessage(ObjectOutputStream out, ResultMessage result) throws IOException {
         ConsoleLogger.log("sending result message");
-        out.writeObject(new ResultMessage(id, this.mode, this.direction, fileContent));
+        out.writeObject(result);
         out.flush();
     }
 

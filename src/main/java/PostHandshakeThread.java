@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 public class PostHandshakeThread extends Thread {
     private final Socket client;
@@ -16,7 +17,6 @@ public class PostHandshakeThread extends Thread {
     Application.Direction direction;
     Application.Mode mode;
     int id;
-    byte[] fileContent;
 
     InetAddress clientAddress;
 
@@ -48,7 +48,6 @@ public class PostHandshakeThread extends Thread {
             this.direction = result.getDirection();
             this.mode = result.getMode();
             this.id = result.getId();
-            this.fileContent = result.getFileContent();
 
             ConsoleLogger.log("%s | sending whether reconnect after handshake", client.getInetAddress());
             out.writeObject(reconnectAfterPostHandshake);
@@ -56,8 +55,10 @@ public class PostHandshakeThread extends Thread {
 
             // if the client is down-link, he needs to upload his results and we need to save them
             if (direction == Application.Direction.DOWN) {
-                Path path = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, id, mode.getName())).toPath();
-                Files.write(path, fileContent);
+                for (Map.Entry<String, byte[]> entry : result.getFiles().entrySet()) {
+                    Path path = new File(String.format("./out/received_run_%d_flow_%d_%s_%s.csv", run, id, mode.getName(), entry.getKey())).toPath();
+                    Files.write(path, entry.getValue());
+                }
             }
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             e.printStackTrace();

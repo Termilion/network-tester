@@ -18,8 +18,8 @@ public class BulkSource extends Source {
 
     long lastLogTime = -1;
 
-    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.BULK);
+    public BulkSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id, Direction directionAsSeenByClient) {
+        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.BULK, directionAsSeenByClient);
         this.id = id;
         this.sndBytes = new AtomicLong(0);
     }

@@ -12,6 +12,16 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class LogSink extends Sink {
 
+    public static final String IDENTIFIER_GOODPUT = "goodput";
+    public static final String IDENTIFIER_ABSOLUTE_DELAY = "absolute-delay";
+    public static final String IDENTIFIER_DURATION = "duration";
+
+    public static final String[] IDENTIFIERS = new String[] {
+            IDENTIFIER_GOODPUT,
+            IDENTIFIER_ABSOLUTE_DELAY,
+            IDENTIFIER_DURATION
+    };
+
     private static class AbsoluteDelayItem {
         long receiveTime;
         int round;
@@ -53,8 +63,8 @@ public class LogSink extends Sink {
     long lastTraceTime = -1;
     long lastLogTime = -1;
 
-    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String parentPath, int id, Mode mode, int traceIntervalMs) throws IOException {
-        super(timeProvider, port, receiveBufferSize, traceIntervalMs, id, mode);
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String parentPath, int traceIntervalMs, int id, Mode mode, Direction directionAsSeenByClient) throws IOException {
+        super(timeProvider, port, receiveBufferSize, traceIntervalMs, id, mode, directionAsSeenByClient);
         this.modeInt = mode.getLogInt();
         this.rcvBytesForGoodputCsv = new AtomicLong(0);
         this.delayForGoodputCsv = Collections.synchronizedList(new ArrayList<>());
@@ -63,9 +73,9 @@ public class LogSink extends Sink {
         this.rcvBytesForLog = new AtomicLong(0);
         this.delayForLog = Collections.synchronizedList(new ArrayList<>());
 
-        this.goodputCsvPath = String.format("%s_flow_%d_%s_goodput.csv", parentPath, id, mode.getName());
-        this.absoluteDelayCsvPath = String.format("%s_flow_%d_%s_absolute-delay.csv", parentPath, id, mode.getName());
-        this.durationCsvPath = String.format("%s_flow_%d_%s_duration.csv", parentPath, id, mode.getName());
+        this.goodputCsvPath = String.format("%s_flow_%d_%s_%s.csv", parentPath, id, mode.getName(), IDENTIFIER_GOODPUT);
+        this.absoluteDelayCsvPath = String.format("%s_flow_%d_%s_%s.csv", parentPath, id, mode.getName(), IDENTIFIER_ABSOLUTE_DELAY);
+        this.durationCsvPath = String.format("%s_flow_%d_%s_%s.csv", parentPath, id, mode.getName(), IDENTIFIER_DURATION);
         createLogFiles();
     }
 
@@ -95,15 +105,15 @@ public class LogSink extends Sink {
             }
         }
         goodputCsv = new BufferedWriter(new FileWriter(goodputCsvFile, true));
-        goodputCsv.write("index,time,flow,type,address,sink_gp,delay_data_ms");
+        goodputCsv.write("index,time,flow,type,direction,address,sink_gp,delay_data_ms");
         goodputCsv.newLine();
         goodputCsv.flush();
         absoluteDelayCsv = new BufferedWriter(new FileWriter(absoluteDelayCsvFile, true));
-        absoluteDelayCsv.write("time,flow,type,address,round,packet_id,delay_data_ms");
+        absoluteDelayCsv.write("time,flow,type,direction,address,round,packet_id,delay_data_ms");
         absoluteDelayCsv.newLine();
         absoluteDelayCsv.flush();
         durationCsv = new BufferedWriter(new FileWriter(durationCsvFile, true));
-        durationCsv.write("time,flow,type,address,round,duration_ms");
+        durationCsv.write("time,flow,type,direction,address,round,duration_ms");
         durationCsv.newLine();
         durationCsv.flush();
     }
@@ -198,7 +208,7 @@ public class LogSink extends Sink {
                 String address = isConnected ? connectedAddress : null;
                 double receiveSimTime = (receiveTime-beginTime.getTime()) / 1000.0;
 
-                durationCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%d,%d", receiveSimTime, id, modeInt, address, round, duration));
+                durationCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%s,%d,%d", receiveSimTime, id, modeInt, directionAsSeenByClient.getName(), address, round, duration));
                 durationCsv.newLine();
             } catch (IOException e) {
                 FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
@@ -257,7 +267,7 @@ public class LogSink extends Sink {
             } else {
                 address = null;
             }
-            goodputCsv.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, modeInt, address, goodput, avgDelay));
+            goodputCsv.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%s,%.02f,%.02f", index, simTime, id, modeInt, directionAsSeenByClient.getName(), address, goodput, avgDelay));
             goodputCsv.newLine();
             index++;
         } catch (IOException e) {
@@ -267,7 +277,7 @@ public class LogSink extends Sink {
     }
 
     private void writeAbsoluteDelay() {
-        // time,flow,type,address,round,packet_id,delay_data_ms
+        // time,flow,type,direction,address,round,packet_id,delay_data_ms
         AbsoluteDelayItem item;
         while ((item = absoluteDelayItemQueue.poll()) != null) {
             // write to file
@@ -276,7 +286,7 @@ public class LogSink extends Sink {
 
                 double receiveSimTime = (item.receiveTime - beginTime.getTime()) / 1000.0;
 
-                absoluteDelayCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%d,%d,%d", receiveSimTime, id, modeInt, address, item.round, item.packetId, item.delayTime));
+                absoluteDelayCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%s,%d,%d,%d", receiveSimTime, id, modeInt, directionAsSeenByClient.getName(), address, item.round, item.packetId, item.delayTime));
                 absoluteDelayCsv.newLine();
             } catch (IOException e) {
                 FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
@@ -370,7 +380,11 @@ public class LogSink extends Sink {
         super.close();
     }
 
-    public String getFilePath() {
-        return goodputCsvPath;
+    public Map<String, String> getFilePaths() {
+        return new HashMap<String, String>() {{
+            put(IDENTIFIER_GOODPUT, goodputCsvPath);
+            put(IDENTIFIER_ABSOLUTE_DELAY, absoluteDelayCsvPath);
+            put(IDENTIFIER_DURATION, durationCsvPath);
+        }};
     }
 }

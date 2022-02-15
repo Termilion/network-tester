@@ -40,8 +40,8 @@ public abstract class Sink extends Application implements Closeable {
     ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     Set<ScheduledFuture<?>> scheduledTasks = new HashSet<>();
 
-    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs, int id, Mode mode) {
-        super(id, mode);
+    public Sink(TimeProvider timeProvider, int port, int receiveBufferSize, int traceIntervalMs, int id, Mode mode, Direction directionAsSeenByClient) {
+        super(id, mode, directionAsSeenByClient);
         this.timeProvider = timeProvider;
         this.port = port;
         this.receiveBufferSize = receiveBufferSize;

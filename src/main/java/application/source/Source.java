@@ -45,9 +45,10 @@ public abstract class Source extends Application implements Closeable {
             int resetTime,
             boolean closeSocketOnReset,
             int id,
-            Mode mode
+            Mode mode,
+            Direction directionAsSeenByClient
     ) {
-        super(id, mode);
+        super(id, mode, directionAsSeenByClient);
         this.sendBufferSize = sendBufferSize;
         this.timeProvider = timeProvider;
         this.address = address;

@@ -38,12 +38,23 @@ public abstract class Application implements Closeable {
     }
 
     public enum Direction {
-        UP,
-        DOWN
+        UP("up"),
+        DOWN("down");
+
+        String name;
+
+        Direction(String name){
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     protected int id;
     protected Mode mode;
+    protected Direction directionAsSeenByClient;
 
     private String dataNetworkInterface = null;
 
@@ -52,9 +63,10 @@ public abstract class Application implements Closeable {
     Date stopTime;
     int duration;
 
-    protected Application(int id, Mode mode) {
+    protected Application(int id, Mode mode, Direction directionAsSeenByClient) {
         this.id = id;
         this.mode = mode;
+        this.directionAsSeenByClient = directionAsSeenByClient;
     }
 
     //TODO builder pattern mixed with normal methods in the same class. Push builder pattern methods in own class
@@ -111,6 +123,10 @@ public abstract class Application implements Closeable {
 
     public Mode getMode() {
         return mode;
+    }
+
+    public Direction getDirectionAsSeenByClient() {
+        return directionAsSeenByClient;
     }
 
     @Override

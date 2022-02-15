@@ -21,8 +21,8 @@ public class IoTSource extends Source {
 
     long lastLogTime = -1;
 
-    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id) {
-        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.IOT);
+    public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id, Direction directionAsSeenByClient) {
+        super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.IOT, directionAsSeenByClient);
         this.id = id;
     }
 

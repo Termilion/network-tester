@@ -84,18 +84,19 @@ public class InitialHandshakeThread extends Thread {
                         clientPort,
                         rcvBuf,
                        "./out/server",
+                        traceIntervalMs,
                         id,
                         mode,
-                        traceIntervalMs
+                        this.direction
                 );
             } else {
                 // else build a source with the clients dataAddress
                 if (this.mode == Application.Mode.IOT) {
                     ConsoleLogger.log("Creating IoT source application: %s:%d", clientAddress, clientPort);
-                    app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id);
+                    app = new IoTSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id, this.direction);
                 } else if (this.mode == Application.Mode.BULK) {
                     ConsoleLogger.log("Creating Bulk source application: %s:%d", clientAddress, clientPort);
-                    app = new BulkSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id);
+                    app = new BulkSource(timeProvider, clientAddress, clientPort, resetTime, closeSocketOnReset, sndBuf, id, this.direction);
                 } else {
                     throw new NotImplementedException();
                 }

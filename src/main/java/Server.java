@@ -19,10 +19,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -245,43 +242,48 @@ public class Server implements Callable<Integer> {
     private void moveServerSideLogs(List<Sink> serverSideSinks, int run) throws IOException {
         List<LogSink> logSinks = serverSideSinks.stream().filter(it -> it instanceof LogSink).map(it -> (LogSink) it).collect(Collectors.toList());
         for (LogSink sink : logSinks) {
-            File csvInFile = new File(sink.getFilePath());
-            File csvOutFile = new File(String.format("./out/received_run_%d_flow_%d_%s.csv", run, sink.getId(), sink.getMode().getName()));
-            Files.copy(csvInFile.toPath(), csvOutFile.toPath());
+            for (Map.Entry<String, String> entry : sink.getFilePaths().entrySet()) {
+                File csvInFile = new File(entry.getValue());
+                File csvOutFile = new File(String.format("./out/received_run_%d_flow_%d_%s_%s.csv", run, sink.getId(), sink.getMode().getName(), entry.getKey()));
+                Files.copy(csvInFile.toPath(), csvOutFile.toPath());
+            }
         }
     }
 
     private void mergeOutFiles(int run) throws IOException {
-        File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith(String.format("received_run_%d", run)) && name.endsWith(".csv"));
+        for (String identifier : LogSink.IDENTIFIERS) {
+            ConsoleLogger.log("Merging csv files: %s", identifier);
+            File[] csvFiles = outDir.listFiles((dir, name) -> name.startsWith(String.format("received_run_%d", run)) && name.endsWith(String.format("%s.csv", identifier)));
 
-        if (csvFiles == null) {
-            throw new FileNotFoundException("No csv files found!");
-        }
-
-        List<CSVRecord> csvRecordsList = new ArrayList<>();
-        List<String> headers = new ArrayList<>();
-
-        for (File file : csvFiles) {
-            Reader inputStreamReader = new InputStreamReader(new FileInputStream(file));
-            CSVParser csvParser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(inputStreamReader);
-            if (headers.isEmpty()) {
-                headers = csvParser.getHeaderNames();
+            if (csvFiles == null) {
+                throw new FileNotFoundException("No csv files found! " + identifier);
             }
 
-            csvParser.forEach(csvRecordsList::add);
+            List<CSVRecord> csvRecordsList = new ArrayList<>();
+            List<String> headers = new ArrayList<>();
+
+            for (File file : csvFiles) {
+                Reader inputStreamReader = new InputStreamReader(new FileInputStream(file));
+                CSVParser csvParser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(inputStreamReader);
+                if (headers.isEmpty()) {
+                    headers = csvParser.getHeaderNames();
+                }
+
+                csvParser.forEach(csvRecordsList::add);
+            }
+
+            Comparator<CSVRecord> comparator = Comparator.comparing(r -> Float.valueOf(r.get("time")));
+            csvRecordsList.sort(comparator);
+
+            File outFile = new File(outDir, String.format("hardware-%d-%s.csv", run, identifier));
+            FileOutputStream out = new FileOutputStream(outFile);
+            Writer outputStreamWriter = new OutputStreamWriter(out);
+            CSVPrinter csvPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);
+            csvPrinter.printRecord(headers);
+            csvPrinter.printRecords(csvRecordsList);
+            csvPrinter.flush();
+            csvPrinter.close();
         }
-
-        Comparator<CSVRecord> comparator = Comparator.comparing(r -> Float.valueOf(r.get("time")));
-        csvRecordsList.sort(comparator);
-
-        File outFile = new File(outDir, String.format("hardware-%d-goodput.csv", run));
-        FileOutputStream out = new FileOutputStream(outFile);
-        Writer outputStreamWriter = new OutputStreamWriter(out);
-        CSVPrinter csvPrinter = CSVFormat.DEFAULT.withFirstRecordAsHeader().print(outputStreamWriter);
-        csvPrinter.printRecord(headers);
-        csvPrinter.printRecords(csvRecordsList);
-        csvPrinter.flush();
-        csvPrinter.close();
 
         ConsoleLogger.log("Finished merging out files...");
     }
