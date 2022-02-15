@@ -83,7 +83,7 @@ public class InitialHandshakeThread extends Thread {
                         timeProvider,
                         clientPort,
                         rcvBuf,
-                        String.format("./out/server_sink_flow_%d_%s.csv", id, mode.getName()),
+                       "./out/server",
                         id,
                         mode,
                         traceIntervalMs

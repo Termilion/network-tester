@@ -1,7 +1,7 @@
 package application.source;
 
 import general.TimeProvider;
-import general.Utility;
+import general.Utility.TransmissionPayload;
 import general.logger.ConsoleLogger;
 
 import java.io.IOException;
@@ -15,7 +15,8 @@ public class IoTSource extends Source {
     String connectedAddress;
     int id;
 
-    final AtomicLong sndBytes;
+    int round = -1;
+    final AtomicLong sndBytes = new AtomicLong(0);
     long totalSndPackets = 0;
 
     long lastLogTime = -1;
@@ -23,15 +24,14 @@ public class IoTSource extends Source {
     public IoTSource(TimeProvider timeProvider, String address, int port, int resetTime, boolean closeSocketOnReset, int bufferSize, int id) {
         super(timeProvider, address, port, bufferSize, resetTime, closeSocketOnReset, id, Mode.IOT);
         this.id = id;
-        this.sndBytes = new AtomicLong(0);
     }
 
     @Override
     protected void executeLogic() throws IOException {
         OutputStream out = socket.getOutputStream();
-
         connectedAddress = socket.getInetAddress().getHostAddress();
 
+        round++;
         double maxNumberOfPackets = Math.ceil(IOT_DATA_SIZE / 1000);
         for (int j = 0; j < maxNumberOfPackets; j++) {
             byte[] payload = new byte[1000];
@@ -39,8 +39,8 @@ public class IoTSource extends Source {
 
             if (isRunning) {
                 try {
-                    // TODO encode Round?
-                    byte[] bytes = Utility.encodeTime(payload, time);
+                    TransmissionPayload transmissionPayload = new TransmissionPayload(j, time, round);
+                    byte[] bytes = transmissionPayload.encode(payload);
                     out.write(bytes);
                     out.flush();
 

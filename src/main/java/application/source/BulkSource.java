@@ -1,7 +1,7 @@
 package application.source;
 
 import general.TimeProvider;
-import general.Utility;
+import general.Utility.TransmissionPayload;
 import general.logger.ConsoleLogger;
 
 import java.io.IOException;
@@ -27,15 +27,18 @@ public class BulkSource extends Source {
     @Override
     protected void executeLogic() throws IOException {
         OutputStream out = socket.getOutputStream();
-
         connectedAddress = socket.getInetAddress().getHostAddress();
 
+        int packetId = -1;
         while (isRunning) {
+            packetId++;
             byte[] payload = new byte[1000];
             long time = this.timeProvider.getAdjustedTime();
 
             try {
-                out.write(Utility.encodeTime(payload, time));
+                TransmissionPayload transmissionPayload = new TransmissionPayload(packetId, time, 0);
+                byte[] bytes = transmissionPayload.encode(payload);
+                out.write(bytes);
                 out.flush();
 
                 measureBytes(payload.length);

@@ -32,7 +32,7 @@ public class Client implements Callable<Integer> {
     @CommandLine.Option(names = {"--data-ip"}, description = "Ip address (of the 2nd NIC) of the server. When specified this ip will be used to route the data packages which will test the network link. the 'controlAddress' is used to communicate control messages over the more reliable / not-to-test link.")
     private String dataAddress;
 
-    @CommandLine.ArgGroup(exclusive = true, multiplicity = "1")
+    @CommandLine.ArgGroup(multiplicity = "1")
     TimeSyncArg timeSyncArgs;
 
     static class TimeSyncArg {
@@ -175,7 +175,7 @@ public class Client implements Callable<Integer> {
             }
         } else {
             ConsoleLogger.log("Creating Log sink application: port %d", appPort);
-            app = new LogSink(timeClient, appPort, this.rcvBuf, String.format("./out/client_sink_flow_%d_%s.csv", id, this.mode.getName()), id, this.mode, this.traceIntervalMs);
+            app = new LogSink(timeClient, appPort, this.rcvBuf, "./out/client", id, this.mode, this.traceIntervalMs);
         }
 
         return app;

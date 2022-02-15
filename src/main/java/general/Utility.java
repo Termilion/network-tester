@@ -38,6 +38,24 @@ public class Utility {
         }
     }
 
+    public static class Pair<K, V> {
+        K key;
+        V value;
+
+        public Pair(K key, V value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getValue() {
+            return value;
+        }
+    }
+
     public static byte[] generateBytes(int number) {
         byte[] bytes = new byte[number];
         new Random().nextBytes(bytes);
@@ -52,38 +70,61 @@ public class Utility {
         return mBytes;
     }
 
-    public static byte[] encodeTime(byte[] payload, long time) throws Exception {
-        if (payload.length < Long.BYTES) {
-            throw new Exception("payload too small");
-        } else {
-            // convert long -> bytes
-            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+    public static class TransmissionPayload {
+        int id;
+        long time;
+        int round;
+
+        public static TransmissionPayload decode(byte[] payload) throws Exception {
+            int bytesToDecode = Integer.BYTES + Long.BYTES + Integer.BYTES;
+            if (payload.length < bytesToDecode) {
+                throw new Exception("payload too small");
+            }
+            // convert from bytes
+            ByteBuffer buffer = ByteBuffer.allocate(bytesToDecode);
+            buffer.put(payload, 0, bytesToDecode);
+            buffer.flip();
+
+            int id = buffer.getInt();
+            long time = buffer.getLong();
+            int round = buffer.getInt();
+
+            return new TransmissionPayload(id, time, round);
+        }
+
+        public TransmissionPayload(int id, long time, int round) {
+            this.id = id;
+            this.time = time;
+            this.round = round;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public long getTime() {
+            return time;
+        }
+
+        public int getRound() {
+            return round;
+        }
+
+        public byte[] encode(byte[] payload) throws Exception {
+            int bytesToEncode = Integer.BYTES + Long.BYTES + Integer.BYTES;
+            if (payload.length < bytesToEncode) {
+                throw new Exception("payload too small");
+            }
+            // convert to bytes
+            ByteBuffer buffer = ByteBuffer.allocate(bytesToEncode);
+            buffer.putInt(id);
             buffer.putLong(time);
-            byte[] tsArray = buffer.array();
+            buffer.putInt(round);
+            buffer.rewind();
 
             // stash bytes in payload
-            for (int k = 0; k < tsArray.length; k++) {
-                payload[k] = tsArray[k];
-            }
+            buffer.get(payload, 0, bytesToEncode);
             return payload;
-        }
-    }
-
-    public static long decodeTime(byte[] payload) {
-        if (payload.length < Long.BYTES) {
-            return -1;
-        } else {
-            // extract first bytes
-            byte[] bytes = new byte[Long.BYTES];
-            for (int i = 0; i < Long.BYTES; i++) {
-                bytes[i] = payload[i];
-            }
-
-            // convert bytes -> long
-            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-            buffer.put(bytes);
-            buffer.flip();
-            return buffer.getLong();
         }
     }
 }

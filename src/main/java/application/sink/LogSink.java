@@ -1,29 +1,45 @@
 package application.sink;
 
 import general.TimeProvider;
-import general.Utility;
+import general.Utility.TransmissionPayload;
 import general.logger.ConsoleLogger;
 import general.logger.FileLogger;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class LogSink extends Sink {
 
+    private static class AbsoluteDelayItem {
+        long receiveTime;
+        int round;
+        int packetId;
+        long delayTime;
+
+        public AbsoluteDelayItem(long receiveTime, int round, int packetId, long delayTime) {
+            this.receiveTime = receiveTime;
+            this.round = round;
+            this.packetId = packetId;
+            this.delayTime = delayTime;
+        }
+    }
+
     String connectedAddress;
     int modeInt;
 
-    String filePath;
-    File outFile;
-    BufferedWriter writer;
+    String goodputCsvPath;
+    File goodputCsvFile;
+    BufferedWriter goodputCsv;
+    String absoluteDelayCsvPath;
+    File absoluteDelayCsvFile;
+    BufferedWriter absoluteDelayCsv;
 
     int index = 0;
-    final AtomicLong rcvBytesForCsv;
-    final List<Long> delayForCsv;
+    final AtomicLong rcvBytesForGoodputCsv;
+    final List<Long> delayForGoodputCsv;
+    final Queue<AbsoluteDelayItem> absoluteDelayItemQueue;
     final AtomicLong rcvBytesForLog;
     final List<Long> delayForLog;
 
@@ -33,30 +49,44 @@ public class LogSink extends Sink {
     long lastTraceTime = -1;
     long lastLogTime = -1;
 
-    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String filePath, int id, Mode mode, int traceIntervalMs) throws IOException {
+    public LogSink(TimeProvider timeProvider, int port, int receiveBufferSize, String parentPath, int id, Mode mode, int traceIntervalMs) throws IOException {
         super(timeProvider, port, receiveBufferSize, traceIntervalMs, id, mode);
         this.modeInt = mode.getLogInt();
-        this.rcvBytesForCsv = new AtomicLong(0);
-        this.delayForCsv = Collections.synchronizedList(new ArrayList<>());
+        this.rcvBytesForGoodputCsv = new AtomicLong(0);
+        this.delayForGoodputCsv = Collections.synchronizedList(new ArrayList<>());
+        this.absoluteDelayItemQueue = new ConcurrentLinkedQueue<>();
         this.rcvBytesForLog = new AtomicLong(0);
         this.delayForLog = Collections.synchronizedList(new ArrayList<>());
-        this.filePath = filePath;
-        createLogFile(filePath);
+        this.goodputCsvPath = String.format("%s_flow_%d_%s_goodput.csv", parentPath, id, mode.getName());
+        this.absoluteDelayCsvPath = String.format("%s_flow_%d_%s_absolute-delay.csv", parentPath, id, mode.getName());
+        createLogFiles();
     }
 
-    public void createLogFile(String filePath) throws IOException {
-        outFile = new File(filePath);
-        outFile.getParentFile().mkdirs();
-        if (outFile.exists()) {
-            boolean deleted = outFile.delete();
+    private void createLogFiles() throws IOException {
+        goodputCsvFile = new File(goodputCsvPath);
+        goodputCsvFile.getParentFile().mkdirs();
+        if (goodputCsvFile.exists()) {
+            boolean deleted = goodputCsvFile.delete();
             if (!deleted) {
-                throw new IOException("Can not delete " + filePath);
+                throw new IOException("Can not delete " + goodputCsvPath);
             }
         }
-        writer = new BufferedWriter(new FileWriter(outFile, true));
-        writer.write("index,time,flow,type,address,sink_gp,delay_data_ms");
-        writer.newLine();
-        writer.flush();
+        absoluteDelayCsvFile = new File(absoluteDelayCsvPath);
+        absoluteDelayCsvFile.getParentFile().mkdirs();
+        if (absoluteDelayCsvFile.exists()) {
+            boolean deleted = absoluteDelayCsvFile.delete();
+            if (!deleted) {
+                throw new IOException("Can not delete " + goodputCsvPath);
+            }
+        }
+        goodputCsv = new BufferedWriter(new FileWriter(goodputCsvFile, true));
+        goodputCsv.write("index,time,flow,type,address,sink_gp,delay_data_ms");
+        goodputCsv.newLine();
+        goodputCsv.flush();
+        absoluteDelayCsv = new BufferedWriter(new FileWriter(absoluteDelayCsvFile, true));
+        absoluteDelayCsv.write("time,flow,type,address,round,packet_id,delay_data_ms");
+        absoluteDelayCsv.newLine();
+        absoluteDelayCsv.flush();
     }
 
     @Override
@@ -70,18 +100,28 @@ public class LogSink extends Sink {
             byte[] payload = new byte[1000];
 
             while (isRunning) {
+                TransmissionPayload transmissionPayload;
                 try {
                     dataInputStream.readFully(payload);
+                    transmissionPayload = TransmissionPayload.decode(payload);
                 } catch (EOFException e) {
                     ConsoleLogger.log("Transmission ended");
                     break;
+                } catch (Exception e) {
+                    ConsoleLogger.log("Problem decoding payload");
+                    FileLogger.log("Problem decoding payload");
+                    break;
                 }
+
                 // calc delay
-                long sendTime = Utility.decodeTime(payload);
+                int packetId = transmissionPayload.getId();
+                long sendTime = transmissionPayload.getTime();
+                int round = transmissionPayload.getRound();
+
                 long currentTime = this.timeProvider.getAdjustedTime();
                 long delayTime = currentTime - sendTime;
 
-                measureDelay(delayTime);
+                measureDelay(delayTime, packetId, currentTime, round);
                 measureBytes(payload.length);
             }
         } catch (IllegalStateException e) {
@@ -91,7 +131,7 @@ public class LogSink extends Sink {
         }
     }
 
-    private void measureDelay(long delayTime) {
+    private void measureDelay(long delayTime, int packetId, long receiveTime, int round) {
         if (delayTime < -30) {
             // if delay is less than epsilon (-30) abort. Something went seriously wrong during time sync
             ConsoleLogger.log("ERROR: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.ERROR);
@@ -105,13 +145,17 @@ public class LogSink extends Sink {
             ConsoleLogger.log("WARN: Packet has negative delay: " + delayTime, ConsoleLogger.LogLevel.WARN);
             delayTime = 0;
         }
-        delayForCsv.add(delayTime);
+        // Put results into lists, to not block the receiving thread (calculations are performed on another thread)
+        delayForGoodputCsv.add(delayTime);
         delayForLog.add(delayTime);
+        if (mode == Mode.IOT) {
+            absoluteDelayItemQueue.add(new AbsoluteDelayItem(receiveTime, round, packetId, delayTime));
+        }
     }
 
     private void measureBytes(int payloadLength) {
         // log rcv bytes
-        this.rcvBytesForCsv.addAndGet(payloadLength);
+        this.rcvBytesForGoodputCsv.addAndGet(payloadLength);
         this.rcvBytesForLog.addAndGet(payloadLength);
         this.totalRcvPackets++;
     }
@@ -120,55 +164,77 @@ public class LogSink extends Sink {
     public void scheduledWriteOutput() {
         try {
             long now = timeProvider.getAdjustedTime();
-
-            // trace values
-            List<Long> currentDelay;
-            synchronized (delayForCsv) {
-                currentDelay = new ArrayList<>(delayForCsv);
-                delayForCsv.clear();
-            }
-
-            double currentRcvMBits;
-            synchronized (rcvBytesForCsv) {
-                currentRcvMBits = (rcvBytesForCsv.get() * 8) / 1e6;
-                rcvBytesForCsv.set(0);
-            }
-
-            double traceIntervalInS;
-            if (lastTraceTime == -1) {
-                traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
-            } else {
-                traceIntervalInS = (now - lastTraceTime) / 1000.0;
-                lastTraceTime = now;
-            }
-
-            // calculate goodput
-            double goodput = avgGoodput(currentRcvMBits, traceIntervalInS);
-
-            // calculate delay
-            double avgDelay = avgDelay(currentDelay);
-
             double simTime = (now - beginTime.getTime()) / 1000.0;
-
-            // write to file
-            try {
-                String address;
-                if (isConnected || goodput > 0 || avgDelay > 0) {
-                    address = connectedAddress;
-                } else {
-                    address = null;
-                }
-                writer.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, modeInt, address, goodput, avgDelay));
-                writer.newLine();
-                index++;
-            } catch (IOException e) {
-                FileLogger.log("ERROR in LogSink Writer: " + e, ConsoleLogger.LogLevel.ERROR);
-                e.printStackTrace();
-            }
+            writeGoodput(now, simTime);
+            writeAbsoluteDelay();
         } catch (Exception e) {
             FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
             e.printStackTrace();
             System.exit(1);
+        }
+    }
+
+    private void writeGoodput(long now, double simTime) {
+        // trace values
+        List<Long> currentDelay;
+        synchronized (delayForGoodputCsv) {
+            currentDelay = new ArrayList<>(delayForGoodputCsv);
+            delayForGoodputCsv.clear();
+        }
+
+        double currentRcvMBits;
+        synchronized (rcvBytesForGoodputCsv) {
+            currentRcvMBits = (rcvBytesForGoodputCsv.get() * 8) / 1e6;
+            rcvBytesForGoodputCsv.set(0);
+        }
+
+        double traceIntervalInS;
+        if (lastTraceTime == -1) {
+            traceIntervalInS = TRACE_INTERVAL_IN_MS / 1000.0;
+        } else {
+            traceIntervalInS = (now - lastTraceTime) / 1000.0;
+            lastTraceTime = now;
+        }
+
+        // calculate goodput
+        double goodput = avgGoodput(currentRcvMBits, traceIntervalInS);
+
+        // calculate delay
+        double avgDelay = avgDelay(currentDelay);
+
+        // write to file
+        try {
+            String address;
+            if (isConnected || goodput > 0 || avgDelay > 0) {
+                address = connectedAddress;
+            } else {
+                address = null;
+            }
+            goodputCsv.write(String.format(Locale.ROOT, "%d,%.06f,%d,%d,%s,%.02f,%.02f", index, simTime, id, modeInt, address, goodput, avgDelay));
+            goodputCsv.newLine();
+            index++;
+        } catch (IOException e) {
+            FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
+            e.printStackTrace();
+        }
+    }
+
+    private void writeAbsoluteDelay() {
+        // time,flow,type,address,round,packet_id,delay_data_ms
+        AbsoluteDelayItem item;
+        while ((item = absoluteDelayItemQueue.poll()) != null) {
+            // write to file
+            try {
+                String address = isConnected ? connectedAddress : null;
+
+                double receiveSimTime = (item.receiveTime - beginTime.getTime()) / 1000.0;
+
+                absoluteDelayCsv.write(String.format(Locale.ROOT, "%.06f,%d,%d,%s,%d,%d,%d", receiveSimTime, id, modeInt, address, item.round, item.packetId, item.delayTime));
+                absoluteDelayCsv.newLine();
+            } catch (IOException e) {
+                FileLogger.log("ERROR in LogSink: " + e, ConsoleLogger.LogLevel.ERROR);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -248,13 +314,14 @@ public class LogSink extends Sink {
             return;
         }
         closed = true;
-        writer.flush();
-        FileLogger.log("LogSink: Writer is closed");
-        writer.close();
+        goodputCsv.flush();
+        absoluteDelayCsv.flush();
+        goodputCsv.close();
+        absoluteDelayCsv.close();
         super.close();
     }
 
     public String getFilePath() {
-        return filePath;
+        return goodputCsvPath;
     }
 }
