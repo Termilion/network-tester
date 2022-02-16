@@ -17,8 +17,8 @@ public abstract class Application implements Closeable {
     public static final int LOG_INTERVAL_IN_MS = 1000;
 
     public enum Mode {
-        IOT("iot", 1),
-        BULK("bulk", 0);
+        IOT("iot", 0),
+        BULK("bulk", 1);
 
         String name;
         int logInt;
